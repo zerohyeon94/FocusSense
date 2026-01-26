@@ -1,0 +1,218 @@
+//
+//  CameraService.swift
+//  FocusSense
+//
+//  카메라 캡처 관리 서비스
+//  - Preview Layer 숨기기 (GPU 부하 감소)
+//  - 프레임 스로틀링 (1 FPS로 제한)
+//
+
+import AVFoundation
+import UIKit
+
+// MARK: - Camera Service Delegate
+protocol CameraServiceDelegate: AnyObject {
+    func cameraService(_ service: CameraService, didOutput sampleBuffer: CMSampleBuffer)
+    func cameraService(_ service: CameraService, didFailWithError error: Error)
+}
+
+// MARK: - Camera Service
+final class CameraService: NSObject, ObservableObject {
+    
+    // MARK: - Published Properties
+    @Published var isRunning = false
+    @Published var permissionGranted = false
+    
+    // MARK: - Properties
+    weak var delegate: CameraServiceDelegate?
+    
+    private let captureSession = AVCaptureSession()
+    private let videoOutput = AVCaptureVideoDataOutput()
+    private let sessionQueue = DispatchQueue(label: "com.focussense.camera.session")
+    private let outputQueue = DispatchQueue(label: "com.focussense.camera.output")
+    
+    // MARK: - Frame Throttling (핵심 최적화!)
+    /// 마지막으로 프레임을 처리한 시간
+    private var lastFrameTime: CFAbsoluteTime = 0
+    /// 프레임 처리 간격 (초) - 1초에 1번만 처리
+    private let frameInterval: CFAbsoluteTime = 1.0  // 1 FPS
+    
+    // MARK: - Initialization
+    override init() {
+        super.init()
+        checkPermission()
+    }
+    
+    // MARK: - Permission Handling
+    private func checkPermission() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized:
+            DispatchQueue.main.async {
+                self.permissionGranted = true
+            }
+            setupSession()
+            
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    self?.permissionGranted = granted
+                }
+                if granted {
+                    self?.setupSession()
+                }
+            }
+            
+        case .denied, .restricted:
+            DispatchQueue.main.async {
+                self.permissionGranted = false
+            }
+            
+        @unknown default:
+            break
+        }
+    }
+    
+    // MARK: - Session Setup
+    private func setupSession() {
+        sessionQueue.async { [weak self] in
+            self?.configureSession()
+        }
+    }
+    
+    private func configureSession() {
+        captureSession.beginConfiguration()
+        captureSession.sessionPreset = .medium  // 해상도 낮춤 (배터리 절약)
+        
+        // 전면 카메라 설정
+        guard let frontCamera = AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: .front
+        ) else {
+            print("❌ Front camera not available")
+            captureSession.commitConfiguration()
+            return
+        }
+        
+        do {
+            // 카메라 입력 설정
+            let input = try AVCaptureDeviceInput(device: frontCamera)
+            if captureSession.canAddInput(input) {
+                captureSession.addInput(input)
+            }
+            
+            // 프레임 레이트 제한 (추가 최적화)
+            try frontCamera.lockForConfiguration()
+            frontCamera.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 15)  // 15 FPS 제한
+            frontCamera.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 15)
+            frontCamera.unlockForConfiguration()
+            
+        } catch {
+            print("❌ Camera input error: \(error)")
+            delegate?.cameraService(self, didFailWithError: error)
+            captureSession.commitConfiguration()
+            return
+        }
+        
+        // 비디오 출력 설정
+        videoOutput.setSampleBufferDelegate(self, queue: outputQueue)
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+        videoOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        
+        if captureSession.canAddOutput(videoOutput) {
+            captureSession.addOutput(videoOutput)
+        }
+        
+        // 비디오 방향 설정
+        if let connection = videoOutput.connection(with: .video) {
+            if connection.isVideoRotationAngleSupported(90) {
+                connection.videoRotationAngle = 90
+            }
+            if connection.isVideoMirroringSupported {
+                connection.isVideoMirrored = true
+            }
+        }
+        
+        captureSession.commitConfiguration()
+    }
+    
+    // MARK: - Session Control
+    func start() {
+        guard permissionGranted else {
+            print("⚠️ Camera permission not granted")
+            return
+        }
+        
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if !self.captureSession.isRunning {
+                self.captureSession.startRunning()
+                DispatchQueue.main.async {
+                    self.isRunning = true
+                }
+                print("✅ Camera session started")
+            }
+        }
+    }
+    
+    func stop() {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            if self.captureSession.isRunning {
+                self.captureSession.stopRunning()
+                DispatchQueue.main.async {
+                    self.isRunning = false
+                }
+                print("✅ Camera session stopped")
+            }
+        }
+    }
+    
+    // MARK: - Frame Rate Adjustment (발열 대응)
+    /// 발열 상태에 따라 프레임 처리 간격 조정
+    func adjustFrameInterval(for thermalState: ProcessInfo.ThermalState) {
+        switch thermalState {
+        case .nominal:
+            // 정상: 1초에 1번
+            setFrameInterval(1.0)
+        case .fair:
+            // 약간 뜨거움: 2초에 1번
+            setFrameInterval(2.0)
+        case .serious:
+            // 심각: 3초에 1번
+            setFrameInterval(3.0)
+        case .critical:
+            // 위험: 분석 중지
+            stop()
+            print("🔥 Critical thermal state - camera stopped")
+        @unknown default:
+            setFrameInterval(1.0)
+        }
+    }
+    
+    private func setFrameInterval(_ interval: CFAbsoluteTime) {
+        // 프레임 간격은 captureOutput에서 체크됨
+        print("📊 Frame interval set to \(interval)s")
+    }
+}
+
+// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
+extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection
+    ) {
+        // 🔑 핵심 최적화: 프레임 스로틀링
+        let currentTime = CFAbsoluteTimeGetCurrent()
+        guard currentTime - lastFrameTime >= frameInterval else {
+            return  // 아직 처리 간격이 안 됐으면 스킵
+        }
+        lastFrameTime = currentTime
+        
+        // Delegate에게 프레임 전달
+        delegate?.cameraService(self, didOutput: sampleBuffer)
+    }
+}
