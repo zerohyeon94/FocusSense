@@ -8,19 +8,32 @@
 import SwiftUI
 
 struct TimerView: View {
+    /// @ObservedObject: 외부에서 전달받은 객체를 관찰
+    /// - ContentView에서 생성된 viewModel을 받아서 사용
+    /// - 이 View가 소유하지 않음 (생성 x)
     @ObservedObject var viewModel: TimerViewModel
+    /// @State: 이 View 내부에서만 사용하는 단순 값
+    /// - Alert 표시 여부 (true/false)
     @State private var showingResetAlert = false
     
     var body: some View {
+        /// GeometryReader: 부모 뷰의 크기/위치 정보 제공
+        /// geometry.size.width → 화면 너비
+        /// geometry.size.height → 화면 높이
         GeometryReader { geometry in
+            /// ZStack: 뷰들을 겹쳐서 배치 (Z축 = 깊이)
+            /// 먼저 쓴 뷰가 아래, 나중에 쓴 뷰가 위
             ZStack {
-                // 배경 (집중 상태에 따라 변화)
+                // 배경 (집중 상태에 따라 변화) - 맨 아래
                 backgroundGradient
-                    .ignoresSafeArea()
+                    .ignoresSafeArea() // 노치/홈바 영역까지 확장
                     .animation(.easeInOut(duration: 0.5), value: viewModel.currentFocusState.level)
                 
+                // 콘텐츠 (위에 겹쳐짐)
+                /// VStack: 뷰들을 세로로 배치
+                /// spacing 각 view 사이 40pt 간격
                 VStack(spacing: 40) {
-                    Spacer()
+                    Spacer() // 빈 공간 (유연하게 늘어남)
                     
                     // 집중 상태 인디케이터
                     FocusStatusIndicator(focusState: viewModel.currentFocusState)
@@ -37,7 +50,7 @@ struct TimerView: View {
                     // 컨트롤 버튼
                     TimerControls(
                         timerState: viewModel.timerState,
-                        onStart: { viewModel.startTimer() },
+                        onStart: { viewModel.startTimer() }, // 클로저 전달
                         onPause: { viewModel.pauseTimer() },
                         onResume: { viewModel.resumeTimer() },
                         onStop: { viewModel.stopTimer() },
@@ -50,9 +63,11 @@ struct TimerView: View {
                 .padding()
             }
         }
+        /// $: Binding - alert가 이 값을 바꿀 수 있음
+        /// true가 되면 표시, 닫으면 false로 변경
         .alert("타이머 리셋", isPresented: $showingResetAlert) {
-            Button("취소", role: .cancel) { }
-            Button("리셋", role: .destructive) {
+            Button("취소", role: .cancel) { } // .cancel: 취소 버튼 스타일
+            Button("리셋", role: .destructive) { // .destructive: 위험한 동작
                 viewModel.resetTimer()
             }
         } message: {
@@ -179,7 +194,7 @@ struct TimerDisplay: View {
 // MARK: - Timer Controls
 struct TimerControls: View {
     let timerState: TimerState
-    let onStart: () -> Void
+    let onStart: () -> Void // 파라미터 없고 반환값 없는 함수
     let onPause: () -> Void
     let onResume: () -> Void
     let onStop: () -> Void
@@ -223,7 +238,7 @@ struct ControlButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button(action: action) { // 버튼을 누르면 action 실행
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(color)
