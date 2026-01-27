@@ -8,6 +8,7 @@
 import Foundation
 
 // MARK: - Study Session Model
+// Codable: JSON 저장/불러오기 가능
 struct StudySession: Identifiable, Codable {
     let id: UUID
     let startTime: Date
@@ -40,7 +41,7 @@ struct StudySession: Identifiable, Codable {
     
     /// 집중률 (%)
     var focusRate: Double {
-        guard totalDuration > 0 else { return 0 }
+        guard totalDuration > 0 else { return 0 } // 0으로 나누기 방지
         return (netFocusTime / totalDuration) * 100
     }
     
