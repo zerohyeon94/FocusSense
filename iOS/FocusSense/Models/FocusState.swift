@@ -16,6 +16,7 @@ enum FocusLevel: String, CaseIterable {
     case drowsy = "졸음"
     case unknown = "분석중"
     
+    // Computed Property (계산 속성)
     var color: Color {
         switch self {
         case .focused: return .green
@@ -26,6 +27,7 @@ enum FocusLevel: String, CaseIterable {
         }
     }
     
+    // SF Symbols
     var icon: String {
         switch self {
         case .focused: return "eye.fill"
@@ -48,18 +50,22 @@ enum FocusLevel: String, CaseIterable {
 }
 
 // MARK: - Focus State Model
+// Identifiable: 고유 ID 필요
+// Equatable: 비교 가능 (==)
 struct FocusState: Identifiable, Equatable {
-    let id = UUID()
-    let timestamp: Date
-    let level: FocusLevel
-    let eyeAspectRatio: Double  // EAR 값 (졸음 감지용)
+    
+    let id = UUID()             // 고유 식별자 (자동 생성)
+    let timestamp: Date         // 측정 시간
+    let level: FocusLevel       // 집중 정도
+    let eyeAspectRatio: Double  // EAR 값 (졸음 감지용) - 눈 가로세로 비율 (0.0 ~ 0.5)
     let isLookingAtScreen: Bool
     let isFaceDetected: Bool
-    let headPose: HeadPose?
+    let headPose: HeadPose?     // Optional
     
+    // 기본값이 있는 초기화 함수
     init(
-        timestamp: Date = Date(),
-        level: FocusLevel = .unknown,
+        timestamp: Date = Date(),       // 기본값: 현재시간
+        level: FocusLevel = .unknown,   // 기본값: 분석중
         eyeAspectRatio: Double = 0.0,
         isLookingAtScreen: Bool = false,
         isFaceDetected: Bool = false,
@@ -84,12 +90,15 @@ struct HeadPose: Equatable {
     let yaw: Double    // 좌우 회전
     let roll: Double   // 갸웃거림
     
+    // 정면을 보고 있는지 계산
     var isLookingForward: Bool {
+        // 모든 각도가 작으면 정면
         abs(pitch) < 20 && abs(yaw) < 30 && abs(roll) < 20
     }
 }
 
-// MARK: - Eye Aspect Ratio Constants
+// MARK: - Eye Aspect Ratio Constants (상수 정의)
+// static: 인스턴스 생성 없이 접근 가능
 struct EARConstants {
     static let drowsinessThreshold: Double = 0.2  // 이 값 이하면 졸음
     static let blinkThreshold: Double = 0.25      // 깜빡임 감지 임계값
