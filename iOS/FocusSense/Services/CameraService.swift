@@ -40,6 +40,11 @@ final class CameraService: NSObject, ObservableObject {
     private let sessionQueue = DispatchQueue(label: "com.focussense.camera.session") // 백그라운드 스레드 (UI 멈춤 방지)
     private let outputQueue = DispatchQueue(label: "com.focussense.camera.output")
     
+    /// 외부에서 카메라 세션에 접근할 수 있는 접근자 (프리뷰용)
+    var session: AVCaptureSession {
+        return captureSession
+    }
+    
     // MARK: - Frame Throttling (핵심 최적화!)
     // 카메라는 기본 30fps (초당 30프레임)
     // 모든 프레임을 AI로 분석하면 → 배터리 소모 + 발열 심함

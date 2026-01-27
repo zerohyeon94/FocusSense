@@ -49,10 +49,22 @@ final class TimerViewModel: ObservableObject {
     @Published var currentSession: StudySession?
     @Published var showAlert = false                // 알림 표시 여부
     @Published var alertMessage = ""                // 알림 메시지
+    @Published var showDebugView = false            // 디버그 화면 표시 여부
     
     // MARK: - Services (서비스 객체: Camera, AI)
-    private let cameraService: CameraService
+    let cameraService: CameraService
     private let focusDetectionService: FocusDetectionService
+    
+    // MARK: - Computed Properties for Debug View
+    /// 카메라 세션 접근자 (프리뷰용)
+    var captureSession: AVCaptureSession? {
+        return cameraService.session
+    }
+    
+    /// 얼굴 분석 데이터 (디버그 화면용)
+    var faceAnalysisData: FaceAnalysisData {
+        return focusDetectionService.faceAnalysisData
+    }
     
     // MARK: - Timer
     private var timer: Timer?

@@ -31,6 +31,7 @@ final class FocusDetectionService: ObservableObject {
     // MARK: - Published Properties
     @Published var currentState: FocusState = FocusState()
     @Published var isAnalyzing = false
+    @Published var faceAnalysisData: FaceAnalysisData = FaceAnalysisData()  // 디버그용 상세 데이터
     
     // MARK: - Properties
     weak var delegate: FocusDetectionDelegate?
@@ -46,6 +47,10 @@ final class FocusDetectionService: ObservableObject {
     // EAR 히스토리 (평균 계산용)
     private var earHistory: [Double] = []
     private let earHistorySize = 10
+    
+    // 개별 EAR 저장 (디버그용)
+    private var lastLeftEAR: Double = 0
+    private var lastRightEAR: Double = 0
     
     // MARK: - Initialization
     init() {
@@ -110,7 +115,8 @@ final class FocusDetectionService: ObservableObject {
         let headPose = calculateHeadPose(from: face)
         
         // 3. 시선 방향 추정
-        let isLookingAtScreen = estimateGazeDirection(from: landmarks, headPose: headPose)
+        let gazeDirection = estimateGazeDirection(from: landmarks, headPose: headPose)
+        let isLookingAtScreen = gazeDirection == .center
         
         // 4. 종합적인 집중도 판단
         let focusLevel = determineFocusLevel(
@@ -119,12 +125,99 @@ final class FocusDetectionService: ObservableObject {
             isLookingAtScreen: isLookingAtScreen
         )
         
+        // 5. 상세 분석 데이터 업데이트 (디버그용)
+        updateAnalysisData(
+            isFaceDetected: true,
+            face: face,
+            landmarks: landmarks,
+            headPose: headPose,
+            ear: ear,
+            gazeDirection: gazeDirection,
+            focusLevel: focusLevel
+        )
+        
         updateState(
             level: focusLevel,
             ear: ear,
             isLookingAtScreen: isLookingAtScreen,
             isFaceDetected: true,
             headPose: headPose
+        )
+    }
+    
+    // MARK: - Update Analysis Data (디버그용)
+    private func updateAnalysisData(
+        isFaceDetected: Bool,
+        face: VNFaceObservation? = nil,
+        landmarks: VNFaceLandmarks2D? = nil,
+        headPose: HeadPose? = nil,
+        ear: Double = 0,
+        gazeDirection: GazeDirection = .center,
+        focusLevel: FocusLevel = .unknown
+    ) {
+        var data = FaceAnalysisData()
+        data.isFaceDetected = isFaceDetected
+        
+        if let face = face {
+            data.faceBoundingBox = face.boundingBox
+        }
+        
+        if let landmarks = landmarks {
+            // 눈 위치 추출
+            if let leftEye = landmarks.leftEye {
+                data.leftEyePoints = leftEye.normalizedPoints
+                data.leftEyeCenter = calculateCenter(of: leftEye.normalizedPoints)
+            }
+            
+            if let rightEye = landmarks.rightEye {
+                data.rightEyePoints = rightEye.normalizedPoints
+                data.rightEyeCenter = calculateCenter(of: rightEye.normalizedPoints)
+            }
+            
+            // 코 위치
+            if let nose = landmarks.nose {
+                data.nosePosition = calculateCenter(of: nose.normalizedPoints)
+            }
+            
+            // 입 위치
+            if let outerLips = landmarks.outerLips {
+                data.mouthPoints = outerLips.normalizedPoints
+            }
+            
+            // 얼굴 윤곽
+            if let faceContour = landmarks.faceContour {
+                data.faceContourPoints = faceContour.normalizedPoints
+            }
+        }
+        
+        if let headPose = headPose {
+            data.yaw = headPose.yaw
+            data.pitch = headPose.pitch
+            data.roll = headPose.roll
+        }
+        
+        data.leftEAR = lastLeftEAR
+        data.rightEAR = lastRightEAR
+        data.averageEAR = ear
+        data.gazeDirection = gazeDirection
+        data.isLookingAtScreen = gazeDirection == .center
+        data.focusLevel = focusLevel
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.faceAnalysisData = data
+        }
+    }
+    
+    /// 점들의 중심점 계산
+    private func calculateCenter(of points: [CGPoint]) -> CGPoint {
+        guard !points.isEmpty else { return .zero }
+        
+        let sumX = points.reduce(0) { $0 + $1.x }
+        let sumY = points.reduce(0) { $0 + $1.y }
+        
+        return CGPoint(
+            x: sumX / CGFloat(points.count),
+            y: sumY / CGFloat(points.count)
         )
     }
     
@@ -221,10 +314,25 @@ final class FocusDetectionService: ObservableObject {
     }
     
     // MARK: - Gaze Direction Estimation
-    private func estimateGazeDirection(from landmarks: VNFaceLandmarks2D, headPose: HeadPose) -> Bool {
-        // 동공 위치가 없으므로 Head Pose로 간접 추정
-        // 얼굴이 정면을 향하고 있으면 화면을 보는 것으로 판단
-        return headPose.isLookingForward
+    private func estimateGazeDirection(from landmarks: VNFaceLandmarks2D, headPose: HeadPose) -> GazeDirection {
+        // Head Pose 기반 시선 방향 추정
+        
+        // Yaw 기반 좌우 판단
+        if headPose.yaw < -20 {
+            return .left
+        } else if headPose.yaw > 20 {
+            return .right
+        }
+        
+        // Pitch 기반 상하 판단
+        if headPose.pitch < -15 {
+            return .down
+        } else if headPose.pitch > 15 {
+            return .up
+        }
+        
+        // 정면
+        return .center
     }
     
     // MARK: - Focus Level Determination (집중 레벨 최종 판정)
@@ -287,6 +395,9 @@ final class FocusDetectionService: ObservableObject {
     func reset() {
         lowEARFrameCount = 0
         earHistory.removeAll()
+        lastLeftEAR = 0
+        lastRightEAR = 0
         currentState = FocusState()
+        faceAnalysisData = FaceAnalysisData()
     }
 }

@@ -33,6 +33,12 @@ struct TimerView: View {
                 /// VStack: 뷰들을 세로로 배치
                 /// spacing 각 view 사이 40pt 간격
                 VStack(spacing: 40) {
+                    // 상단 툴바 (디버그 버튼)
+                    DebugToolbar(
+                        isDebugMode: $viewModel.showDebugView,
+                        isRunning: viewModel.timerState == .running
+                    )
+                    
                     Spacer() // 빈 공간 (유연하게 늘어남)
                     
                     // 집중 상태 인디케이터
@@ -79,6 +85,9 @@ struct TimerView: View {
                     viewModel.resumeTimer()
                 }
             }
+        }
+        .fullScreenCover(isPresented: $viewModel.showDebugView) {
+            CameraDebugView(viewModel: viewModel)
         }
     }
     
@@ -328,6 +337,44 @@ extension Color {
             blue:  Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+}
+
+// MARK: - Debug Toolbar
+struct DebugToolbar: View {
+    @Binding var isDebugMode: Bool
+    let isRunning: Bool
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            
+            // 디버그 모드 토글 버튼
+            Button(action: {
+                isDebugMode = true
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "camera.viewfinder")
+                        .font(.system(size: 14))
+                    
+                    Text("AI 분석 보기")
+                        .font(.caption)
+                }
+                .foregroundColor(isRunning ? .cyan : .gray)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isRunning ? Color.cyan.opacity(0.2) : Color.gray.opacity(0.2))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(isRunning ? Color.cyan.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            }
+            .disabled(!isRunning)
+            .opacity(isRunning ? 1 : 0.5)
+        }
     }
 }
 
