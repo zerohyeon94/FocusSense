@@ -8,7 +8,15 @@
 //  - Head Pose 추정으로 이탈 감지
 //
 
-import Vision
+/*
+ 카메라 영상 → 집중 상태 판단
+┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
+│ Camera Frame │ ──→ │ Apple Vision API │ ──→ │  FocusState  │
+│   (이미지)     │     │   (얼굴/눈 분석)    │     │   (결과)      │
+└──────────────┘     └──────────────────┘     └──────────────┘
+*/
+
+import Vision // Apple의 컴퓨터 비전 프레임워크
 import AVFoundation
 import UIKit
 
@@ -27,7 +35,7 @@ final class FocusDetectionService: ObservableObject {
     // MARK: - Properties
     weak var delegate: FocusDetectionDelegate?
     
-    // Vision Request
+    // Vision Request - "이 이미지에서 얼굴 랜드마크를 찾아줘"
     private var faceDetectionRequest: VNDetectFaceLandmarksRequest?
     private let sequenceHandler = VNSequenceRequestHandler()
     
@@ -46,7 +54,7 @@ final class FocusDetectionService: ObservableObject {
     
     // MARK: - Vision Request Setup
     private func setupVisionRequest() {
-        faceDetectionRequest = VNDetectFaceLandmarksRequest { [weak self] request, error in
+        faceDetectionRequest = VNDetectFaceLandmarksRequest { [weak self] request, error in // 결과가 오면 해당 클로저 실행
             if let error = error {
                 print("❌ Face detection error: \(error)")
                 return
@@ -58,8 +66,10 @@ final class FocusDetectionService: ObservableObject {
         faceDetectionRequest?.revision = VNDetectFaceLandmarksRequestRevision3
     }
     
-    // MARK: - Process Video Frame
+    // MARK: - Process Video Frame (카메라 프레임 처리)
     func processFrame(_ sampleBuffer: CMSampleBuffer) {
+        // CMSampleBuffer: 카메라에서 온 raw 데이터
+        // PixelBuffer: Vision이 처리할 수 있는 형태로 변환
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let request = faceDetectionRequest else {
             return
@@ -68,6 +78,10 @@ final class FocusDetectionService: ObservableObject {
         isAnalyzing = true
         
         do {
+            // Vision API 실행
+            // [request]: 요청 목록
+            // pixelBuffer: 이미지 데이터
+            // orientation: 이미지 방향
             try sequenceHandler.perform([request], on: pixelBuffer, orientation: .up)
         } catch {
             print("❌ Vision request failed: \(error)")
@@ -114,21 +128,40 @@ final class FocusDetectionService: ObservableObject {
         )
     }
     
-    // MARK: - EAR (Eye Aspect Ratio) Calculation
+    // MARK: - EAR (Eye Aspect Ratio) Calculation - 졸음 감지 핵심 알고리즘
     /// 눈의 세로/가로 비율을 계산하여 졸음 감지
     /// EAR = (|p2-p6| + |p3-p5|) / (2 * |p1-p4|)
+    /*
+    눈이 떠있을 때:              눈이 감겼을 때:
+        p2    p3                    p2  p3
+      ●────────●                  ●──────●
+     /          \                  ──────
+    p1            p4    →     p1  ──────  p4
+     \          /                  ──────
+      ●────────●                  ●──────●
+        p6    p5                    p6  p5
+
+    EAR = (|p2-p6| + |p3-p5|) / (2 × |p1-p4|)
+        = 세로길이 / 가로길이
+
+    - 눈 떴을 때: EAR ≈ 0.3 ~ 0.4
+    - 눈 감았을 때: EAR ≈ 0.1 이하
+    - 졸음 판정: EAR < 0.2가 3초 이상 지속
+    */
+    
     private func calculateEAR(from landmarks: VNFaceLandmarks2D) -> Double {
         guard let leftEye = landmarks.leftEye,
               let rightEye = landmarks.rightEye else {
             return 0.3  // 기본값 (정상 범위)
         }
         
+        // 양쪽 눈의 EAR 평균
         let leftEAR = calculateSingleEyeEAR(eyePoints: leftEye.normalizedPoints)
         let rightEAR = calculateSingleEyeEAR(eyePoints: rightEye.normalizedPoints)
         
         let averageEAR = (leftEAR + rightEAR) / 2.0
         
-        // EAR 히스토리 업데이트 (스무딩)
+        // EAR 히스토리 업데이트 (스무딩 - 급격한 변화 방지 (이동 평균))
         earHistory.append(averageEAR)
         if earHistory.count > earHistorySize {
             earHistory.removeFirst()
@@ -194,7 +227,7 @@ final class FocusDetectionService: ObservableObject {
         return headPose.isLookingForward
     }
     
-    // MARK: - Focus Level Determination
+    // MARK: - Focus Level Determination (집중 레벨 최종 판정)
     private func determineFocusLevel(
         ear: Double,
         headPose: HeadPose,
