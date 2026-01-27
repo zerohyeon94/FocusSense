@@ -8,18 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    /// @StateObject: 이 View가 ViewModel을 생성하고 소유함
+    /// - 이 View가 사라지면 ViewModel도 함께 사라짐
+    /// - 자식 View에게는 @ObservedObject로 전달
     @StateObject private var timerViewModel = TimerViewModel()
+    /// @State: View 내부에서 변하는 단순한 값
+    /// - 현재 선택된 탭 번호
+    /// - 값이 바뀌면 View가 다시 그려짐
     @State private var selectedTab = 0
     
     var body: some View {
         TabView(selection: $selectedTab) {
             // 타이머 탭
-            TimerView(viewModel: timerViewModel)
-                .tabItem {
+            TimerView(viewModel: timerViewModel) // 자식 View
+                .tabItem { // 탭바 아이템 모양
                     Image(systemName: "timer")
                     Text("타이머")
                 }
-                .tag(0)
+                .tag(0) // 탭의 고유 번호
             
             // 통계 탭
             AnalyticsView(viewModel: timerViewModel)
@@ -37,12 +43,12 @@ struct ContentView: View {
                 }
                 .tag(2)
         }
-        .tint(.orange)
+        .tint(.orange) // 선택된 탭 색상
     }
 }
 
 // MARK: - Preview
 #Preview {
     ContentView()
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.dark) // 다크모드로 미리보기
 }
