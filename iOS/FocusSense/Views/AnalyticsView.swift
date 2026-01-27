@@ -12,8 +12,10 @@ struct AnalyticsView: View {
     @ObservedObject var viewModel: TimerViewModel
     
     var body: some View {
+        /// NavigationStack: 화면 상단에 네비게이션 바를 추가
+        /// 하위 뷰에서 NavigationLink로 화면 전환 가능
         NavigationStack {
-            ScrollView {
+            ScrollView { // 컨텐츠가 화면보다 길면 스크롤 가능
                 VStack(spacing: 24) {
                     // 오늘의 요약 카드
                     TodaySummaryCard(session: viewModel.currentSession)
@@ -30,8 +32,8 @@ struct AnalyticsView: View {
                 .padding()
             }
             .background(Color(hex: "0f0f1a"))
-            .navigationTitle("집중 분석")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("집중 분석") // 네비게이션 바 제목
+            .navigationBarTitleDisplayMode(.large) // 큰 제목 스타일
         }
     }
 }
@@ -53,11 +55,14 @@ struct TodaySummaryCard: View {
                     .foregroundColor(.secondary)
             }
             
+            /// StudySession? - Optional if let
+            /// - Optional이 nil이 아니면 언래핑하여 사용
+            /// - session은 이제 StudySession 타입 (not Optional)
             if let session = session {
                 HStack(spacing: 20) {
                     SummaryItem(
                         title: "총 학습",
-                        value: session.formattedTotalDuration,
+                        value: session.formattedTotalDuration, // 안전하게 접근
                         color: .blue
                     )
                     
@@ -74,6 +79,7 @@ struct TodaySummaryCard: View {
                     )
                 }
             } else {
+                // session이 nil일 때 표시
                 Text("아직 학습 기록이 없습니다.\n타이머를 시작해보세요!")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -98,7 +104,7 @@ struct TodaySummaryCard: View {
     }
 }
 
-// MARK: - Summary Item
+// MARK: - Summary Item (재사용 컴포넌트)
 struct SummaryItem: View {
     let title: String
     let value: String
@@ -113,7 +119,7 @@ struct SummaryItem: View {
                 .font(.title3.bold())
                 .foregroundColor(color)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity) // 가로로 균등 분할
     }
 }
 
@@ -133,13 +139,18 @@ struct FocusChartCard: View {
             if let session = session, !session.focusRecords.isEmpty {
                 // Swift Charts
                 Chart {
+                    /// ForEach: 배열의 각 요소에 대해 반복
+                    /// - session.focusRecords.enumerated(): (인덱스, 값) 튜플로 변환
+                    /// - id: \.offset: 인덱스를 고유 ID로 사용
                     ForEach(Array(session.focusRecords.enumerated()), id: \.offset) { index, record in
+                        // 선그래프
                         LineMark(
-                            x: .value("Time", index),
-                            y: .value("Focus", focusValue(for: record.level))
+                            x: .value("Time", index), // X축: 시간 (인덱스)
+                            y: .value("Focus", focusValue(for: record.level)) // Y츅: 집중도
                         )
-                        .foregroundStyle(record.level.color.gradient)
+                        .foregroundStyle(record.level.color.gradient) // 색상 그라데이션
                         
+                        // 영역 그래프 (선 아래 채우기)
                         AreaMark(
                             x: .value("Time", index),
                             y: .value("Focus", focusValue(for: record.level))
@@ -147,11 +158,11 @@ struct FocusChartCard: View {
                         .foregroundStyle(record.level.color.opacity(0.2).gradient)
                     }
                 }
-                .chartYScale(domain: 0...100)
-                .chartYAxis {
+                .chartYScale(domain: 0...100) // Y축 범위: 0 ~ 100
+                .chartYAxis { // Y축 커스터마이징
                     AxisMarks(values: [0, 25, 50, 75, 100]) { value in
-                        AxisGridLine()
-                        AxisValueLabel {
+                        AxisGridLine() // 눈금선
+                        AxisValueLabel { // 눈금 레이블
                             if let intValue = value.as(Int.self) {
                                 Text("\(intValue)")
                                     .font(.caption2)
@@ -159,8 +170,8 @@ struct FocusChartCard: View {
                         }
                     }
                 }
-                .chartXAxis(.hidden)
-                .frame(height: 200)
+                .chartXAxis(.hidden) // X축 숨기기
+                .frame(height: 200) // 차트 높이
             } else {
                 // 빈 상태
                 VStack(spacing: 12) {
@@ -175,10 +186,10 @@ struct FocusChartCard: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding()
+        .padding() // 내부 여백
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.05))
+            RoundedRectangle(cornerRadius: 16) // 둥근 사각형
+                .fill(Color.white.opacity(0.05)) // 반투명 흰색
         )
     }
     
