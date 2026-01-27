@@ -5,8 +5,24 @@
 //  타이머 및 집중도 추적 관리
 //
 
+/*
+MVVM (Model - View - ViewModel) 패턴:
+
+┌─────────┐         ┌─────────────┐         ┌─────────┐
+│  Model  │ ←────── │  ViewModel  │ ←────── │  View   │
+│ (데이터)  │         │   (비즈니스   │         │  (UI)   │
+│         │ ──────→ │     로직)    │ ──────→ │         │
+└─────────┘         └─────────────┘         └─────────┘
+
+- Model: FocusState, StudySession (순수 데이터)
+- ViewModel: TimerViewModel (로직 + 상태 관리)
+- View: TimerView (화면 표시)
+
+장점: UI와 로직 분리 → 테스트 쉬움, 유지보수 쉬움
+*/
+
 import Foundation
-import Combine
+import Combine // Apple의 반응형 프로그래밍 프레임워크
 import AVFoundation
 import UIKit
 
@@ -19,19 +35,22 @@ enum TimerState {
 }
 
 // MARK: - Timer ViewModel
+// @MainActor: 이 클래스의 모든 코드는 메인 스레드에서 실행
+// ObservableObject: SwiftUI가 이 객체의 변화를 감지할 수 있음
 @MainActor
 final class TimerViewModel: ObservableObject {
     
     // MARK: - Published Properties
+    // @Published: 이 값이 바뀌면 UI 자동 업데이트
     @Published var timerState: TimerState = .idle
-    @Published var elapsedTime: TimeInterval = 0
-    @Published var netFocusTime: TimeInterval = 0
+    @Published var elapsedTime: TimeInterval = 0    // 총 경과 시간
+    @Published var netFocusTime: TimeInterval = 0   // 순수 집중 시간
     @Published var currentFocusState: FocusState = FocusState()
     @Published var currentSession: StudySession?
-    @Published var showAlert = false
-    @Published var alertMessage = ""
+    @Published var showAlert = false                // 알림 표시 여부
+    @Published var alertMessage = ""                // 알림 메시지
     
-    // MARK: - Services
+    // MARK: - Services (서비스 객체: Camera, AI)
     private let cameraService: CameraService
     private let focusDetectionService: FocusDetectionService
     
@@ -50,7 +69,7 @@ final class TimerViewModel: ObservableObject {
     private let autoPauseThreshold = 3  // 3초 연속 이탈 시 자동 일시정지
     
     // MARK: - Cancellables
-    private var cancellables = Set<AnyCancellable>()
+    private var cancellables = Set<AnyCancellable>() // 구독을 저장해두는 컨테이너 (메모리 관리)
     
     // MARK: - Computed Properties
     var formattedElapsedTime: String {
@@ -82,18 +101,32 @@ final class TimerViewModel: ObservableObject {
     }
     
     // MARK: - Setup
+    /*
+    데이터 흐름:
+        FocusDetectionService.currentState 변경
+            ↓
+        Publisher 발행
+            ↓
+        ViewModel.sink 수신
+            ↓
+        handleFocusStateChange() 호출
+            ↓
+        currentFocusState 업데이트 (@Published)
+            ↓
+        View 자동 리렌더링
+    */
     private func setupBindings() {
         // 카메라 -> 집중도 감지 연결
         cameraService.delegate = self
         focusDetectionService.delegate = self
         
-        // 집중도 상태 변화 구독
-        focusDetectionService.$currentState
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] state in
+        // 집중도 상태 변화 구독 - currentState가 변할 때마다
+        focusDetectionService.$currentState // $ = Published 값을 Publisher로 변환
+            .receive(on: DispatchQueue.main) // 메인 스레드에서 받음
+            .sink { [weak self] state in // 값이 올 때마다 실행
                 self?.handleFocusStateChange(state)
             }
-            .store(in: &cancellables)
+            .store(in: &cancellables) // 구독 저장 (해제 방지)
     }
     
     private func setupThermalMonitoring() {
@@ -109,15 +142,15 @@ final class TimerViewModel: ObservableObject {
     
     // MARK: - Timer Control
     func startTimer() {
-        guard timerState == .idle || timerState == .paused else { return }
+        guard timerState == .idle || timerState == .paused else { return } // 대기 or 일시정지 상태일 때만 시작 가능
         
         // 새 세션 시작 또는 기존 세션 재개
         if currentSession == nil {
             currentSession = StudySession()
         }
         
-        timerState = .running
-        cameraService.start()
+        timerState = .running // 상태 변경 -> @Published -> UI 업데이트
+        cameraService.start() // 카메라 시작
         
         // 1초마다 타이머 업데이트
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -182,11 +215,11 @@ final class TimerViewModel: ObservableObject {
     
     // MARK: - Timer Update
     private func updateTimer() {
-        elapsedTime += 1
+        elapsedTime += 1 // 총 시간 +1초
         
         // 집중 상태일 때만 순수 집중 시간 증가
         if currentFocusState.level == .focused {
-            netFocusTime += 1
+            netFocusTime += 1 // 짐중 시간 +1초
         }
         
         // 세션에 기록 추가
@@ -198,19 +231,21 @@ final class TimerViewModel: ObservableObject {
         currentSession?.focusRecords.append(record)
     }
     
-    // MARK: - Focus State Handling
+    // MARK: - Focus State Handling (자동 일시정지 로직)
     private func handleFocusStateChange(_ state: FocusState) {
         currentFocusState = state
         
         // 자동 일시정지 로직
         if timerState == .running {
-            if state.level == .drowsy || state.level == .unfocused {
+            if state.level == .drowsy || state.level == .unfocused { // 졸음 or 잍라 상태면
                 consecutiveUnfocusedCount += 1
                 
+                // 3초 연속이면 자동 일시 정지
                 if consecutiveUnfocusedCount >= autoPauseThreshold {
                     triggerAutoPause(reason: state.level)
                 }
             } else {
+                // 집중 복귀하면 카운터 리셋
                 consecutiveUnfocusedCount = 0
             }
         }
@@ -218,7 +253,7 @@ final class TimerViewModel: ObservableObject {
     
     private func triggerAutoPause(reason: FocusLevel) {
         timerState = .autoPaused
-        timer?.invalidate()
+        timer?.invalidate() // 타이머 중지
         timer = nil
         // 카메라는 계속 실행 (복귀 감지를 위해)
         
@@ -234,7 +269,7 @@ final class TimerViewModel: ObservableObject {
         default:
             alertMessage = "집중이 흐트러졌어요."
         }
-        showAlert = true
+        showAlert = true // @Published → View에서 Alert 표시
         
         print("⚠️ Auto-paused: \(reason.rawValue)")
     }
@@ -267,6 +302,7 @@ final class TimerViewModel: ObservableObject {
 }
 
 // MARK: - CameraServiceDelegate
+// TimerViewModel이 CameraServiceDelegate를 구현
 extension TimerViewModel: CameraServiceDelegate {
     nonisolated func cameraService(_ service: CameraService, didOutput sampleBuffer: CMSampleBuffer) {
         // 카메라 프레임을 집중도 감지 서비스로 전달
@@ -274,6 +310,7 @@ extension TimerViewModel: CameraServiceDelegate {
     }
     
     nonisolated func cameraService(_ service: CameraService, didFailWithError error: Error) {
+        // 에러 처리
         Task { @MainActor in
             alertMessage = "카메라 오류: \(error.localizedDescription)"
             showAlert = true
