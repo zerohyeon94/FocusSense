@@ -11,27 +11,39 @@ import AVFoundation
 import UIKit
 
 // MARK: - Camera Service Delegate
+// protocol: 계약서 같은 것
 protocol CameraServiceDelegate: AnyObject {
     func cameraService(_ service: CameraService, didOutput sampleBuffer: CMSampleBuffer)
     func cameraService(_ service: CameraService, didFailWithError error: Error)
 }
 
 // MARK: - Camera Service
+// final: 상속 불가
+// NSObject:  Objective-C 호환
+// ObservableObject: SwiftUI에서 관찰 가능
 final class CameraService: NSObject, ObservableObject {
     
     // MARK: - Published Properties
+    // @Published: 이 값이 바뀌면 UI가 자동 업데이트 됨
     @Published var isRunning = false
     @Published var permissionGranted = false
     
     // MARK: - Properties
+    // weak: 약한 참조 (메모리 누수 방지)
     weak var delegate: CameraServiceDelegate?
     
+    // AVFoundation 객체
     private let captureSession = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
-    private let sessionQueue = DispatchQueue(label: "com.focussense.camera.session")
+    
+    // DispatchQueue: 작업을 특정 스레드에서 실행
+    private let sessionQueue = DispatchQueue(label: "com.focussense.camera.session") // 백그라운드 스레드 (UI 멈춤 방지)
     private let outputQueue = DispatchQueue(label: "com.focussense.camera.output")
     
     // MARK: - Frame Throttling (핵심 최적화!)
+    // 카메라는 기본 30fps (초당 30프레임)
+    // 모든 프레임을 AI로 분석하면 → 배터리 소모 + 발열 심함
+    // 해결책: 1초에 1번만 처리
     /// 마지막으로 프레임을 처리한 시간
     private var lastFrameTime: CFAbsoluteTime = 0
     /// 프레임 처리 간격 (초) - 1초에 1번만 처리
@@ -47,13 +59,15 @@ final class CameraService: NSObject, ObservableObject {
     private func checkPermission() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            DispatchQueue.main.async {
+            // 이미 허용됨
+            DispatchQueue.main.async { // UI 업데이트의 경우 반드시 main 스레드에서 수행
                 self.permissionGranted = true
             }
             setupSession()
             
         case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+            // 아직 물어보지 않은 상태 → 권한 요청
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in // wek self: 메모리 누수 방지
                 DispatchQueue.main.async {
                     self?.permissionGranted = granted
                 }
@@ -63,6 +77,7 @@ final class CameraService: NSObject, ObservableObject {
             }
             
         case .denied, .restricted:
+            // 거부됨 or 제한됨
             DispatchQueue.main.async {
                 self.permissionGranted = false
             }
@@ -200,19 +215,44 @@ final class CameraService: NSObject, ObservableObject {
 
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
 extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    // 프레임이 들어올 때마다 호출됨 (30번/초)
     func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
         // 🔑 핵심 최적화: 프레임 스로틀링
-        let currentTime = CFAbsoluteTimeGetCurrent()
+        let currentTime = CFAbsoluteTimeGetCurrent() // 현재 시간
+        
+        // 1초가 지나지 않았으면 무시
         guard currentTime - lastFrameTime >= frameInterval else {
             return  // 아직 처리 간격이 안 됐으면 스킵
         }
+        
         lastFrameTime = currentTime
         
         // Delegate에게 프레임 전달
         delegate?.cameraService(self, didOutput: sampleBuffer)
     }
 }
+
+/**
+ ┌─────────────┐      30fps       ┌────────┐
+ │   Camera                               │ ────→   │  CameraService  │
+ │  (하드웨어)                              │                      │   (스로틀링)           │
+ └─────────────┘                      └────────┘
+                                           │
+                                     1fps (최적화!)
+                                           │
+                                           ▼
+                                  ┌─────────┐
+                                  │          Delegate        │
+                                  │   (TimerViewModel)│
+                                  └─────────┘
+                                           │
+                                           ▼
+                                  ┌─────────┐
+                                  │        AI Analysis       │
+                                  │   (FocusDetection)  │
+                                  └─────────┘
+ */
