@@ -13,6 +13,7 @@ import AVFoundation
 struct CameraPreviewView: UIViewRepresentable {
     let session: AVCaptureSession
     
+    // SwiftUI -> UIKit 변환 (AVCaptureVideoPreviewLayer를 사용하기 위해서 이는 Core Animation(CALayer) 기반이라 UIView 위에서만 돌아간다
     func makeUIView(context: Context) -> CameraPreviewUIView {
         let view = CameraPreviewUIView()
         view.setSession(session)
