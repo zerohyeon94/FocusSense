@@ -14,26 +14,75 @@ import AVFoundation
 struct CameraDebugView: View {
     @ObservedObject var viewModel: TimerViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var isReady = false
     
     var body: some View {
         ZStack {
             // 배경
             Color.black.ignoresSafeArea()
             
-            VStack(spacing: 16) {
-                // 헤더
-                DebugHeaderView(onClose: { dismiss() })
-                
-                // 카메라 프리뷰 + 오버레이
-                CameraPreviewSection(viewModel: viewModel)
-                
-                // 실시간 분석 데이터
-                AnalysisDataSection(data: viewModel.faceAnalysisData)
-                
-                Spacer()
+            if isReady {
+                // 메인 컨텐츠 (준비 완료 후)
+                mainContent
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            } else {
+                // 로딩 화면
+                loadingView
             }
-            .padding()
         }
+        .task {
+            // Swift Concurrency: .task modifier
+            // - View가 나타날 때 자동 실행
+            // - View가 사라지면 자동으로 Task 취소
+            await prepareContent()
+        }
+    }
+    
+    // MARK: - Prepare Content (async)
+    /// 컨텐츠 준비 (Swift Concurrency)
+    private func prepareContent() async {
+        // 화면 전환 애니메이션이 완료될 시간을 줌
+        try? await Task.sleep(for: .milliseconds(100))
+        
+        // Task가 취소되지 않았다면 UI 업데이트
+        guard !Task.isCancelled else { return }
+        
+        // @MainActor 컨텍스트에서 UI 업데이트
+        await MainActor.run {
+            withAnimation(.easeOut(duration: 0.25)) {
+                isReady = true
+            }
+        }
+    }
+    
+    // MARK: - Loading View
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .cyan))
+                .scaleEffect(1.5)
+            
+            Text("AI 분석 화면 로딩 중...")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+    }
+    
+    // MARK: - Main Content
+    private var mainContent: some View {
+        VStack(spacing: 16) {
+            // 헤더
+            DebugHeaderView(onClose: { dismiss() })
+            
+            // 카메라 프리뷰 + 오버레이
+            CameraPreviewSection(viewModel: viewModel)
+            
+            // 실시간 분석 데이터
+            AnalysisDataSection(data: viewModel.faceAnalysisData)
+            
+            Spacer()
+        }
+        .padding()
     }
 }
 
