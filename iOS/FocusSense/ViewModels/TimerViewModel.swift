@@ -22,9 +22,15 @@ MVVM (Model - View - ViewModel) 패턴:
 */
 
 import Foundation
-import Combine // Apple의 반응형 프로그래밍 프레임워크
+import Combine
 import AVFoundation
 import UIKit
+
+// MARK: - Detection Mode
+enum DetectionMode: String, CaseIterable {
+    case vision = "Vision Framework"
+    case coreML = "CoreML 모델"
+}
 
 // MARK: - Timer State
 enum TimerState {
@@ -41,49 +47,39 @@ enum TimerState {
 final class TimerViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    // @Published: 이 값이 바뀌면 UI 자동 업데이트
     @Published var timerState: TimerState = .idle
     @Published var elapsedTime: TimeInterval = 0    // 총 경과 시간
     @Published var netFocusTime: TimeInterval = 0   // 순수 집중 시간
     @Published var currentFocusState: FocusState = FocusState()
     @Published var currentSession: StudySession?
-    @Published var showAlert = false                // 알림 표시 여부
-    @Published var alertMessage = ""                // 알림 메시지
-    @Published var showDebugView = false            // 디버그 화면 표시 여부
+    @Published var showAlert = false        // 알림 표시 여부
+    @Published var alertMessage = ""        // 알림 메시지
+    @Published var showDebugView = false    // 디버그 화면 표시 여부
+    @Published var detectionMode: DetectionMode = .vision  // 현재 모드
     
     // MARK: - Services (서비스 객체: Camera, AI)
     let cameraService: CameraService
-    private let focusDetectionService: FocusDetectionService
     
-    // MARK: - Computed Properties for Debug View
-    /// 카메라 세션 접근자 (프리뷰용)
+    // 두 서비스를 모두 보유 (선택적 사용)
+    private var visionService: FocusDetectionService?
+    private(set) var mlService: MLFocusDetectionService?
+    
+    // MARK: - Computed Properties
+    /// 현재 사용 중인 서비스의 카메라 세션
     var captureSession: AVCaptureSession? {
         return cameraService.session
     }
     
-    /// 얼굴 분석 데이터 (디버그 화면용)
+    /// 현재 모드에 따른 분석 데이터
     var faceAnalysisData: FaceAnalysisData {
-        return focusDetectionService.faceAnalysisData
+        switch detectionMode {
+        case .vision:
+            return visionService?.faceAnalysisData ?? FaceAnalysisData()
+        case .coreML:
+            return mlService?.faceAnalysisData ?? FaceAnalysisData()
+        }
     }
     
-    // MARK: - Timer
-    private var timer: Timer?
-    private var focusCheckTimer: Timer?
-    
-    // MARK: - Thermal Monitoring
-    private var thermalStateObserver: NSObjectProtocol?
-    
-    // MARK: - Haptic Feedback
-    private let hapticGenerator = UINotificationFeedbackGenerator()
-    
-    // MARK: - Auto Pause Settings
-    private var consecutiveUnfocusedCount = 0
-    private let autoPauseThreshold = 3  // 3초 연속 이탈 시 자동 일시정지
-    
-    // MARK: - Cancellables
-    private var cancellables = Set<AnyCancellable>() // 구독을 저장해두는 컨테이너 (메모리 관리)
-    
-    // MARK: - Computed Properties
     var formattedElapsedTime: String {
         formatTime(elapsedTime)
     }
@@ -97,121 +93,144 @@ final class TimerViewModel: ObservableObject {
         return (netFocusTime / elapsedTime) * 100
     }
     
+    // MARK: - Timer
+    private var timer: Timer?
+    
+    // MARK: - Combine
+    private var cancellables = Set<AnyCancellable>()
+    
+    // MARK: - Auto Pause
+    private var consecutiveUnfocusedCount = 0
+    private let autoPauseThreshold = 3 // 3초 연속 이탈 시 자동 일시정지
+    
+    // MARK: - Haptic
+    private let hapticGenerator = UINotificationFeedbackGenerator()
+    
     // MARK: - Initialization
-    init() {
+    init(detectionMode: DetectionMode = .coreML) {
+        self.detectionMode = detectionMode
         self.cameraService = CameraService()
-        self.focusDetectionService = FocusDetectionService()
         
-        setupBindings()
-        setupThermalMonitoring()
-    }
-    
-    deinit {
-        if let observer = thermalStateObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
-    }
-    
-    // MARK: - Setup
-    /*
-    데이터 흐름:
-        FocusDetectionService.currentState 변경
-            ↓
-        Publisher 발행
-            ↓
-        ViewModel.sink 수신
-            ↓
-        handleFocusStateChange() 호출
-            ↓
-        currentFocusState 업데이트 (@Published)
-            ↓
-        View 자동 리렌더링
-    */
-    private func setupBindings() {
-        // 카메라 -> 집중도 감지 연결
+        // 선택된 모드에 따라 서비스 초기화
+        setupDetectionService(mode: detectionMode)
+        
+        // 카메라 delegate 설정
         cameraService.delegate = self
-        focusDetectionService.delegate = self
         
-        // 집중도 상태 변화 구독 - currentState가 변할 때마다
-        focusDetectionService.$currentState // $ = Published 값을 Publisher로 변환
-            .receive(on: DispatchQueue.main) // 메인 스레드에서 받음
-            .sink { [weak self] state in // 값이 올 때마다 실행
-                self?.handleFocusStateChange(state)
+        // Combine 바인딩
+        setupBindings()
+    }
+    
+    // MARK: - Setup Detection Service
+    private func setupDetectionService(mode: DetectionMode) {
+        // 기존 바인딩 해제
+        cancellables.removeAll()
+        
+        switch mode {
+        case .vision:
+            // Vision 서비스 생성
+            if visionService == nil {
+                visionService = FocusDetectionService()
             }
-            .store(in: &cancellables) // 구독 저장 (해제 방지)
+            mlService = nil  // 메모리 해제
+            
+            // Vision 서비스 바인딩
+            visionService?.$currentState
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] state in
+                    self?.handleFocusStateChange(state)
+                }
+                .store(in: &cancellables)
+            
+        case .coreML:
+            // CoreML 서비스 생성
+            if mlService == nil {
+                mlService = MLFocusDetectionService()
+            }
+            visionService = nil  // 메모리 해제
+            
+            // CoreML 서비스 바인딩
+            mlService?.$currentState
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] state in
+                    self?.handleFocusStateChange(state)
+                }
+                .store(in: &cancellables)
+        }
+        
+        print("🔄 Detection Mode: \(mode.rawValue)")
     }
     
-    private func setupThermalMonitoring() {
-        // 발열 상태 모니터링
-        thermalStateObserver = NotificationCenter.default.addObserver(
-            forName: ProcessInfo.thermalStateDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            self?.handleThermalStateChange()
+    // MARK: - Switch Detection Mode (런타임에 변경 가능)
+    func switchDetectionMode(to mode: DetectionMode) {
+        guard mode != detectionMode else { return }
+        
+        detectionMode = mode
+        setupDetectionService(mode: mode)
+        
+        print("✅ Switched to \(mode.rawValue)")
+    }
+    
+    // MARK: - Setup Bindings
+    private func setupBindings() {
+        // 초기 바인딩은 setupDetectionService에서 처리
+    }
+    
+    // MARK: - Handle Focus State Change
+    private func handleFocusStateChange(_ state: FocusState) {
+        currentFocusState = state
+        
+        // 자동 일시정지 로직
+        if timerState == .running {
+            if state.level == .drowsy || state.level == .unfocused {
+                consecutiveUnfocusedCount += 1
+                if consecutiveUnfocusedCount >= autoPauseThreshold {
+                    triggerAutoPause()
+                }
+            } else {
+                consecutiveUnfocusedCount = 0
+            }
         }
     }
     
-    // MARK: - Timer Control
+    // MARK: - Timer Controls
     func startTimer() {
-        guard timerState == .idle || timerState == .paused else { return } // 대기 or 일시정지 상태일 때만 시작 가능
-        
-        // 새 세션 시작 또는 기존 세션 재개
-        if currentSession == nil {
-            currentSession = StudySession()
-        }
-        
         timerState = .running // 상태 변경 -> @Published -> UI 업데이트
-        cameraService.start() // 카메라 시작
+        currentSession = StudySession(startTime: Date())
         
-        // 1초마다 타이머 업데이트
+        // 카메라 시작
+        cameraService.start()
+        
+        // 타이머 시작
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateTimer()
             }
         }
-        
-        print("▶️ Timer started")
     }
     
     func pauseTimer() {
-        guard timerState == .running else { return }
-        
         timerState = .paused
         timer?.invalidate()
-        timer = nil
-        cameraService.stop()
-        
-        print("⏸️ Timer paused")
     }
     
     func resumeTimer() {
-        guard timerState == .paused || timerState == .autoPaused else { return }
-        
         timerState = .running
         consecutiveUnfocusedCount = 0
-        cameraService.start()
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateTimer()
             }
         }
-        
-        print("▶️ Timer resumed")
     }
     
     func stopTimer() {
+        timerState = .idle
         timer?.invalidate()
-        timer = nil
         cameraService.stop()
         
-        // 세션 종료
         currentSession?.endTime = Date()
-        
-        timerState = .idle
-        
-        print("⏹️ Timer stopped")
     }
     
     func resetTimer() {
@@ -219,17 +238,17 @@ final class TimerViewModel: ObservableObject {
         elapsedTime = 0
         netFocusTime = 0
         currentSession = nil
-        focusDetectionService.reset()
         consecutiveUnfocusedCount = 0
         
-        print("🔄 Timer reset")
+        // 서비스 리셋
+        visionService?.reset()
+        mlService?.reset()
     }
     
-    // MARK: - Timer Update
+    // MARK: - Update Timer
     private func updateTimer() {
         elapsedTime += 1 // 총 시간 +1초
         
-        // 집중 상태일 때만 순수 집중 시간 증가
         if currentFocusState.level == .focused {
             netFocusTime += 1 // 짐중 시간 +1초
         }
@@ -243,96 +262,43 @@ final class TimerViewModel: ObservableObject {
         currentSession?.focusRecords.append(record)
     }
     
-    // MARK: - Focus State Handling (자동 일시정지 로직)
-    private func handleFocusStateChange(_ state: FocusState) {
-        currentFocusState = state
-        
-        // 자동 일시정지 로직
-        if timerState == .running {
-            if state.level == .drowsy || state.level == .unfocused { // 졸음 or 잍라 상태면
-                consecutiveUnfocusedCount += 1
-                
-                // 3초 연속이면 자동 일시 정지
-                if consecutiveUnfocusedCount >= autoPauseThreshold {
-                    triggerAutoPause(reason: state.level)
-                }
-            } else {
-                // 집중 복귀하면 카운터 리셋
-                consecutiveUnfocusedCount = 0
-            }
-        }
-    }
-    
-    private func triggerAutoPause(reason: FocusLevel) {
+    // MARK: - Auto Pause
+    private func triggerAutoPause() {
         timerState = .autoPaused
-        timer?.invalidate() // 타이머 중지
-        timer = nil
-        // 카메라는 계속 실행 (복귀 감지를 위해)
+        timer?.invalidate()
         
-        // 햅틱 피드백
         hapticGenerator.notificationOccurred(.warning)
         
-        // 알림 메시지 설정
-        switch reason {
-        case .drowsy:
-            alertMessage = "😴 졸음이 감지되었어요!\n잠시 환기하고 돌아오세요."
-        case .unfocused:
-            alertMessage = "👀 자리를 비우셨나요?\n돌아오시면 자동으로 재개됩니다."
-        default:
-            alertMessage = "집중이 흐트러졌어요."
-        }
-        showAlert = true // @Published → View에서 Alert 표시
-        
-        print("⚠️ Auto-paused: \(reason.rawValue)")
-    }
-    
-    // MARK: - Thermal Handling
-    private func handleThermalStateChange() {
-        let thermalState = ProcessInfo.processInfo.thermalState
-        cameraService.adjustFrameInterval(for: thermalState)
-        
-        if thermalState == .critical {
-            // 위험 수준 발열 시 분석 중지하고 알림
-            alertMessage = "🔥 기기가 과열되었습니다.\n잠시 후 다시 시도해주세요."
-            showAlert = true
-            pauseTimer()
-        }
+        alertMessage = currentFocusState.level == .drowsy
+            ? "😴 졸음이 감지되어 일시정지되었습니다."
+            : "👀 집중이 흐트러져 일시정지되었습니다."
+        showAlert = true
     }
     
     // MARK: - Helpers
     private func formatTime(_ time: TimeInterval) -> String {
         let hours = Int(time) / 3600
-        let minutes = (Int(time) % 3600) / 60
+        let minutes = Int(time) / 60 % 60
         let seconds = Int(time) % 60
-        
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%02d:%02d", minutes, seconds)
-        }
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 }
 
-// MARK: - CameraServiceDelegate
-// TimerViewModel이 CameraServiceDelegate를 구현
+// MARK: - Camera Service Delegate
 extension TimerViewModel: CameraServiceDelegate {
     nonisolated func cameraService(_ service: CameraService, didOutput sampleBuffer: CMSampleBuffer) {
-        // 카메라 프레임을 집중도 감지 서비스로 전달
-        focusDetectionService.processFrame(sampleBuffer)
+        Task { @MainActor in
+            // 현재 모드에 따라 적절한 서비스로 프레임 전달
+            switch detectionMode {
+            case .vision:
+                visionService?.processFrame(sampleBuffer)
+            case .coreML:
+                mlService?.processFrame(sampleBuffer)
+            }
+        }
     }
     
     nonisolated func cameraService(_ service: CameraService, didFailWithError error: Error) {
-        // 에러 처리
-        Task { @MainActor in
-            alertMessage = "카메라 오류: \(error.localizedDescription)"
-            showAlert = true
-        }
-    }
-}
-
-// MARK: - FocusDetectionDelegate
-extension TimerViewModel: FocusDetectionDelegate {
-    nonisolated func focusDetection(_ service: FocusDetectionService, didDetect state: FocusState) {
-        // 이미 Published 변수로 바인딩되어 있음
+        print("❌ Camera error: \(error)")
     }
 }

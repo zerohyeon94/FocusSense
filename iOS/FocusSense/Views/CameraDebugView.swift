@@ -71,13 +71,15 @@ struct CameraDebugView: View {
     // MARK: - Main Content
     private var mainContent: some View {
         VStack(spacing: 16) {
-            // 헤더
             DebugHeaderView(onClose: { dismiss() })
             
-            // 카메라 프리뷰 + 오버레이
             CameraPreviewSection(viewModel: viewModel)
             
-            // 실시간 분석 데이터
+            // ML 디버그 섹션 추가!
+            if let mlService = viewModel.mlService {
+                MLDebugSection(state: mlService.detectionState)
+            }
+            
             AnalysisDataSection(data: viewModel.faceAnalysisData)
             
             Spacer()
@@ -561,6 +563,99 @@ struct EARGauge: View {
         } else {
             return .green
         }
+    }
+}
+
+// MARK: - ML Debug Section
+struct MLDebugSection: View {
+    let state: MLDetectionState
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "brain")
+                    .foregroundColor(.purple)
+                Text("CoreML 디버그")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            
+            // 현재 단계
+            HStack {
+                Circle()
+                    .fill(state.faceDetected ? Color.green : Color.red)
+                    .frame(width: 8, height: 8)
+                Text(state.step)
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            
+            // 모델 상태
+            HStack {
+                Text("모델 로드:")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text(state.mlModelLoaded ? "✅" : "❌")
+            }
+            
+            // 얼굴 감지
+            HStack {
+                Text("얼굴 감지:")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text(state.faceDetected ? "✅ 감지됨" : "❌ 없음")
+                    .foregroundColor(state.faceDetected ? .green : .red)
+            }
+            
+            if state.faceDetected {
+                // 얼굴 영역
+                Text("영역: (\(String(format: "%.2f", state.faceRect.origin.x)), \(String(format: "%.2f", state.faceRect.origin.y))) - \(String(format: "%.0f%%", state.faceRect.width * 100)) x \(String(format: "%.0f%%", state.faceRect.height * 100))")
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+            }
+            
+            // ML 추론 결과
+            HStack {
+                Text("추론 결과:")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                Text(state.mlInferenceResult)
+                    .font(.caption)
+                    .foregroundColor(.cyan)
+            }
+            
+            // 확률 바
+            HStack(spacing: 8) {
+                VStack(alignment: .leading) {
+                    Text("깨어있음")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                    ProgressView(value: Double(state.awakeProb))
+                        .tint(.green)
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("졸림")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                    ProgressView(value: Double(state.drowsyProb))
+                        .tint(.red)
+                }
+            }
+            
+            // 에러
+            if let error = state.errorMessage {
+                Text("⚠️ \(error)")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.purple.opacity(0.1))
+        )
     }
 }
 

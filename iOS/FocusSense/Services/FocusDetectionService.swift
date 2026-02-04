@@ -26,7 +26,7 @@ protocol FocusDetectionDelegate: AnyObject {
 }
 
 // MARK: - Focus Detection Service
-final class FocusDetectionService: ObservableObject {
+final class FocusDetectionService: ObservableObject, FocusDetectionServiceProtocol {
     
     // MARK: - Published Properties
     @Published var currentState: FocusState = FocusState()
