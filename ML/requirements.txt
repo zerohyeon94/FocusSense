@@ -7,6 +7,8 @@ numpy>=1.24.0,<2.0.0
 torch>=2.0.0            # PyTorch (딥러닝)
 torchvision>=0.15.0     # 이미지 처리
 
+sympy==1.12             # 기호 계산을 위한 라이브러리
+
 # --- Computer Vision ---
 opencv-python>=4.8.0    # 이미지 처리
 mediapipe>=0.10.0       # 얼굴/손 인식 (Google)

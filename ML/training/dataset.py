@@ -1,22 +1,23 @@
 """
 FocusSense Dataset Loader
 
-공개 데이터셋을 활용한 데이터 로딩
-- MRL Eye Dataset (졸음 감지)
-- Gaze Estimation Dataset
-- Face Detection Dataset
+Kaggle Drowsiness Dataset 활용:
+- Open / Closed (눈 상태)
+- yawn / no_yawn (하품 여부)
+
+이진 분류로 매핑:
+- awake: Open + no_yawn
+- drowsy: Closed + yawn
 """
 
 import os
 from pathlib import Path
-from typing import Tuple, List, Optional, Dict, Any
+from typing import Tuple, List, Optional, Any
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 import cv2
-from PIL import Image
-import pandas as pd
 
 # Albumentations for augmentation
 try:
@@ -28,190 +29,84 @@ except ImportError:
     print("Warning: albumentations not installed. Using basic transforms.")
 
 
+# Kaggle 데이터셋 폴더 -> 이진 레이블 매핑
+KAGGLE_CLASS_MAP = {
+    'Open': 0,      # awake
+    'Closed': 1,    # drowsy
+    'no_yawn': 0,   # awake
+    'yawn': 1,      # drowsy
+}
+
+IDX_TO_CLASS = {0: 'awake', 1: 'drowsy'}
+
+
 class DrowsinessDataset(Dataset):
     """
     졸음 감지 데이터셋
-    
-    Supports:
-    - MRL Eye Dataset
-    - Custom labeled data
-    
-    Directory structure:
-    data/
-    ├── drowsy/
-    │   ├── img001.jpg
-    │   └── ...
-    └── awake/
-        ├── img001.jpg
-        └── ...
+
+    Kaggle Drowsiness Dataset 구조:
+    data/drowsiness_kaggle/train/
+    ├── Open/        -> awake (0)
+    ├── Closed/      -> drowsy (1)
+    ├── no_yawn/     -> awake (0)
+    └── yawn/        -> drowsy (1)
     """
-    
+
     def __init__(
         self,
         root_dir: str,
         transform: Optional[Any] = None,
-        is_training: bool = True,
+        class_map: Optional[dict] = None,
     ):
         self.root_dir = Path(root_dir)
         self.transform = transform
-        self.is_training = is_training
-        
-        # 이미지 경로 및 레이블 수집
+        self.class_map = class_map or KAGGLE_CLASS_MAP
+        self.idx_to_class = IDX_TO_CLASS
+
         self.samples: List[Tuple[Path, int]] = []
-        
-        # Class mapping
-        self.class_to_idx = {'awake': 0, 'drowsy': 1}
-        self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
-        
         self._load_samples()
-        
+
     def _load_samples(self):
         """샘플 경로 및 레이블 로딩"""
-        for class_name, class_idx in self.class_to_idx.items():
-            class_dir = self.root_dir / class_name
-            if not class_dir.exists():
-                print(f"Warning: {class_dir} not found")
+        for folder_name, label in self.class_map.items():
+            folder_dir = self.root_dir / folder_name
+            if not folder_dir.exists():
+                print(f"Warning: {folder_dir} not found, skipping")
                 continue
-                
-            for img_path in class_dir.glob('*.[jJ][pP][gG]'):
-                self.samples.append((img_path, class_idx))
-            for img_path in class_dir.glob('*.[pP][nN][gG]'):
-                self.samples.append((img_path, class_idx))
-                
+
+            for ext in ('*.[jJ][pP][gG]', '*.[pP][nN][gG]', '*.[jJ][pP][eE][gG]'):
+                for img_path in folder_dir.glob(ext):
+                    self.samples.append((img_path, label))
+
+        # 클래스별 개수 출력
+        counts = {}
+        for _, label in self.samples:
+            name = self.idx_to_class[label]
+            counts[name] = counts.get(name, 0) + 1
+
         print(f"Loaded {len(self.samples)} samples from {self.root_dir}")
-        
+        for name, count in sorted(counts.items()):
+            print(f"  - {name}: {count}")
+
     def __len__(self) -> int:
         return len(self.samples)
-    
+
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
         img_path, label = self.samples[idx]
-        
-        # 이미지 로드
+
         image = cv2.imread(str(img_path))
+        if image is None:
+            raise RuntimeError(f"Failed to load image: {img_path}")
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Transform 적용
+
         if self.transform:
             if HAS_ALBUMENTATIONS:
                 transformed = self.transform(image=image)
                 image = transformed['image']
             else:
                 image = self.transform(image)
-        
+
         return image, label
-
-
-class GazeDataset(Dataset):
-    """
-    시선 방향 데이터셋
-    
-    Directory structure:
-    data/
-    ├── looking_at_screen/
-    └── looking_away/
-    """
-    
-    def __init__(
-        self,
-        root_dir: str,
-        transform: Optional[Any] = None,
-        is_training: bool = True,
-    ):
-        self.root_dir = Path(root_dir)
-        self.transform = transform
-        self.is_training = is_training
-        
-        self.samples: List[Tuple[Path, int]] = []
-        self.class_to_idx = {'looking_at_screen': 0, 'looking_away': 1}
-        self.idx_to_class = {v: k for k, v in self.class_to_idx.items()}
-        
-        self._load_samples()
-        
-    def _load_samples(self):
-        for class_name, class_idx in self.class_to_idx.items():
-            class_dir = self.root_dir / class_name
-            if not class_dir.exists():
-                continue
-                
-            for img_path in class_dir.glob('*.[jJ][pP][gG]'):
-                self.samples.append((img_path, class_idx))
-            for img_path in class_dir.glob('*.[pP][nN][gG]'):
-                self.samples.append((img_path, class_idx))
-                
-        print(f"Loaded {len(self.samples)} gaze samples from {self.root_dir}")
-        
-    def __len__(self) -> int:
-        return len(self.samples)
-    
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
-        img_path, label = self.samples[idx]
-        
-        image = cv2.imread(str(img_path))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        if self.transform:
-            if HAS_ALBUMENTATIONS:
-                transformed = self.transform(image=image)
-                image = transformed['image']
-            else:
-                image = self.transform(image)
-        
-        return image, label
-
-
-class MultiTaskDataset(Dataset):
-    """
-    멀티태스크 학습용 통합 데이터셋
-    
-    CSV 파일 기반으로 모든 태스크의 레이블을 로드
-    
-    CSV format:
-    image_path, drowsiness, gaze, face_present
-    /path/to/img.jpg, 0, 1, 1
-    """
-    
-    def __init__(
-        self,
-        csv_path: str,
-        root_dir: str,
-        transform: Optional[Any] = None,
-        is_training: bool = True,
-    ):
-        self.root_dir = Path(root_dir)
-        self.transform = transform
-        self.is_training = is_training
-        
-        # CSV 로드
-        self.df = pd.read_csv(csv_path)
-        print(f"Loaded {len(self.df)} samples from {csv_path}")
-        
-    def __len__(self) -> int:
-        return len(self.df)
-    
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, Dict[str, int]]:
-        row = self.df.iloc[idx]
-        
-        # 이미지 로드
-        img_path = self.root_dir / row['image_path']
-        image = cv2.imread(str(img_path))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Transform 적용
-        if self.transform:
-            if HAS_ALBUMENTATIONS:
-                transformed = self.transform(image=image)
-                image = transformed['image']
-            else:
-                image = self.transform(image)
-        
-        # 레이블
-        labels = {
-            'drowsiness': int(row['drowsiness']),
-            'gaze': int(row['gaze']),
-            'face': int(row['face_present']),
-        }
-        
-        return image, labels
 
 
 # ============================================================
@@ -235,7 +130,6 @@ def get_train_transforms(image_size: int = 224):
             ToTensorV2(),
         ])
     else:
-        # Basic transform without albumentations
         import torchvision.transforms as T
         return T.Compose([
             T.ToPILImage(),
@@ -278,71 +172,99 @@ def get_val_transforms(image_size: int = 224):
 # ============================================================
 
 def create_dataloaders(
-    train_dir: str,
-    val_dir: str,
-    dataset_type: str = 'drowsiness',
+    data_dir: str,
+    val_split: float = 0.2,
     batch_size: int = 32,
     num_workers: int = 4,
     image_size: int = 224,
+    seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader]:
     """
-    DataLoader 생성
-    
+    DataLoader 생성 (단일 디렉토리에서 train/val 자동 분할)
+
     Args:
-        train_dir: 학습 데이터 디렉토리
-        val_dir: 검증 데이터 디렉토리
-        dataset_type: 'drowsiness', 'gaze', 'multitask'
+        data_dir: 데이터 디렉토리 (Open, Closed, yawn, no_yawn 폴더 포함)
+        val_split: 검증 데이터 비율
         batch_size: 배치 사이즈
         num_workers: 데이터 로딩 워커 수
         image_size: 이미지 크기
-        
+        seed: 랜덤 시드 (재현성)
+
     Returns:
         (train_loader, val_loader)
     """
     train_transform = get_train_transforms(image_size)
     val_transform = get_val_transforms(image_size)
-    
-    dataset_classes = {
-        'drowsiness': DrowsinessDataset,
-        'gaze': GazeDataset,
-    }
-    
-    DatasetClass = dataset_classes.get(dataset_type)
-    if DatasetClass is None:
-        raise ValueError(f"Unknown dataset type: {dataset_type}")
-    
-    train_dataset = DatasetClass(
-        root_dir=train_dir,
-        transform=train_transform,
-        is_training=True,
+
+    # 전체 데이터셋 로드 (transform 없이 - 분할 후 적용)
+    full_dataset = DrowsinessDataset(root_dir=data_dir, transform=None)
+
+    # Train/Val 분할
+    total = len(full_dataset)
+    val_size = int(total * val_split)
+    train_size = total - val_size
+
+    generator = torch.Generator().manual_seed(seed)
+    train_indices, val_indices = random_split(
+        range(total), [train_size, val_size], generator=generator
     )
-    
-    val_dataset = DatasetClass(
-        root_dir=val_dir,
-        transform=val_transform,
-        is_training=False,
-    )
-    
+
+    # Transform을 적용하는 래퍼 데이터셋
+    train_dataset = TransformSubset(full_dataset, train_indices.indices, train_transform)
+    val_dataset = TransformSubset(full_dataset, val_indices.indices, val_transform)
+
+    print(f"\nSplit: {train_size} train / {val_size} val")
+
+    pin_memory = torch.cuda.is_available()
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=pin_memory,
     )
-    
+
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=True,
+        pin_memory=pin_memory,
     )
-    
+
     return train_loader, val_loader
 
 
+class TransformSubset(Dataset):
+    """Subset에 별도의 transform을 적용하는 래퍼"""
+
+    def __init__(self, dataset: DrowsinessDataset, indices: list, transform):
+        self.dataset = dataset
+        self.indices = indices
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        img_path, label = self.dataset.samples[self.indices[idx]]
+
+        image = cv2.imread(str(img_path))
+        if image is None:
+            raise RuntimeError(f"Failed to load image: {img_path}")
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        if self.transform:
+            if HAS_ALBUMENTATIONS:
+                transformed = self.transform(image=image)
+                image = transformed['image']
+            else:
+                image = self.transform(image)
+
+        return image, label
+
+
 if __name__ == '__main__':
-    # 테스트
     print("Dataset module loaded successfully!")
     print(f"Albumentations available: {HAS_ALBUMENTATIONS}")

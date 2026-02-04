@@ -9,6 +9,30 @@ FocusSense Multi-Task Model
 Architecture: MobileNetV3 기반 경량 모델 (모바일 최적화)
 """
 
+"""
+======== Result ========
+
+[FocusSenseModel]
+Input shape: torch.Size([1, 3, 224, 224])
+    - 배치 크기 1 (이미지 1장)
+    - RGB 3채널 (컬러)
+    - 너비 224px
+    - 높이 224px
+Output shapes:
+  - drowsiness: torch.Size([1, 2])
+  - gaze: torch.Size([1, 2])
+  - face: torch.Size([1, 2])
+Total parameters: 1,116,166 (1.12M)
+
+[FocusSenseLite]
+Total parameters: 31,734 (0.03M)
+
+[EyeAspectRatioModel]
+Input shape: torch.Size([1, 1, 64, 32])
+Output shape: torch.Size([1, 1])
+Total parameters: 56,417
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,7 +60,7 @@ class FocusSenseModel(nn.Module):
         
         # Feature extractor (마지막 분류층 제외)
         self.features = backbone.features
-        self.avgpool = backbone.avgpools
+        self.avgpool = backbone.avgpool
         
         # Backbone output features
         backbone_out_features = 576  # MobileNetV3-Small의 출력 채널
