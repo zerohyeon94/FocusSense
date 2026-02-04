@@ -9,7 +9,11 @@ Datasets:
 3. Columbia Gaze Dataset - 시선 추정용
 
 Usage:
-    python download_datasets.py --dataset all --output ./data
+    # 샘플 데이터 생성 (테스트용)
+    python data/download_datasets.py --dataset sample --output ./data
+
+    # Kaggle 데이터셋 다운로드
+    python data/download_datasets.py --dataset kaggle --output ./data
 """
 
 import os
@@ -69,7 +73,7 @@ class DatasetDownloader:
     """데이터셋 다운로더"""
     
     def __init__(self, output_dir: str):
-        self.output_dir = Path(output_dir)
+        self.output_dir = Path(output_di)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
     def download_mrl_eye_dataset(self):
