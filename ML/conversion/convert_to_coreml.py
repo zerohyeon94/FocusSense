@@ -7,7 +7,8 @@ PyTorch 모델을 CoreML (.mlmodel) 형식으로 변환
 - 메타데이터 추가
 
 Usage:
-    python convert_to_coreml.py --checkpoint ./checkpoints/best_model.pth --output ./output
+    python conversion/convert_to_coreml.py --checkpoint ./checkpoints/best_model.pth --output ./output
+    python conversion/convert_to_coreml.py --checkpoint ./checkpoints/drowsiness_default_20260204_163610/best_model.pth --output ./output
 """
 
 import os
@@ -18,6 +19,8 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import numpy as np
+
+import coremltools.optimize.coreml as cto
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -142,24 +145,28 @@ def convert_to_coreml(
     # 입출력 설명 추가
     spec = mlmodel.get_spec()
     
-    # 양자화 (선택적)
+    # 양자화 (최신 CoreML Optimize API 사용)
     if quantize:
         print(f"Applying {quantization_type} quantization...")
         
         if quantization_type == 'linear':
-            # INT8 양자화 (가장 일반적)
-            mlmodel = ct.models.neural_network.quantization_utils.quantize_weights(
-                mlmodel,
-                nbits=8,
-                quantization_mode="linear",
+            # INT8 양자화 (iOS 16+ 최적화)
+            op_config = cto.OpLinearQuantizerConfig(
+                mode="linear_symmetric",
+                dtype="int8",
+                granularity="per_tensor"
             )
+            config = cto.OptimizationConfig(global_config=op_config)
+            mlmodel = cto.linear_quantize_weights(mlmodel, config=config)
+            
         elif quantization_type == 'lut':
-            # Look-up table 양자화 (더 작은 크기)
-            mlmodel = ct.models.neural_network.quantization_utils.quantize_weights(
-                mlmodel,
-                nbits=8,
-                quantization_mode="kmeans",
+            # Lookup Table 양자화 (팔레트 방식)
+            op_config = cto.OpPalettizerConfig(
+                mode="kmeans",
+                nbits=8
             )
+            config = cto.OptimizationConfig(global_config=op_config)
+            mlmodel = cto.palettize_weights(mlmodel, config=config)
     
     # 저장
     output_path = Path(output_path)
