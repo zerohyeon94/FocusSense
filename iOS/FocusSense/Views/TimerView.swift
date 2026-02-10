@@ -117,6 +117,8 @@ struct TimerView: View {
                 return [Color(hex: "3d2c29"), Color(hex: "1a1a2e")]
             case .drowsy:
                 return [Color(hex: "4a1c1c"), Color(hex: "1a1a2e")]
+            case .away:
+                return [Color(hex: "1a1a2e"), Color(hex: "0f0f1a")]
             case .unknown:
                 return [Color(hex: "1a1a2e"), Color(hex: "0f0f1a")]
             }

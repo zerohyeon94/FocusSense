@@ -375,7 +375,6 @@ final class FocusDetectionService: ObservableObject, FocusDetectionServiceProtoc
         headPose: HeadPose? = nil
     ) {
         let newState = FocusState(
-            timestamp: Date(),
             level: level,
             eyeAspectRatio: ear,
             isLookingAtScreen: isLookingAtScreen,

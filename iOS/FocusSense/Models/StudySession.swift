@@ -35,7 +35,7 @@ struct StudySession: Identifiable, Codable {
     /// 순수 집중 시간 (초)
     var netFocusTime: TimeInterval {
         focusRecords
-            .filter { $0.level == .focused }
+            .filter { $0.focusLevel == .focused }
             .reduce(0) { $0 + $1.duration }
     }
     
@@ -47,12 +47,12 @@ struct StudySession: Identifiable, Codable {
     
     /// 졸음 감지 횟수
     var drowsinessCount: Int {
-        focusRecords.filter { $0.level == .drowsy }.count
+        focusRecords.filter { $0.focusLevel == .drowsy }.count
     }
     
     /// 이탈 횟수
     var unfocusedCount: Int {
-        focusRecords.filter { $0.level == .unfocused }.count
+        focusRecords.filter { $0.focusLevel == .unfocused }.count
     }
     
     // MARK: - Formatted Strings
@@ -88,13 +88,13 @@ struct StudySession: Identifiable, Codable {
 struct FocusRecord: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
-    let level: FocusLevel
+    let focusLevel: FocusLevel
     let duration: TimeInterval  // 해당 상태 지속 시간
     
-    init(id: UUID = UUID(), timestamp: Date = Date(), level: FocusLevel, duration: TimeInterval = 1.0) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), focusLevel: FocusLevel, duration: TimeInterval = 1.0) {
         self.id = id
         self.timestamp = timestamp
-        self.level = level
+        self.focusLevel = focusLevel
         self.duration = duration
     }
 }

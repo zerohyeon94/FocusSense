@@ -3,8 +3,6 @@
 //  FocusSense
 //
 //  카메라 프리뷰 + 실시간 분석 데이터 표시 화면
-//  - 카메라 영상 위에 얼굴 랜드마크 오버레이
-//  - 하단에 실시간 수치 데이터 표시
 //
 
 import SwiftUI
@@ -18,36 +16,24 @@ struct CameraDebugView: View {
     
     var body: some View {
         ZStack {
-            // 배경
             Color.black.ignoresSafeArea()
             
             if isReady {
-                // 메인 컨텐츠 (준비 완료 후)
                 mainContent
                     .transition(.opacity.combined(with: .scale(scale: 0.98)))
             } else {
-                // 로딩 화면
                 loadingView
             }
         }
         .task {
-            // Swift Concurrency: .task modifier
-            // - View가 나타날 때 자동 실행
-            // - View가 사라지면 자동으로 Task 취소
             await prepareContent()
         }
     }
     
-    // MARK: - Prepare Content (async)
-    /// 컨텐츠 준비 (Swift Concurrency)
     private func prepareContent() async {
-        // 화면 전환 애니메이션이 완료될 시간을 줌
         try? await Task.sleep(for: .milliseconds(100))
-        
-        // Task가 취소되지 않았다면 UI 업데이트
         guard !Task.isCancelled else { return }
         
-        // @MainActor 컨텍스트에서 UI 업데이트
         await MainActor.run {
             withAnimation(.easeOut(duration: 0.25)) {
                 isReady = true
@@ -75,10 +61,8 @@ struct CameraDebugView: View {
             
             CameraPreviewSection(viewModel: viewModel)
             
-            // ML 디버그 섹션 추가!
-            if let mlService = viewModel.mlService {
-                MLDebugSection(state: mlService.detectionState)
-            }
+            // 새로운 디버그 섹션
+            SimpleDebugSection(debugInfo: viewModel.focusService.debugInfo)
             
             AnalysisDataSection(data: viewModel.faceAnalysisData)
             
@@ -99,7 +83,7 @@ struct DebugHeaderView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                 
-                Text("실시간 얼굴 인식 시각화")
+                Text("실시간 집중도 분석")
                     .font(.caption)
                     .foregroundColor(.gray)
             }
@@ -121,7 +105,6 @@ struct CameraPreviewSection: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // 카메라 프리뷰 + 오버레이
             if let session = viewModel.captureSession {
                 CameraPreviewWithOverlay(
                     session: session,
@@ -129,20 +112,15 @@ struct CameraPreviewSection: View {
                 )
                 .aspectRatio(3/4, contentMode: .fit)
                 .overlay(
-                    // 프레임 테두리
                     RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(
-                            viewModel.faceAnalysisData.isFaceDetected ? Color.green : Color.red,
-                            lineWidth: 2
-                        )
+                        .strokeBorder(borderColor, lineWidth: 2)
                 )
             } else {
-                // 카메라 없음
                 CameraUnavailableView()
                     .aspectRatio(3/4, contentMode: .fit)
             }
             
-            // 상태 표시
+            // 상태 표시 (간소화)
             HStack(spacing: 20) {
                 StatusIndicator(
                     icon: "camera.fill",
@@ -151,17 +129,28 @@ struct CameraPreviewSection: View {
                 )
                 
                 StatusIndicator(
-                    icon: "face.smiling",
-                    label: "얼굴 감지",
-                    isActive: viewModel.faceAnalysisData.isFaceDetected
+                    icon: "person.fill",
+                    label: "존재 감지",
+                    isActive: viewModel.focusService.presenceState == .present
                 )
                 
                 StatusIndicator(
                     icon: "eye.fill",
-                    label: "시선 추적",
-                    isActive: viewModel.faceAnalysisData.isLookingAtScreen
+                    label: "눈 상태",
+                    isActive: viewModel.focusService.eyeState == .open
                 )
             }
+        }
+    }
+    
+    private var borderColor: Color {
+        switch viewModel.focusService.presenceState {
+        case .present:
+            return viewModel.focusService.eyeState == .open ? .green : .yellow
+        case .away:
+            return .red
+        case .returning:
+            return .blue
         }
     }
 }
@@ -204,7 +193,241 @@ struct CameraUnavailableView: View {
     }
 }
 
-// MARK: - Analysis Data Section
+// MARK: - Simple Debug Section (CoreML 정보 추가)
+struct SimpleDebugSection: View {
+    let debugInfo: SimpleDebugInfo
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // 헤더
+            HStack {
+                Image(systemName: "brain")
+                    .foregroundColor(.cyan)
+                Text("분석 상태")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                // CoreML 사용 여부 뱃지
+                if debugInfo.usingCoreML {
+                    Text("🤖 AI")
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.purple.opacity(0.3))
+                        .cornerRadius(4)
+                }
+                
+                Text(debugInfo.step)
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.cyan.opacity(0.2))
+                    .cornerRadius(8)
+            }
+            
+            Divider().background(Color.gray.opacity(0.5))
+            
+            // 2열: 존재 / 눈 상태
+            HStack(spacing: 16) {
+                // 존재 상태
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("존재 상태", systemImage: "person.fill")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(presenceColor)
+                            .frame(width: 10, height: 10)
+                        
+                        Text(debugInfo.presenceDescription.isEmpty
+                             ? debugInfo.presenceState.rawValue
+                             : debugInfo.presenceDescription)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    
+                    if debugInfo.awayDuration > 0 {
+                        Text("비움: \(String(format: "%.1f", debugInfo.awayDuration))초")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                // 눈 상태
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("눈 상태", systemImage: "eye")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(eyeColor)
+                            .frame(width: 10, height: 10)
+                        
+                        Text(debugInfo.eyeDescription.isEmpty
+                             ? debugInfo.eyeState.rawValue
+                             : debugInfo.eyeDescription)
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    
+                    if debugInfo.closedDuration > 0 {
+                        Text("감음: \(String(format: "%.1f", debugInfo.closedDuration))초")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
+            Divider().background(Color.gray.opacity(0.5))
+            
+            // EAR + CoreML 정보
+            VStack(alignment: .leading, spacing: 8) {
+                // Vision EAR
+                HStack {
+                    Text("👁️ Vision EAR")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    Text(String(format: "%.3f", debugInfo.earValue))
+                        .font(.caption.monospaced())
+                        .foregroundColor(.cyan)
+                    
+                    Text("/ 기준")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                    
+                    Text(String(format: "%.3f", debugInfo.earBaseline))
+                        .font(.caption.monospaced())
+                        .foregroundColor(.green)
+                }
+                
+                // EAR 비율 바
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.3))
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(earRatioColor)
+                            .frame(width: geometry.size.width * min(debugInfo.earRatio, 1.2))
+                    }
+                }
+                .frame(height: 6)
+                
+                // CoreML (있으면)
+                if debugInfo.usingCoreML {
+                    HStack {
+                        Text("🤖 CoreML")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        
+                        Spacer()
+                        
+                        Text("졸음: \(String(format: "%.0f%%", debugInfo.coreMLDrowsyProb * 100))")
+                            .font(.caption.monospaced())
+                            .foregroundColor(debugInfo.coreMLDrowsyProb > 0.5 ? .red : .green)
+                    }
+                    
+                    // CoreML 바
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.3))
+                            
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(debugInfo.coreMLDrowsyProb > 0.5 ? Color.red : Color.green)
+                                .frame(width: geometry.size.width * CGFloat(debugInfo.coreMLDrowsyProb))
+                        }
+                    }
+                    .frame(height: 6)
+                }
+                
+                // 결합 점수
+                HStack {
+                    Text("📊 결합 점수")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    Text(String(format: "%.0f%%", debugInfo.combinedDrowsyScore * 100))
+                        .font(.caption.monospaced().bold())
+                        .foregroundColor(combinedScoreColor)
+                    
+                    if debugInfo.usingCoreML {
+                        Text("(70% EAR + 30% AI)")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
+                }
+            }
+            
+            Divider().background(Color.gray.opacity(0.5))
+            
+            // 최종 판단
+            HStack {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundColor(.yellow)
+                
+                Text("판단:")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                
+                Text(debugInfo.decision)
+                    .font(.caption.bold())
+                    .foregroundColor(.white)
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.cyan.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+    
+    private var presenceColor: Color {
+        switch debugInfo.presenceState {
+        case .present: return .green
+        case .away: return .red
+        case .returning: return .blue
+        }
+    }
+    
+    private var eyeColor: Color {
+        switch debugInfo.eyeState {
+        case .open: return .green
+        case .halfClosed: return .yellow
+        case .closed: return .red
+        case .unknown: return .gray
+        }
+    }
+    
+    private var earRatioColor: Color {
+        if debugInfo.earRatio > 0.75 { return .green }
+        else if debugInfo.earRatio > 0.55 { return .yellow }
+        else { return .red }
+    }
+    
+    private var combinedScoreColor: Color {
+        if debugInfo.combinedDrowsyScore < 0.3 { return .green }
+        else if debugInfo.combinedDrowsyScore < 0.6 { return .yellow }
+        else { return .red }
+    }
+}
+
+// MARK: - Analysis Data Section (간소화)
 struct AnalysisDataSection: View {
     let data: FaceAnalysisData
     
@@ -215,70 +438,43 @@ struct AnalysisDataSection: View {
                 HStack {
                     Image(systemName: "chart.bar.xaxis")
                         .foregroundColor(.cyan)
-                    Text("실시간 분석 데이터")
+                    Text("상세 데이터")
                         .font(.headline)
                         .foregroundColor(.white)
                     Spacer()
                 }
                 
-                // 상태 요약 배너
-                StatusSummaryBanner(data: data)
-                
-                // 얼굴 방향 정보 (새로 추가!)
-                FaceOrientationCard(data: data)
-                
-                // 데이터 그리드
+                // 데이터 그리드 (간소화)
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
                     GridItem(.flexible())
                 ], spacing: 12) {
-                    // Head Pose 데이터
+                    DataCard(
+                        icon: "eye",
+                        title: "왼쪽 눈 EAR",
+                        value: String(format: "%.3f", data.leftEAR),
+                        color: data.leftEAR < 0.2 ? .red : .green
+                    )
+                    
+                    DataCard(
+                        icon: "eye",
+                        title: "오른쪽 눈 EAR",
+                        value: String(format: "%.3f", data.rightEAR),
+                        color: data.rightEAR < 0.2 ? .red : .green
+                    )
+                    
                     DataCard(
                         icon: "arrow.left.and.right",
-                        title: "좌우 회전 (Yaw)",
+                        title: "좌우 (Yaw)",
                         value: String(format: "%.1f°", data.yaw),
-                        detail: data.faceDirectionDescription,
                         color: .blue
                     )
                     
                     DataCard(
                         icon: "arrow.up.and.down",
-                        title: "고개 숙임 (Pitch)",
+                        title: "상하 (Pitch)",
                         value: String(format: "%.1f°", data.pitch),
-                        detail: data.pitchDescription,
                         color: .purple
-                    )
-                    
-                    DataCard(
-                        icon: "rotate.right",
-                        title: "기울임 (Roll)",
-                        value: String(format: "%.1f°", data.roll),
-                        detail: data.rollDescription,
-                        color: .orange
-                    )
-                    
-                    DataCard(
-                        icon: "eye",
-                        title: "눈 비율 (EAR)",
-                        value: String(format: "%.3f", data.averageEAR),
-                        detail: data.earStatusDescription,
-                        color: data.averageEAR < 0.2 ? .red : .green
-                    )
-                    
-                    DataCard(
-                        icon: "person.crop.rectangle",
-                        title: "얼굴 위치",
-                        value: data.facePositionInFrame,
-                        detail: "화면 내 위치",
-                        color: .cyan
-                    )
-                    
-                    DataCard(
-                        icon: "target",
-                        title: "시선 방향",
-                        value: data.gazeDirection.rawValue,
-                        detail: data.isLookingAtScreen ? "화면 응시 중" : "화면 이탈",
-                        color: data.isLookingAtScreen ? .green : .red
                     )
                 }
                 
@@ -294,163 +490,11 @@ struct AnalysisDataSection: View {
     }
 }
 
-// MARK: - Status Summary Banner
-struct StatusSummaryBanner: View {
-    let data: FaceAnalysisData
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: data.isFaceDetected ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.title2)
-                .foregroundColor(statusColor)
-            
-            Text(data.summaryDescription)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.white)
-            
-            Spacer()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(statusColor.opacity(0.2))
-        )
-    }
-    
-    private var statusColor: Color {
-        if !data.isFaceDetected {
-            return .red
-        } else if data.focusLevel == .focused {
-            return .green
-        } else if data.focusLevel == .warning {
-            return .yellow
-        } else {
-            return .orange
-        }
-    }
-}
-
-// MARK: - Face Orientation Card (새로 추가!)
-struct FaceOrientationCard: View {
-    let data: FaceAnalysisData
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            // 타이틀
-            HStack {
-                Image(systemName: "face.smiling")
-                    .foregroundColor(.yellow)
-                Text("얼굴 방향 분석")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            
-            HStack(spacing: 16) {
-                // 어느 쪽 얼굴이 보이는지
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("보이는 얼굴")
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                    
-                    HStack(spacing: 4) {
-                        FaceDirectionIcon(yaw: data.yaw)
-                        Text(data.visibleFaceSide)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Divider()
-                    .frame(height: 30)
-                    .background(Color.gray.opacity(0.5))
-                
-                // 카메라 위치
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("카메라 위치")
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                    
-                    Text(data.cameraPositionRelativeToUser)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Divider()
-                    .frame(height: 30)
-                    .background(Color.gray.opacity(0.5))
-                
-                // 전체 각도
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("카메라 각도")
-                        .font(.caption2)
-                        .foregroundColor(.gray)
-                    
-                    Text(String(format: "%.1f°", data.totalFaceAngle))
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(data.isFacingCamera ? .green : .yellow)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            
-            // 정면 여부 인디케이터
-            HStack {
-                Circle()
-                    .fill(data.isFacingCamera ? Color.green : Color.orange)
-                    .frame(width: 8, height: 8)
-                
-                Text(data.isFacingCamera ? "✓ 정면을 향하고 있습니다" : "⚠️ 카메라를 정면으로 바라봐 주세요")
-                    .font(.caption)
-                    .foregroundColor(data.isFacingCamera ? .green : .orange)
-                
-                Spacer()
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.yellow.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.yellow.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-}
-
-// MARK: - Face Direction Icon
-struct FaceDirectionIcon: View {
-    let yaw: Double
-    
-    var body: some View {
-        ZStack {
-            // 얼굴 윤곽
-            Circle()
-                .stroke(Color.white.opacity(0.5), lineWidth: 1)
-                .frame(width: 24, height: 24)
-            
-            // 코 방향 표시 (어느 쪽을 보고 있는지)
-            Circle()
-                .fill(Color.yellow)
-                .frame(width: 6, height: 6)
-                .offset(x: CGFloat(yaw / 90 * 8))
-        }
-    }
-}
-
-// MARK: - Data Card
+// MARK: - Data Card (간소화)
 struct DataCard: View {
     let icon: String
     let title: String
     let value: String
-    let detail: String
     let color: Color
     
     var body: some View {
@@ -469,10 +513,6 @@ struct DataCard: View {
                 .font(.system(.title3, design: .monospaced))
                 .fontWeight(.semibold)
                 .foregroundColor(.white)
-            
-            Text(detail)
-                .font(.caption2)
-                .foregroundColor(color.opacity(0.8))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
@@ -490,13 +530,12 @@ struct FocusSummaryBar: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 상태 아이콘
             Image(systemName: level.icon)
                 .font(.title2)
                 .foregroundColor(level.color)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("현재 집중 상태")
+                Text("현재 상태")
                     .font(.caption)
                     .foregroundColor(.gray)
                 
@@ -536,126 +575,21 @@ struct EARGauge: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                // 배경
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.gray.opacity(0.3))
                 
-                // 값 표시
                 RoundedRectangle(cornerRadius: 4)
                     .fill(gaugeColor)
                     .frame(width: geometry.size.width * CGFloat(min(value / 0.5, 1.0)))
-                
-                // 임계값 표시선
-                Rectangle()
-                    .fill(Color.red)
-                    .frame(width: 2)
-                    .offset(x: geometry.size.width * 0.4 - 1)  // 0.2 / 0.5 = 0.4
             }
         }
         .frame(width: 60, height: 8)
     }
     
     private var gaugeColor: Color {
-        if value < 0.2 {
-            return .red
-        } else if value < 0.25 {
-            return .yellow
-        } else {
-            return .green
-        }
-    }
-}
-
-// MARK: - ML Debug Section
-struct MLDebugSection: View {
-    let state: MLDetectionState
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "brain")
-                    .foregroundColor(.purple)
-                Text("CoreML 디버그")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            
-            // 현재 단계
-            HStack {
-                Circle()
-                    .fill(state.faceDetected ? Color.green : Color.red)
-                    .frame(width: 8, height: 8)
-                Text(state.step)
-                    .font(.caption)
-                    .foregroundColor(.white)
-            }
-            
-            // 모델 상태
-            HStack {
-                Text("모델 로드:")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(state.mlModelLoaded ? "✅" : "❌")
-            }
-            
-            // 얼굴 감지
-            HStack {
-                Text("얼굴 감지:")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(state.faceDetected ? "✅ 감지됨" : "❌ 없음")
-                    .foregroundColor(state.faceDetected ? .green : .red)
-            }
-            
-            if state.faceDetected {
-                // 얼굴 영역
-                Text("영역: (\(String(format: "%.2f", state.faceRect.origin.x)), \(String(format: "%.2f", state.faceRect.origin.y))) - \(String(format: "%.0f%%", state.faceRect.width * 100)) x \(String(format: "%.0f%%", state.faceRect.height * 100))")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-            }
-            
-            // ML 추론 결과
-            HStack {
-                Text("추론 결과:")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                Text(state.mlInferenceResult)
-                    .font(.caption)
-                    .foregroundColor(.cyan)
-            }
-            
-            // 확률 바
-            HStack(spacing: 8) {
-                VStack(alignment: .leading) {
-                    Text("깨어있음")
-                        .font(.caption2)
-                        .foregroundColor(.green)
-                    ProgressView(value: Double(state.awakeProb))
-                        .tint(.green)
-                }
-                
-                VStack(alignment: .leading) {
-                    Text("졸림")
-                        .font(.caption2)
-                        .foregroundColor(.red)
-                    ProgressView(value: Double(state.drowsyProb))
-                        .tint(.red)
-                }
-            }
-            
-            // 에러
-            if let error = state.errorMessage {
-                Text("⚠️ \(error)")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.purple.opacity(0.1))
-        )
+        if value < 0.2 { return .red }
+        else if value < 0.25 { return .yellow }
+        else { return .green }
     }
 }
 

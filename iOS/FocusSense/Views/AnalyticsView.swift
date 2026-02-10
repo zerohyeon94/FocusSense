@@ -146,16 +146,16 @@ struct FocusChartCard: View {
                         // 선그래프
                         LineMark(
                             x: .value("Time", index), // X축: 시간 (인덱스)
-                            y: .value("Focus", focusValue(for: record.level)) // Y츅: 집중도
+                            y: .value("Focus", focusValue(for: record.focusLevel)) // Y츅: 집중도
                         )
-                        .foregroundStyle(record.level.color.gradient) // 색상 그라데이션
+                        .foregroundStyle(record.focusLevel.color.gradient) // 색상 그라데이션
                         
                         // 영역 그래프 (선 아래 채우기)
                         AreaMark(
                             x: .value("Time", index),
-                            y: .value("Focus", focusValue(for: record.level))
+                            y: .value("Focus", focusValue(for: record.focusLevel))
                         )
-                        .foregroundStyle(record.level.color.opacity(0.2).gradient)
+                        .foregroundStyle(record.focusLevel.color.opacity(0.2).gradient)
                     }
                 }
                 .chartYScale(domain: 0...100) // Y축 범위: 0 ~ 100
@@ -199,6 +199,7 @@ struct FocusChartCard: View {
         case .warning: return 70
         case .unfocused: return 30
         case .drowsy: return 10
+        case .away: return 20
         case .unknown: return 50
         }
     }
@@ -256,7 +257,7 @@ struct DetailedStatsCard: View {
     }
     
     private func calculateAverageFocusDuration(_ session: StudySession) -> String {
-        let focusedRecords = session.focusRecords.filter { $0.level == .focused }
+        let focusedRecords = session.focusRecords.filter { $0.focusLevel == .focused }
         guard !focusedRecords.isEmpty else { return "-" }
         
         // 연속 집중 구간 계산 (간단 버전)

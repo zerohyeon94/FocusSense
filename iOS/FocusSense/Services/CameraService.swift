@@ -159,7 +159,7 @@ final class CameraService: NSObject, ObservableObject {
     }
     
     // MARK: - Session Control
-    func start() {
+    func startSession() {
         guard permissionGranted else {
             print("⚠️ Camera permission not granted")
             return
@@ -177,7 +177,7 @@ final class CameraService: NSObject, ObservableObject {
         }
     }
     
-    func stop() {
+    func stopSession() {
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
             if self.captureSession.isRunning {
@@ -205,7 +205,7 @@ final class CameraService: NSObject, ObservableObject {
             setFrameInterval(3.0)
         case .critical:
             // 위험: 분석 중지
-            stop()
+            stopSession()
             print("🔥 Critical thermal state - camera stopped")
         @unknown default:
             setFrameInterval(1.0)

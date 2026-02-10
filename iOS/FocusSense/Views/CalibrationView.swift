@@ -37,7 +37,7 @@ struct CalibrationView: View {
         }
         .onAppear {
             // ✅ 카메라 시작
-            viewModel.cameraService.start()
+            viewModel.cameraService.startSession()
         }
         .onDisappear {
             // 캘리브레이션 중이면 취소
@@ -47,7 +47,7 @@ struct CalibrationView: View {
             
             // 타이머가 실행 중이 아니면 카메라 정지
             if viewModel.timerState == .idle {
-                viewModel.cameraService.stop()
+                viewModel.cameraService.stopSession()
             }
         }
     }

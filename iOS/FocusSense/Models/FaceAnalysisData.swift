@@ -179,25 +179,6 @@ struct FaceAnalysisData: Equatable {
     }
 }
 
-// MARK: - Gaze Direction
-enum GazeDirection: String {
-    case left = "왼쪽"
-    case right = "오른쪽"
-    case up = "위"
-    case down = "아래"
-    case center = "정면"
-    
-    var icon: String {
-        switch self {
-        case .left: return "arrow.left"
-        case .right: return "arrow.right"
-        case .up: return "arrow.up"
-        case .down: return "arrow.down"
-        case .center: return "circle.fill"
-        }
-    }
-}
-
 // MARK: - Debug Overlay Style
 struct DebugOverlayStyle {
     // 색상
