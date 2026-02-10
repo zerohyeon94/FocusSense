@@ -306,4 +306,7 @@ pip-selfcheck.json
 /*.gcno
 **/xcshareddata/WorkspaceSettings.xcsettings
 
+## CLAUDE
+CLAUDE.md
+
 # End of https://www.toptal.com/developers/gitignore/api/xcode,swift,swiftpackagemanager,python,visualstudiocode,venv
