@@ -23,6 +23,9 @@ struct MLDetectionState {
     var awakeProb: Float = 0
     var drowsyProb: Float = 0
     var errorMessage: String?
+    var isCalibrated: Bool = false
+    var calibrationPosition: String = "미설정"
+    var deviationFromBaseline: String = ""
 }
 
 // MARK: - ML Focus Detection Service
@@ -48,6 +51,9 @@ final class MLFocusDetectionService: ObservableObject, FocusDetectionServiceProt
     // MARK: - EAR 저장
     private var lastLeftEAR: Double = 0
     private var lastRightEAR: Double = 0
+    
+    // MARK: - Calibration Service 연결
+    var calibrationService: CalibrationService?
     
     // MARK: - Initialization
     init() {
@@ -176,13 +182,133 @@ final class MLFocusDetectionService: ObservableObject, FocusDetectionServiceProt
         // 스무딩 적용
         let smoothedDrowsiness = addToHistoryAndSmooth(&drowsinessHistory, value: mlDrowsinessProb)
         
-        // 최종 상태 업데이트
-        updateFinalState(
+//        // 최종 상태 업데이트
+//        updateFinalState(
+//            isFaceDetected: true,
+//            drowsinessProb: smoothedDrowsiness,
+//            visionEAR: visionEAR,
+//            headPose: headPose,
+//            faceRect: faceRect
+//        )
+        // 캘리브레이션 적용한 최종 상태 결정
+        updateFinalStateWithCalibration(
             isFaceDetected: true,
             drowsinessProb: smoothedDrowsiness,
             visionEAR: visionEAR,
             headPose: headPose,
             faceRect: faceRect
+        )
+    }
+    
+    // 캘리브레이션 적용된 최종 상태 결정
+    private func updateFinalStateWithCalibration(
+        isFaceDetected: Bool,
+        drowsinessProb: Float,
+        visionEAR: Double,
+        headPose: HeadPose,
+        faceRect: CGRect
+    ) {
+        // 캘리브레이션 평가
+        let evaluation: (isLooking: Bool, isDrowsy: Bool, isAway: Bool)
+        var deviationInfo = ""
+        
+        if let calibration = calibrationService,
+           calibration.calibrationData.isCalibrated {
+            
+            // ✅ 캘리브레이션 데이터 기반 평가
+            evaluation = calibration.evaluate(
+                currentYaw: headPose.yaw,
+                currentPitch: headPose.pitch,
+                currentEAR: visionEAR
+            )
+            
+            // 기준 대비 차이 계산 (디버그용)
+            let yawDiff = headPose.yaw - calibration.calibrationData.baselineYaw
+            let pitchDiff = headPose.pitch - calibration.calibrationData.baselinePitch
+            let earDiff = visionEAR - calibration.calibrationData.baselineEAR
+            
+            deviationInfo = String(format: "Δyaw: %.1f°, Δpitch: %.1f°, ΔEAR: %.2f",
+                                   yawDiff, pitchDiff, earDiff)
+            
+            updateDetectionState(
+                step: "4️⃣ 캘리브레이션 적용 완료!",
+                isCalibrated: true,
+                calibrationPosition: calibration.calibrationData.positionDescription,
+                deviationFromBaseline: deviationInfo
+            )
+            
+        } else {
+            // ✅ 캘리브레이션 없으면 기본 로직
+            evaluation = (
+                isLooking: abs(headPose.yaw) < 30 && abs(headPose.pitch) < 25,
+                isDrowsy: drowsinessProb > 0.7 || visionEAR < 0.2,
+                isAway: abs(headPose.yaw) > 45 || abs(headPose.pitch) > 35
+            )
+            
+            updateDetectionState(
+                step: "4️⃣ 분석 완료 (캘리브레이션 없음)",
+                isCalibrated: false,
+                calibrationPosition: "미설정"
+            )
+        }
+        
+        // 집중 레벨 결정
+        let focusLevel: FocusLevel
+        
+        if evaluation.isDrowsy {
+            focusLevel = .drowsy
+        } else if evaluation.isAway {
+            focusLevel = .unfocused
+        } else if !evaluation.isLooking {
+            focusLevel = .warning
+        } else {
+            focusLevel = .focused
+        }
+        
+        // 시선 방향 결정
+        let gazeDirection: GazeDirection
+        if headPose.yaw < -20 {
+            gazeDirection = .left
+        } else if headPose.yaw > 20 {
+            gazeDirection = .right
+        } else if headPose.pitch < -15 {
+            gazeDirection = .down
+        } else if headPose.pitch > 15 {
+            gazeDirection = .up
+        } else {
+            gazeDirection = .center
+        }
+        
+        let isLookingAtScreen = evaluation.isLooking
+        
+        // UI 업데이트
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.isAnalyzing = false
+            
+            self.currentState = FocusState(
+                level: focusLevel,
+                eyeAspectRatio: visionEAR,
+                isLookingAtScreen: isLookingAtScreen,
+                isFaceDetected: true,
+                headPose: headPose
+            )
+            
+            self.faceAnalysisData.isFaceDetected = true
+            self.faceAnalysisData.focusLevel = focusLevel
+            self.faceAnalysisData.yaw = headPose.yaw
+            self.faceAnalysisData.pitch = headPose.pitch
+            self.faceAnalysisData.roll = headPose.roll
+            self.faceAnalysisData.averageEAR = visionEAR
+            self.faceAnalysisData.gazeDirection = gazeDirection
+            self.faceAnalysisData.isLookingAtScreen = isLookingAtScreen
+        }
+        
+        // 디버그 상태 업데이트
+        updateDetectionState(
+            awakeProb: 1.0 - drowsinessProb,
+            drowsyProb: drowsinessProb
         )
     }
     
@@ -224,60 +350,37 @@ final class MLFocusDetectionService: ObservableObject, FocusDetectionServiceProt
     
     // MARK: - Parse ML Results
     private func parseMLResults(request: VNRequest) -> Float {
-        // 방법 1: VNClassificationObservation (분류 모델)
         if let classifications = request.results as? [VNClassificationObservation] {
-            print("📊 분류 결과: \(classifications.map { "\($0.identifier): \($0.confidence)" })")
-            
-            // "drowsy" 또는 "closed" 클래스 찾기
             for classification in classifications {
                 let id = classification.identifier.lowercased()
                 if id.contains("drowsy") || id.contains("closed") || id == "1" {
                     updateDetectionState(
-                        step: "✅ 분류 완료",
                         mlInferenceResult: "\(classification.identifier): \(String(format: "%.1f%%", classification.confidence * 100))"
                     )
                     return classification.confidence
                 }
             }
             
-            // 첫 번째가 awake/open이면 drowsy = 1 - confidence
             if let first = classifications.first {
                 let id = first.identifier.lowercased()
                 if id.contains("awake") || id.contains("open") || id == "0" {
                     return 1.0 - first.confidence
                 }
             }
-            
-            return 0
         }
         
-        // 방법 2: VNCoreMLFeatureValueObservation (멀티태스크 모델)
         if let observations = request.results as? [VNCoreMLFeatureValueObservation] {
-            print("📊 Feature 결과: \(observations.map { $0.featureName })")
-            
             for observation in observations {
-                if let multiArray = observation.featureValue.multiArrayValue {
-                    // [awake, drowsy] 형식이면 drowsy 확률 반환
-                    if multiArray.count >= 2 {
-                        let drowsyProb = multiArray[1].floatValue
-                        let awakeProb = multiArray[0].floatValue
-                        
-                        // Softmax 적용 (필요한 경우)
-                        let total = exp(awakeProb) + exp(drowsyProb)
-                        let normalizedDrowsy = exp(drowsyProb) / total
-                        
-                        updateDetectionState(
-                            step: "✅ 추론 완료",
-                            mlInferenceResult: "drowsy: \(String(format: "%.1f%%", normalizedDrowsy * 100))"
-                        )
-                        
-                        return normalizedDrowsy
-                    }
+                if let multiArray = observation.featureValue.multiArrayValue,
+                   multiArray.count >= 2 {
+                    let drowsyProb = multiArray[1].floatValue
+                    let awakeProb = multiArray[0].floatValue
+                    let total = exp(awakeProb) + exp(drowsyProb)
+                    return exp(drowsyProb) / total
                 }
             }
         }
         
-        print("⚠️ 알 수 없는 결과 형식")
         return 0
     }
     
@@ -379,71 +482,6 @@ final class MLFocusDetectionService: ObservableObject, FocusDetectionServiceProt
         return history.reduce(0, +) / Float(history.count)
     }
     
-    // MARK: - Update Final State
-    private func updateFinalState(
-        isFaceDetected: Bool,
-        drowsinessProb: Float,
-        visionEAR: Double,
-        headPose: HeadPose,
-        faceRect: CGRect
-    ) {
-        // 집중 레벨 결정
-        let focusLevel: FocusLevel
-        
-        if drowsinessProb > 0.7 || visionEAR < 0.2 {
-            focusLevel = .drowsy
-        } else if drowsinessProb > 0.5 || visionEAR < 0.25 {
-            focusLevel = .warning
-        } else if abs(headPose.yaw) > 30 || abs(headPose.pitch) > 25 {
-            focusLevel = .unfocused
-        } else if abs(headPose.yaw) > 20 || abs(headPose.pitch) > 15 {
-            focusLevel = .warning
-        } else {
-            focusLevel = .focused
-        }
-        
-        // 시선 방향 결정
-        let gazeDirection: GazeDirection
-        if headPose.yaw < -20 {
-            gazeDirection = .left
-        } else if headPose.yaw > 20 {
-            gazeDirection = .right
-        } else if headPose.pitch < -15 {
-            gazeDirection = .down
-        } else if headPose.pitch > 15 {
-            gazeDirection = .up
-        } else {
-            gazeDirection = .center
-        }
-        
-        let isLookingAtScreen = abs(headPose.yaw) < 25 && abs(headPose.pitch) < 20
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            
-            self.isAnalyzing = false
-            
-            // FocusState 업데이트
-            self.currentState = FocusState(
-                level: focusLevel,
-                eyeAspectRatio: visionEAR,
-                isLookingAtScreen: isLookingAtScreen,
-                isFaceDetected: true,
-                headPose: headPose
-            )
-            
-            // FaceAnalysisData 업데이트
-            self.faceAnalysisData.isFaceDetected = true
-            self.faceAnalysisData.focusLevel = focusLevel
-            self.faceAnalysisData.yaw = headPose.yaw
-            self.faceAnalysisData.pitch = headPose.pitch
-            self.faceAnalysisData.roll = headPose.roll
-            self.faceAnalysisData.averageEAR = visionEAR
-            self.faceAnalysisData.gazeDirection = gazeDirection
-            self.faceAnalysisData.isLookingAtScreen = isLookingAtScreen
-        }
-    }
-    
     // MARK: - Update No Face State
     private func updateNoFaceState() {
         DispatchQueue.main.async { [weak self] in
@@ -464,47 +502,35 @@ final class MLFocusDetectionService: ObservableObject, FocusDetectionServiceProt
         }
     }
     
-    // MARK: - Update Detection State (디버그용)
+    // MARK: - Update Detection State
     private func updateDetectionState(
-        step: String,
+        step: String? = nil,
         faceDetected: Bool? = nil,
         faceRect: CGRect? = nil,
         mlModelLoaded: Bool? = nil,
         mlInferenceResult: String? = nil,
         awakeProb: Float? = nil,
         drowsyProb: Float? = nil,
-        error: String? = nil
+        error: String? = nil,
+        isCalibrated: Bool? = nil,
+        calibrationPosition: String? = nil,
+        deviationFromBaseline: String? = nil
     ) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
-            self.detectionState.step = step
-            
-            if let faceDetected = faceDetected {
-                self.detectionState.faceDetected = faceDetected
-            }
-            if let faceRect = faceRect {
-                self.detectionState.faceRect = faceRect
-            }
-            if let mlModelLoaded = mlModelLoaded {
-                self.detectionState.mlModelLoaded = mlModelLoaded
-            }
-            if let mlInferenceResult = mlInferenceResult {
-                self.detectionState.mlInferenceResult = mlInferenceResult
-            }
-            if let awakeProb = awakeProb {
-                self.detectionState.awakeProb = awakeProb
-            }
-            if let drowsyProb = drowsyProb {
-                self.detectionState.drowsyProb = drowsyProb
-            }
-            if let error = error {
-                self.detectionState.errorMessage = error
-            }
+            if let step = step { self.detectionState.step = step }
+            if let faceDetected = faceDetected { self.detectionState.faceDetected = faceDetected }
+            if let faceRect = faceRect { self.detectionState.faceRect = faceRect }
+            if let mlModelLoaded = mlModelLoaded { self.detectionState.mlModelLoaded = mlModelLoaded }
+            if let mlInferenceResult = mlInferenceResult { self.detectionState.mlInferenceResult = mlInferenceResult }
+            if let awakeProb = awakeProb { self.detectionState.awakeProb = awakeProb }
+            if let drowsyProb = drowsyProb { self.detectionState.drowsyProb = drowsyProb }
+            if let error = error { self.detectionState.errorMessage = error }
+            if let isCalibrated = isCalibrated { self.detectionState.isCalibrated = isCalibrated }
+            if let calibrationPosition = calibrationPosition { self.detectionState.calibrationPosition = calibrationPosition }
+            if let deviationFromBaseline = deviationFromBaseline { self.detectionState.deviationFromBaseline = deviationFromBaseline }
         }
-        
-        // 콘솔 로그
-        print("🔍 [\(step)]")
     }
     
     // MARK: - Reset

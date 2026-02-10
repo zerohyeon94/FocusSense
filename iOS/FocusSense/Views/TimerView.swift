@@ -36,6 +36,8 @@ struct TimerView: View {
                     // 상단 툴바 (디버그 버튼)
                     DebugToolbar(
                         isDebugMode: $viewModel.showDebugView,
+                        showCalibration: $viewModel.showCalibrationView,
+                        isCalibrated: viewModel.calibrationService.calibrationData.isCalibrated,
                         isRunning: viewModel.timerState == .running
                     )
                     
@@ -93,6 +95,13 @@ struct TimerView: View {
         /// 5. 메인 스레드가 멈춤.
         .fullScreenCover(isPresented: $viewModel.showDebugView) {
             CameraDebugView(viewModel: viewModel) // 복잡한 View + 카메라 초기화
+        }
+        // 캘리브레이션 화면 (추가!)
+        .fullScreenCover(isPresented: $viewModel.showCalibrationView) {
+            CalibrationView(
+                viewModel: viewModel,
+                calibrationService: viewModel.calibrationService
+            )
         }
     }
     
@@ -348,13 +357,42 @@ extension Color {
 // MARK: - Debug Toolbar
 struct DebugToolbar: View {
     @Binding var isDebugMode: Bool
+    @Binding var showCalibration: Bool
+    let isCalibrated: Bool
     let isRunning: Bool
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12) {
+            // 캘리브레이션 버튼
+            Button(action: {
+                showCalibration = true
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: isCalibrated ? "checkmark.circle.fill" : "scope")
+                        .font(.system(size: 14))
+                    
+                    Text(isCalibrated ? "위치 설정됨" : "위치 설정")
+                        .font(.caption)
+                }
+                .foregroundColor(isCalibrated ? .green : .orange)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isCalibrated ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(
+                                    isCalibrated ? Color.green.opacity(0.5) : Color.orange.opacity(0.5),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+            }
+            
             Spacer()
             
-            // 디버그 모드 토글 버튼
+            // 기존 디버그 버튼
             Button(action: {
                 isDebugMode = true
             }) {
@@ -373,7 +411,10 @@ struct DebugToolbar: View {
                         .fill(isRunning ? Color.cyan.opacity(0.2) : Color.gray.opacity(0.2))
                         .overlay(
                             Capsule()
-                                .strokeBorder(isRunning ? Color.cyan.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
+                                .strokeBorder(
+                                    isRunning ? Color.cyan.opacity(0.5) : Color.gray.opacity(0.3),
+                                    lineWidth: 1
+                                )
                         )
                 )
             }

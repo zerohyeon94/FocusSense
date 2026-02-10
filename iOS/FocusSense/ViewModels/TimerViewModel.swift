@@ -55,7 +55,8 @@ final class TimerViewModel: ObservableObject {
     @Published var showAlert = false        // 알림 표시 여부
     @Published var alertMessage = ""        // 알림 메시지
     @Published var showDebugView = false    // 디버그 화면 표시 여부
-    @Published var detectionMode: DetectionMode = .vision  // 현재 모드
+    @Published var showCalibrationView = false  // CalibrationView 표시 여부
+    @Published var detectionMode: DetectionMode = .coreML  // 현재 모드
     
     // MARK: - Services (서비스 객체: Camera, AI)
     let cameraService: CameraService
@@ -63,6 +64,9 @@ final class TimerViewModel: ObservableObject {
     // 두 서비스를 모두 보유 (선택적 사용)
     private var visionService: FocusDetectionService?
     private(set) var mlService: MLFocusDetectionService?
+    
+    // MARK: - Calibration
+    let calibrationService = CalibrationService()
     
     // MARK: - Computed Properties
     /// 현재 사용 중인 서비스의 카메라 세션
@@ -78,6 +82,11 @@ final class TimerViewModel: ObservableObject {
         case .coreML:
             return mlService?.faceAnalysisData ?? FaceAnalysisData()
         }
+    }
+    
+    // MARK: - 캘리브레이션 필요 여부
+    var needsCalibration: Bool {
+        return !calibrationService.calibrationData.isCalibrated
     }
     
     var formattedElapsedTime: String {
@@ -149,6 +158,8 @@ final class TimerViewModel: ObservableObject {
             }
             visionService = nil  // 메모리 해제
             
+            mlService?.calibrationService = calibrationService // CalibrationService 연결
+            
             // CoreML 서비스 바인딩
             mlService?.$currentState
                 .receive(on: DispatchQueue.main)
@@ -195,6 +206,14 @@ final class TimerViewModel: ObservableObject {
     
     // MARK: - Timer Controls
     func startTimer() {
+        // 캘리브레이션 안됐으면 먼저 안내
+        if needsCalibration {
+            alertMessage = "먼저 공부 위치를 설정해주세요.\n핸드폰을 둘 위치에서 설정하면 더 정확해집니다."
+            showAlert = true
+            showCalibrationView = true  // 캘리브레이션 화면으로
+            return
+        }
+        
         timerState = .running // 상태 변경 -> @Published -> UI 업데이트
         currentSession = StudySession(startTime: Date())
         
@@ -293,9 +312,32 @@ extension TimerViewModel: CameraServiceDelegate {
             case .vision:
                 visionService?.processFrame(sampleBuffer)
             case .coreML:
+                // 캘리브레이션 중이면 샘플 수집
+                if calibrationService.isCalibrating {
+                    collectCalibrationSample()
+                }
                 mlService?.processFrame(sampleBuffer)
             }
         }
+    }
+    
+    // ✅ 캘리브레이션 샘플 수집
+    @MainActor
+    private func collectCalibrationSample() {
+        let data = faceAnalysisData
+        
+        guard data.isFaceDetected else { return }
+        
+        // 얼굴 크기 계산 (화면 대비)
+        let faceSize = data.faceBoundingBox.width * data.faceBoundingBox.height
+        
+        calibrationService.addSample(
+            yaw: data.yaw,
+            pitch: data.pitch,
+            roll: data.roll,
+            ear: data.averageEAR,
+            faceSize: faceSize
+        )
     }
     
     nonisolated func cameraService(_ service: CameraService, didFailWithError error: Error) {
