@@ -317,7 +317,7 @@ struct SimpleDebugSection: View {
                         
                         RoundedRectangle(cornerRadius: 4)
                             .fill(earRatioColor)
-                            .frame(width: geometry.size.width * min(debugInfo.earRatio, 1.2))
+                            .frame(width: geometry.size.width * min(debugInfo.earRatio, 1.0))
                     }
                 }
                 .frame(height: 6)
