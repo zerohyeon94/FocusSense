@@ -71,19 +71,22 @@ struct FocusState: Equatable {
     let isLookingAtScreen: Bool
     let isFaceDetected: Bool
     let headPose: HeadPose?
-    
+    let combinedDrowsyScore: Double
+
     init(
         level: FocusLevel = .unknown,
         eyeAspectRatio: Double = 0,
         isLookingAtScreen: Bool = false,
         isFaceDetected: Bool = false,
-        headPose: HeadPose? = nil
+        headPose: HeadPose? = nil,
+        combinedDrowsyScore: Double = 0
     ) {
         self.level = level
         self.eyeAspectRatio = eyeAspectRatio
         self.isLookingAtScreen = isLookingAtScreen
         self.isFaceDetected = isFaceDetected
         self.headPose = headPose
+        self.combinedDrowsyScore = combinedDrowsyScore
     }
 }
 

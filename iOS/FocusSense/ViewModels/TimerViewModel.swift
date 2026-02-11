@@ -41,6 +41,7 @@ final class TimerViewModel: ObservableObject {
     let cameraService: CameraService
     private(set) var focusService: SimpleFocusDetectionService
     let calibrationService = CalibrationService()
+    private(set) var focusScoreService = FocusScoreService()
     
     // MARK: - Computed Properties
     var captureSession: AVCaptureSession? {
@@ -65,7 +66,7 @@ final class TimerViewModel: ObservableObject {
     
     var focusRate: Double {
         guard elapsedTime > 0 else { return 0 }
-        return (netFocusTime / elapsedTime) * 100
+        return focusScoreService.totalScore
     }
     
     // MARK: - Timer
@@ -116,7 +117,21 @@ final class TimerViewModel: ObservableObject {
     private func handleFocusStateChange(_ newState: FocusState) {
         let previousLevel = currentFocusState.level
         currentFocusState = newState
-        
+
+        // 집중도 점수 업데이트 (타이머 실행 중일 때만)
+        if timerState == .running {
+            let baselineEAR = calibrationService.calibrationData.isCalibrated
+                ? calibrationService.calibrationData.baselineEAR
+                : 0.3
+            focusScoreService.updateMetrics(
+                ear: newState.eyeAspectRatio,
+                baselineEAR: baselineEAR,
+                headPose: newState.headPose ?? HeadPose(),
+                combinedDrowsyScore: newState.combinedDrowsyScore,
+                focusLevel: newState.level
+            )
+        }
+
         // 타이머가 실행 중이 아니면 무시
         guard timerState == .running || timerState == .autoPaused else { return }
         
@@ -250,7 +265,8 @@ final class TimerViewModel: ObservableObject {
         lastAutoPauseReason = nil
         
         focusService.reset()
-        
+        focusScoreService.reset()
+
         print("🔄 타이머 리셋")
     }
     
@@ -267,7 +283,8 @@ final class TimerViewModel: ObservableObject {
         let record = FocusRecord(
             timestamp: Date(),
             focusLevel: currentFocusState.level,
-            duration: 1.0
+            duration: 1.0,
+            focusScore: focusScoreService.totalScore
         )
         currentSession?.focusRecords.append(record)
     }

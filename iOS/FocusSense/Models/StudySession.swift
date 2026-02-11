@@ -39,10 +39,15 @@ struct StudySession: Identifiable, Codable {
             .reduce(0) { $0 + $1.duration }
     }
     
-    /// 집중률 (%)
+    /// 집중률 (%) - 종합 집중도 점수 평균
     var focusRate: Double {
-        guard totalDuration > 0 else { return 0 } // 0으로 나누기 방지
-        return (netFocusTime / totalDuration) * 100
+        let scored = focusRecords.filter { $0.focusScore > 0 }
+        guard !scored.isEmpty else {
+            // focusScore가 없는 기존 데이터 호환: 기존 로직 fallback
+            guard totalDuration > 0 else { return 0 }
+            return (netFocusTime / totalDuration) * 100
+        }
+        return scored.map { $0.focusScore }.reduce(0, +) / Double(scored.count)
     }
     
     /// 졸음 감지 횟수
@@ -90,12 +95,24 @@ struct FocusRecord: Identifiable, Codable {
     let timestamp: Date
     let focusLevel: FocusLevel
     let duration: TimeInterval  // 해당 상태 지속 시간
-    
-    init(id: UUID = UUID(), timestamp: Date = Date(), focusLevel: FocusLevel, duration: TimeInterval = 1.0) {
+    let focusScore: Double      // 종합 집중도 점수 (0~100)
+
+    init(id: UUID = UUID(), timestamp: Date = Date(), focusLevel: FocusLevel, duration: TimeInterval = 1.0, focusScore: Double = 0) {
         self.id = id
         self.timestamp = timestamp
         self.focusLevel = focusLevel
         self.duration = duration
+        self.focusScore = focusScore
+    }
+
+    // MARK: - Backward-compatible Codable
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        focusLevel = try container.decode(FocusLevel.self, forKey: .focusLevel)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        focusScore = try container.decodeIfPresent(Double.self, forKey: .focusScore) ?? 0
     }
 }
 
