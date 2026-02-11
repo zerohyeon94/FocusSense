@@ -1,13 +1,34 @@
-// React 컴포넌트는 항상 대문자로 시작하는 함수입니다.
-export default function Header() {
+interface HeaderProps {
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void; // 함수 타입 정의
+}
+
+export default function Header({ isDarkMode, setIsDarkMode }: HeaderProps) {
   return (
-    <header style={styles.header}>
+    <header style={{
+      ...styles.header,
+      backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+      borderBottom: isDarkMode ? '1px solid #333' : '1px solid rgba(0,0,0,0.1)'
+    }}>
       <div style={styles.container}>
-        <h1 style={styles.logo}>Focus Sense</h1>
+        <h1 style={{ ...styles.logo, color: isDarkMode ? '#fff' : '#1d1d1f' }}>Focus Sense</h1>
         <nav>
           <ul style={styles.navList}>
-            <li><a href="#philosophy">방향성</a></li>
-            <li><a href="#guide">배치 가이드</a></li>
+            {/* 5. 다크모드 토글 버튼 추가 */}
+            <li>
+              <button 
+                onClick={() => setIsDarkMode(!isDarkMode)} // 클릭 시 상태 반전
+                style={{
+                  ...styles.themeBtn,
+                  backgroundColor: isDarkMode ? '#fff' : '#000',
+                  color: isDarkMode ? '#000' : '#fff'
+                }}
+              >
+                {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+              </button>
+            </li>
+            <li style={{ color: isDarkMode ? '#fff' : '#1d1d1f' }}><a href="#philosophy">방향성</a></li>
+            <li style={{ color: isDarkMode ? '#fff' : '#1d1d1f' }}><a href="#guide">배치 가이드</a></li>
             <li>
               <a href="#download" style={styles.downloadBtn}>앱 다운로드</a>
             </li>
@@ -18,18 +39,15 @@ export default function Header() {
   );
 }
 
-// CSS-in-JS 방식 (스타일 객체)
-// 나중에는 CSS 모듈이나 Tailwind 등으로 고도화할 수 있습니다.
 const styles = {
+  // 기존 스타일 유지...
   header: {
     height: '60px',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(10px)',
-    position: 'fixed' as 'fixed', // TypeScript 타입 단언
+    position: 'fixed' as 'fixed',
     width: '100%',
     top: 0,
     zIndex: 1000,
-    borderBottom: '1px solid rgba(0,0,0,0.1)',
     display: 'flex',
     alignItems: 'center',
   },
@@ -53,12 +71,19 @@ const styles = {
     fontSize: '0.9rem',
     fontWeight: 500,
   },
+  themeBtn: {
+    border: 'none',
+    padding: '5px 12px',
+    borderRadius: '15px',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+  },
   downloadBtn: {
     backgroundColor: '#007AFF',
     color: 'white',
     padding: '8px 16px',
     borderRadius: '20px',
     fontSize: '0.85rem',
-    transition: 'background 0.3s',
   }
 };

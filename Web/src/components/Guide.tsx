@@ -25,7 +25,7 @@ export default function Guide() {
             </div>
           </div>
 
-          {/* 우측: 시각적 가이드 영역 (이미지/도형) */}
+          {/* 우측: 시각적 가이드 영역 (아이폰 모형) */}
           <div style={styles.imageSide}>
             <div style={styles.mockupContainer}>
               <div style={styles.iphoneMockup}>
@@ -35,6 +35,7 @@ export default function Guide() {
                   <p style={styles.aiText}>AI Detecting...</p>
                 </div>
               </div>
+              {/* 거치대 베이스 색상도 변수로 처리 */}
               <div style={styles.standBase}></div>
             </div>
           </div>
@@ -48,7 +49,8 @@ export default function Guide() {
 const styles = {
   section: {
     padding: '120px 0',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--bg-main)', // 배경색 변수 적용
+    transition: '0.3s',
   },
   container: {
     maxWidth: '1000px',
@@ -70,7 +72,7 @@ const styles = {
     fontWeight: 700,
     lineHeight: 1.2,
     marginBottom: '50px',
-    color: '#1d1d1f',
+    color: 'var(--text-primary)', // 글자색 변수 적용
   },
   step: {
     display: 'flex',
@@ -80,17 +82,18 @@ const styles = {
   stepNumber: {
     fontSize: '1.2rem',
     fontWeight: 700,
-    color: '#007AFF',
+    color: 'var(--primary-color)', // iOS 블루
     fontFamily: 'monospace',
   },
   stepTitle: {
     fontSize: '1.2rem',
     fontWeight: 600,
     marginBottom: '8px',
+    color: 'var(--text-primary)',
   },
   stepText: {
     fontSize: '1rem',
-    color: '#86868b',
+    color: 'var(--text-secondary)', // 보조 글자색 변수 적용
     lineHeight: 1.5,
   },
   imageSide: {
@@ -99,7 +102,6 @@ const styles = {
     justifyContent: 'center',
     minWidth: '300px',
   },
-  /* 간단한 아이폰/거치대 모양 만들기 */
   mockupContainer: {
     position: 'relative' as 'relative',
     display: 'flex',
@@ -109,12 +111,13 @@ const styles = {
   iphoneMockup: {
     width: '160px',
     height: '320px',
-    backgroundColor: '#1d1d1f',
+    backgroundColor: '#1d1d1f', // 아이폰 하우징은 다크 유지 (실제 기기 느낌)
     borderRadius: '30px',
     padding: '10px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
     position: 'relative' as 'relative',
     zIndex: 2,
+    border: '1px solid rgba(255,255,255,0.1)',
   },
   cameraHole: {
     width: '40px',
@@ -126,7 +129,7 @@ const styles = {
   screenContent: {
     width: '100%',
     height: '270px',
-    backgroundColor: '#000',
+    backgroundColor: '#000', // 화면은 꺼진 느낌 혹은 앱 실행 느낌으로 블랙 유지
     borderRadius: '20px',
     display: 'flex',
     flexDirection: 'column' as 'column',
@@ -138,21 +141,23 @@ const styles = {
     width: '80px',
     height: '80px',
     borderRadius: '50%',
-    border: '2px solid #007AFF',
-    boxShadow: '0 0 15px #007AFF',
+    border: '2px solid var(--primary-color)',
+    boxShadow: '0 0 15px var(--primary-color)',
     marginBottom: '20px',
   },
   aiText: {
-    color: '#007AFF',
+    color: 'var(--primary-color)',
     fontSize: '0.8rem',
     fontWeight: 600,
   },
   standBase: {
-    width: '120px',
+    width: '200px',
     height: '100px',
-    backgroundColor: '#e5e5e7',
+    backgroundColor: 'var(--bg-sub)', // 거치대는 섹션 배경색과 맞춤
     marginTop: '-40px',
     borderRadius: '10px',
     zIndex: 1,
+    border: '1px solid rgba(0,0,0,0.05)',
+    transition: '0.3s',
   }
 };

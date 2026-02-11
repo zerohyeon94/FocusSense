@@ -41,7 +41,8 @@ export default function Philosophy() {
 const styles = {
   section: {
     padding: '100px 0',
-    backgroundColor: '#f5f5f7', // 연한 회색 배경으로 섹션 구분
+    backgroundColor: 'var(--bg-sub)', // 연회색 -> 블랙으로 자동 전환
+    transition: '0.3s',
   },
   container: {
     maxWidth: '1000px',
@@ -53,7 +54,7 @@ const styles = {
     fontWeight: 700,
     textAlign: 'center' as 'center',
     marginBottom: '60px',
-    color: '#1d1d1f',
+    color: 'var(--text-primary)'
   },
   cardGrid: {
     display: 'flex',

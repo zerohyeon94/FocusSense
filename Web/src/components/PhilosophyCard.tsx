@@ -16,7 +16,7 @@ export default function PhilosophyCard({ icon, title, description }: CardProps) 
 
 const styles = {
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'var(--card-bg)', // 고정값이 아닌 변수 사용
     padding: '40px 30px',
     borderRadius: '20px',
     textAlign: 'center' as 'center',
@@ -33,11 +33,11 @@ const styles = {
     fontSize: '1.4rem',
     fontWeight: 700,
     marginBottom: '15px',
-    color: '#1d1d1f',
+    color: 'var(--text-primary)',
   },
   description: {
     fontSize: '1rem',
-    color: '#86868b',
+    color: 'var(--text-secondary)',
     lineHeight: 1.6,
   },
 };

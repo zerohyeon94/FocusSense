@@ -25,7 +25,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%)', // Apple 스타일 그라데이션
+    background: 'var(--bg-main)', // 혹은 테마별 그라데이션 변수 생성
+    transition: '0.3s',
     textAlign: 'center' as 'center',
   },
   container: {
@@ -37,7 +38,7 @@ const styles = {
     fontWeight: 800,
     letterSpacing: '-0.02em',
     marginBottom: '20px',
-    color: '#1d1d1f',
+    color: 'var(--text-primary)',
   },
   subtitle: {
     fontSize: '1.5rem',
