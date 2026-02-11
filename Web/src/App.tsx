@@ -1,6 +1,7 @@
 import Header from './components/Header';
 import Hero from './components/Hero';
-import Philosophy from './components/Philosophy'; // 1. 불러오기
+import Philosophy from './components/Philosophy';
+import Guide from './components/Guide'; // 1. 불러오기
 
 function App() {
   return (
@@ -11,14 +12,17 @@ function App() {
           title="당신의 몰입을 완성하는 시간" 
           subtitle="FocusSense - AI 기반 집중도 분석으로 학습 효율을 극대화하세요." 
         />
-        
-        {/* 2. 방향성 섹션 배치 */}
         <Philosophy />
         
-        <section style={{ height: '500px', padding: '100px', textAlign: 'center' }}>
-          <h3>다음 섹션: 배치 가이드 (Guide)</h3>
-        </section>
+        {/* 2. 가이드 섹션 배치 */}
+        <Guide />
+        
       </main>
+      
+      {/* 3. 간단한 푸터 추가 */}
+      <footer style={{ padding: '50px 0', borderTop: '1px solid #eee', textAlign: 'center', color: '#86868b', fontSize: '0.9rem' }}>
+        <p>© 2026 FocusSense Project. Built with React & TypeScript.</p>
+      </footer>
     </div>
   );
 }
