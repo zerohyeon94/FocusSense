@@ -42,6 +42,7 @@ final class TimerViewModel: ObservableObject {
     private(set) var focusService: SimpleFocusDetectionService
     let calibrationService = CalibrationService()
     private(set) var focusScoreService = FocusScoreService()
+    let sessionStore = StudySessionStore()
     
     // MARK: - Computed Properties
     var captureSession: AVCaptureSession? {
@@ -250,9 +251,14 @@ final class TimerViewModel: ObservableObject {
         timerState = .idle
         timer?.invalidate()
         cameraService.stopSession()
-        
+
         currentSession?.endTime = Date()
-        
+
+        // 세션 저장
+        if let session = currentSession {
+            sessionStore.saveSession(session)
+        }
+
         print("⏹️ 타이머 정지")
     }
     

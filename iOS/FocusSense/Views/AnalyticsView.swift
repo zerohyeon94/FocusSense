@@ -11,18 +11,53 @@ import Charts
 struct AnalyticsView: View {
     @ObservedObject var viewModel: TimerViewModel
 
+    /// 오늘의 모든 세션 (저장된 세션 + 현재 진행 중 세션)
+    private var todaySessions: [StudySession] {
+        var sessions = viewModel.sessionStore.todaySessions
+        if let current = viewModel.currentSession,
+           !sessions.contains(where: { $0.id == current.id }) {
+            sessions.insert(current, at: 0)
+        }
+        return sessions
+    }
+
+    /// 오늘의 총 학습 시간
+    private var todayTotalDuration: TimeInterval {
+        todaySessions.reduce(0) { $0 + $1.totalDuration }
+    }
+
+    /// 오늘의 평균 집중률
+    private var todayAverageFocusRate: Double {
+        let sessions = todaySessions.filter { !$0.focusRecords.isEmpty }
+        guard !sessions.isEmpty else { return 0 }
+        return sessions.map { $0.focusRate }.reduce(0, +) / Double(sessions.count)
+    }
+
+    /// 오늘의 총 순수 집중 시간
+    private var todayNetFocusTime: TimeInterval {
+        todaySessions.reduce(0) { $0 + $1.netFocusTime }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // 오늘의 요약 카드
-                    TodaySummaryCard(session: viewModel.currentSession)
+                    // 오늘의 종합 요약
+                    TodaySummaryCard(
+                        sessionCount: todaySessions.count,
+                        totalDuration: todayTotalDuration,
+                        netFocusTime: todayNetFocusTime,
+                        averageFocusRate: todayAverageFocusRate
+                    )
 
-                    // 종합 집중도 차트 (focusScore 기반)
+                    // 종합 집중도 차트 (focusScore 기반 - 현재 세션)
                     FocusChartCard(session: viewModel.currentSession)
 
                     // 시간대별 집중도 타임라인 (좌우 스크롤)
                     FocusScoreTimelineCard(session: viewModel.currentSession)
+
+                    // 오늘의 완료된 세션 목록
+                    TodaySessionsCard(sessions: viewModel.sessionStore.todaySessions)
 
                     // 상세 통계
                     DetailedStatsCard(session: viewModel.currentSession)
@@ -35,14 +70,27 @@ struct AnalyticsView: View {
             .background(Color(hex: "0f0f1a"))
             .navigationTitle("집중 분석")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        HistoryView(sessionStore: viewModel.sessionStore)
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
         }
     }
 }
 
 // MARK: - Today Summary Card
 struct TodaySummaryCard: View {
-    let session: StudySession?
-    
+    let sessionCount: Int
+    let totalDuration: TimeInterval
+    let netFocusTime: TimeInterval
+    let averageFocusRate: Double
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -55,32 +103,35 @@ struct TodaySummaryCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
-            /// StudySession? - Optional if let
-            /// - Optional이 nil이 아니면 언래핑하여 사용
-            /// - session은 이제 StudySession 타입 (not Optional)
-            if let session = session {
+
+            if sessionCount > 0 {
                 HStack(spacing: 20) {
                     SummaryItem(
                         title: "총 학습",
-                        value: session.formattedTotalDuration, // 안전하게 접근
+                        value: formatDuration(totalDuration),
                         color: .blue
                     )
-                    
+
                     SummaryItem(
                         title: "순수 집중",
-                        value: session.formattedNetFocusTime,
+                        value: formatDuration(netFocusTime),
                         color: .green
                     )
-                    
+
                     SummaryItem(
                         title: "집중률",
-                        value: session.formattedFocusRate,
-                        color: focusRateColor(session.focusRate)
+                        value: String(format: "%.1f%%", averageFocusRate),
+                        color: focusRateColor(averageFocusRate)
                     )
                 }
+
+                if sessionCount > 1 {
+                    Text("\(sessionCount)회 학습")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
             } else {
-                // session이 nil일 때 표시
                 Text("아직 학습 기록이 없습니다.\n타이머를 시작해보세요!")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -94,7 +145,21 @@ struct TodaySummaryCard: View {
                 .fill(Color.white.opacity(0.05))
         )
     }
-    
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let hours = Int(duration) / 3600
+        let minutes = (Int(duration) % 3600) / 60
+        let seconds = Int(duration) % 60
+
+        if hours > 0 {
+            return String(format: "%d시간 %02d분", hours, minutes)
+        } else if minutes > 0 {
+            return String(format: "%d분 %02d초", minutes, seconds)
+        } else {
+            return String(format: "%d초", seconds)
+        }
+    }
+
     private func focusRateColor(_ rate: Double) -> Color {
         switch rate {
         case 80...: return .green
@@ -612,6 +677,80 @@ struct StatRow: View {
                 .fontWeight(.semibold)
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Today Sessions Card
+struct TodaySessionsCard: View {
+    let sessions: [StudySession]
+
+    private var timeFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }
+
+    var body: some View {
+        if !sessions.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "list.bullet")
+                        .foregroundColor(.indigo)
+                    Text("오늘의 학습 기록")
+                        .font(.headline)
+                }
+
+                ForEach(sessions) { session in
+                    HStack(spacing: 12) {
+                        // 집중률 원
+                        FocusRateCircle(rate: session.focusRate)
+                            .scaleEffect(0.8)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Text(timeFormatter.string(from: session.startTime))
+                                Text("~")
+                                    .foregroundColor(.secondary)
+                                if let endTime = session.endTime {
+                                    Text(timeFormatter.string(from: endTime))
+                                }
+                            }
+                            .font(.subheadline)
+
+                            Text(session.formattedTotalDuration)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text(session.formattedFocusRate)
+                            .font(.subheadline.bold())
+                            .foregroundColor(sessionFocusColor(session.focusRate))
+                    }
+                    .padding(.vertical, 4)
+
+                    if session.id != sessions.last?.id {
+                        Divider()
+                            .background(Color.white.opacity(0.1))
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.05))
+            )
+        }
+    }
+
+    private func sessionFocusColor(_ rate: Double) -> Color {
+        switch rate {
+        case 80...: return .green
+        case 60..<80: return .yellow
+        case 40..<60: return .orange
+        default: return .red
+        }
     }
 }
 

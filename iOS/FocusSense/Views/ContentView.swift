@@ -34,14 +34,22 @@ struct ContentView: View {
                     Text("통계")
                 }
                 .tag(1)
-            
+
+            // 학습 기록 탭
+            HistoryView(sessionStore: timerViewModel.sessionStore)
+                .tabItem {
+                    Image(systemName: "clock.arrow.circlepath")
+                    Text("기록")
+                }
+                .tag(2)
+
             // 설정 탭
             SettingsView()
                 .tabItem {
                     Image(systemName: "gearshape")
                     Text("설정")
                 }
-                .tag(2)
+                .tag(3)
         }
         .tint(.orange) // 선택된 탭 색상
     }
