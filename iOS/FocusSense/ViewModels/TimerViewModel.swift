@@ -292,6 +292,7 @@ final class TimerViewModel: ObservableObject {
             duration: 1.0,
             focusScore: focusScoreService.totalScore
         )
+        record.session = currentSession
         currentSession?.focusRecords.append(record)
     }
     

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import Charts
 
 struct AnalyticsView: View {
@@ -789,4 +790,5 @@ struct TipsCard: View {
 #Preview {
     AnalyticsView(viewModel: TimerViewModel())
         .preferredColorScheme(.dark)
+        .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }

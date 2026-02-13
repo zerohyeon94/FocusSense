@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     /// @StateObject: 이 View가 ViewModel을 생성하고 소유함
@@ -16,7 +17,10 @@ struct ContentView: View {
     /// - 현재 선택된 탭 번호
     /// - 값이 바뀌면 View가 다시 그려짐
     @State private var selectedTab = 0
-    
+
+    /// SwiftData ModelContext (환경에서 주입)
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         TabView(selection: $selectedTab) {
             // 타이머 탭
@@ -26,7 +30,7 @@ struct ContentView: View {
                     Text("타이머")
                 }
                 .tag(0) // 탭의 고유 번호
-            
+
             // 통계 탭
             AnalyticsView(viewModel: timerViewModel)
                 .tabItem {
@@ -52,6 +56,10 @@ struct ContentView: View {
                 .tag(3)
         }
         .tint(.orange) // 선택된 탭 색상
+        .onAppear {
+            // SwiftData ModelContext를 SessionStore에 주입
+            timerViewModel.sessionStore.configure(with: modelContext)
+        }
     }
 }
 
@@ -59,4 +67,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .preferredColorScheme(.dark) // 다크모드로 미리보기
+        .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }

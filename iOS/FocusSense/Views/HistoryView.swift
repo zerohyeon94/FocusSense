@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HistoryView: View {
     @ObservedObject var sessionStore: StudySessionStore
@@ -199,4 +200,5 @@ struct FocusRateCircle: View {
 #Preview {
     HistoryView(sessionStore: StudySessionStore())
         .preferredColorScheme(.dark)
+        .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import Charts
 
 struct SessionDetailView: View {
@@ -463,20 +464,20 @@ private struct DetailTimeSegmentBar: View {
 
 // MARK: - Preview
 #Preview {
-    NavigationStack {
-        SessionDetailView(session: {
-            var s = StudySession(startTime: Date().addingTimeInterval(-3600))
-            s.endTime = Date()
-            s.focusRecords = (0..<3600).map { i in
-                FocusRecord(
-                    timestamp: Date().addingTimeInterval(-3600 + Double(i)),
-                    focusLevel: [.focused, .focused, .focused, .warning, .drowsy].randomElement()!,
-                    duration: 1.0,
-                    focusScore: Double.random(in: 40...95)
-                )
-            }
-            return s
-        }())
+    let session = StudySession(startTime: Date().addingTimeInterval(-3600))
+    session.endTime = Date()
+    session.focusRecords = (0..<3600).map { i in
+        FocusRecord(
+            timestamp: Date().addingTimeInterval(-3600 + Double(i)),
+            focusLevel: [.focused, .focused, .focused, .warning, .drowsy].randomElement()!,
+            duration: 1.0,
+            focusScore: Double.random(in: 40...95)
+        )
+    }
+
+    return NavigationStack {
+        SessionDetailView(session: session)
     }
     .preferredColorScheme(.dark)
+    .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }
