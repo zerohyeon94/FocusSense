@@ -74,16 +74,20 @@ final class AppCoordinator: ObservableObject {
         selectedTab = tab
     }
     
-    func showTimer() {
+    func showHome() {
         switchToTab(0)
     }
-    
-    func showAnalytics() {
+
+    func showTimer() {
         switchToTab(1)
     }
-    
-    func showSettings() {
+
+    func showAnalytics() {
         switchToTab(2)
+    }
+
+    func showSettings() {
+        switchToTab(4)
     }
     
     // MARK: - Sheet Methods
