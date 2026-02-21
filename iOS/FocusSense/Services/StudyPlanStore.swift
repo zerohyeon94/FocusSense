@@ -31,6 +31,11 @@ final class StudyPlanStore: ObservableObject {
         self.modelContext = context
         loadAllPlans()
         print("✅ StudyPlanStore configured: \(plans.count)개 계획 로드")
+
+        // 앱 시작 시 기존 알림 갱신
+        Task {
+            await notificationService.refreshAllNotifications(plans: plans)
+        }
     }
 
     // MARK: - Save Plan
@@ -46,9 +51,11 @@ final class StudyPlanStore: ObservableObject {
             try modelContext.save()
             loadAllPlans()
 
-            // 알림 갱신
+            // 알림 스케줄 (비동기 - 권한 확인 포함)
             if plan.isReminderEnabled {
-                notificationService.scheduleNotifications(for: plan)
+                Task {
+                    await notificationService.scheduleNotifications(for: plan)
+                }
             }
 
             print("✅ 학습 계획 저장: \(plan.title)")
@@ -65,10 +72,12 @@ final class StudyPlanStore: ObservableObject {
             try modelContext.save()
             loadAllPlans()
 
-            // 알림 갱신
+            // 알림 갱신 (비동기 - 권한 확인 포함)
             notificationService.removeNotifications(for: plan.id)
             if plan.isReminderEnabled && plan.isActive {
-                notificationService.scheduleNotifications(for: plan)
+                Task {
+                    await notificationService.scheduleNotifications(for: plan)
+                }
             }
 
             print("✅ 학습 계획 업데이트: \(plan.title)")

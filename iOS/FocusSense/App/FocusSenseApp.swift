@@ -11,6 +11,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main // 앱의 시작지점
 struct FocusSenseApp: App {
@@ -54,6 +55,9 @@ struct FocusSenseApp: App {
                 }
             }
             .task {
+                // 앱 시작 시 알림 권한 상태 확인
+                await requestNotificationPermissionIfNeeded()
+
                 try? await Task.sleep(for: .seconds(1.8))
                 withAnimation(.easeOut(duration: 0.4)) {
                     showSplash = false
@@ -61,5 +65,29 @@ struct FocusSenseApp: App {
             }
         }
         .modelContainer(modelContainer)
+    }
+
+    // MARK: - Notification Permission
+
+    /// 앱 시작 시 알림 권한 확인 (이미 학습 계획에 알림이 설정되어 있으면 권한 요청)
+    private func requestNotificationPermissionIfNeeded() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+
+        switch settings.authorizationStatus {
+        case .notDetermined:
+            // 아직 권한을 요청하지 않은 경우, 알림 계획이 있을 때만 요청
+            // (configure 전이므로 pending requests로 확인)
+            let pendingRequests = await center.pendingNotificationRequests()
+            if !pendingRequests.isEmpty {
+                _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+            }
+        case .denied:
+            print("⚠️ 알림 권한이 거부되어 있습니다. 설정에서 변경해주세요.")
+        case .authorized, .provisional, .ephemeral:
+            print("✅ 알림 권한 확인됨")
+        @unknown default:
+            break
+        }
     }
 }

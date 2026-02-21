@@ -308,6 +308,27 @@ struct StudyPlanEditSheet: View {
         let recurrence: RecurrenceType = isDaily ? .daily : .weekdays(Array(selectedWeekdays).sorted())
         let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: reminderTime)
 
+        // 알림이 활성화된 경우, 권한을 먼저 요청한 후 저장
+        if isReminderEnabled {
+            Task {
+                // 1. 먼저 권한 요청
+                let granted = await studyPlanStore.notificationService.requestPermission()
+                if !granted {
+                    print("⚠️ 알림 권한이 거부되어 알림 없이 저장합니다")
+                }
+
+                // 2. 권한 확인 후 저장 (MainActor에서 실행)
+                await MainActor.run {
+                    performSave(recurrence: recurrence, timeComponents: timeComponents)
+                }
+            }
+        } else {
+            performSave(recurrence: recurrence, timeComponents: timeComponents)
+        }
+    }
+
+    /// 실제 저장 수행
+    private func performSave(recurrence: RecurrenceType, timeComponents: DateComponents) {
         if let plan = editingPlan {
             // 기존 계획 업데이트
             plan.title = title.trimmingCharacters(in: .whitespaces)
@@ -329,13 +350,6 @@ struct StudyPlanEditSheet: View {
                 isReminderEnabled: isReminderEnabled
             )
             studyPlanStore.savePlan(plan)
-        }
-
-        // 알림 권한 요청 (최초 알림 설정 시)
-        if isReminderEnabled {
-            Task {
-                await studyPlanStore.notificationService.requestPermission()
-            }
         }
     }
 }
