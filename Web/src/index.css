@@ -8,6 +8,14 @@
   --card-bg: #ffffff;
 }
 
+html {
+  /* 1. 뚝 끊기는 이동 대신 부드러운 스크롤 애니메이션 활성화 (animated: true 역할) */
+  scroll-behavior: smooth;
+  
+  /* 2. (매우 중요) 헤더가 화면을 가리지 않도록 여백 주기 */
+  scroll-padding-top: 60px; 
+}
+
 /* Dark Mode 클래스가 붙었을 때의 변수값들 */
 body.dark {
   --text-primary: #f5f5f7;
