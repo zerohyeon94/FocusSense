@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 import Charts
 
 struct SessionDetailView: View {
@@ -70,7 +69,7 @@ private struct SessionSummaryHeader: View {
 
             // 핵심 지표 3개
             HStack(spacing: 0) {
-                DetailSummaryMetric(
+                SummaryMetric(
                     title: "총 학습",
                     value: session.formattedTotalDuration,
                     color: .blue
@@ -80,7 +79,7 @@ private struct SessionSummaryHeader: View {
                     .frame(height: 40)
                     .background(Color.white.opacity(0.2))
 
-                DetailSummaryMetric(
+                SummaryMetric(
                     title: "순수 집중",
                     value: session.formattedNetFocusTime,
                     color: .green
@@ -90,7 +89,7 @@ private struct SessionSummaryHeader: View {
                     .frame(height: 40)
                     .background(Color.white.opacity(0.2))
 
-                DetailSummaryMetric(
+                SummaryMetric(
                     title: "집중률",
                     value: session.formattedFocusRate,
                     color: focusRateColor(session.focusRate)
@@ -114,8 +113,8 @@ private struct SessionSummaryHeader: View {
     }
 }
 
-// MARK: - Detail Summary Metric
-private struct DetailSummaryMetric: View {
+// MARK: - Summary Metric
+private struct SummaryMetric: View {
     let title: String
     let value: String
     let color: Color
@@ -149,40 +148,26 @@ private struct SessionFocusChart: View {
             if !session.focusRecords.isEmpty {
                 Chart {
                     ForEach(Array(session.focusRecords.enumerated()), id: \.offset) { index, record in
-                        let score = record.focusScore > 0 ? record.focusScore : focusValueFallback(for: record.focusLevel)
-
                         LineMark(
                             x: .value("Time", index),
-                            y: .value("Focus", score)
+                            y: .value("Focus", focusValue(for: record.focusLevel))
                         )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.cyan, .green],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundStyle(Color.orange.gradient)
                         .interpolationMethod(.catmullRom)
 
                         AreaMark(
                             x: .value("Time", index),
-                            y: .value("Focus", score)
+                            y: .value("Focus", focusValue(for: record.focusLevel))
                         )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.cyan.opacity(0.3), .green.opacity(0.05)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .foregroundStyle(Color.orange.opacity(0.15).gradient)
                         .interpolationMethod(.catmullRom)
                     }
                 }
                 .chartYScale(domain: 0...100)
                 .chartYAxis {
                     AxisMarks(values: [0, 25, 50, 75, 100]) { value in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [3, 3]))
-                            .foregroundStyle(.gray.opacity(0.3))
+                        AxisGridLine()
+                            .foregroundStyle(Color.white.opacity(0.1))
                         AxisValueLabel {
                             if let intValue = value.as(Int.self) {
                                 Text("\(intValue)")
@@ -220,13 +205,13 @@ private struct SessionFocusChart: View {
         )
     }
 
-    private func focusValueFallback(for level: FocusLevel) -> Double {
+    private func focusValue(for level: FocusLevel) -> Int {
         switch level {
-        case .focused: return 85
-        case .warning: return 60
+        case .focused: return 100
+        case .warning: return 70
         case .unfocused: return 30
-        case .drowsy: return 15
-        case .away: return 10
+        case .drowsy: return 10
+        case .away: return 20
         case .unknown: return 50
         }
     }
@@ -249,28 +234,28 @@ private struct SessionStatsGrid: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                DetailStatCard(
+                StatCard(
                     icon: "moon.zzz.fill",
                     title: "졸음 감지",
                     value: "\(session.drowsinessCount)회",
                     color: .red
                 )
 
-                DetailStatCard(
+                StatCard(
                     icon: "eye.slash.fill",
                     title: "이탈 감지",
                     value: "\(session.unfocusedCount)회",
                     color: .orange
                 )
 
-                DetailStatCard(
+                StatCard(
                     icon: "eye.fill",
                     title: "집중 비율",
                     value: focusedRatio,
                     color: .green
                 )
 
-                DetailStatCard(
+                StatCard(
                     icon: "clock.fill",
                     title: "평균 집중 구간",
                     value: averageFocusDuration,
@@ -304,8 +289,8 @@ private struct SessionStatsGrid: View {
     }
 }
 
-// MARK: - Detail Stat Card
-private struct DetailStatCard: View {
+// MARK: - Stat Card
+private struct StatCard: View {
     let icon: String
     let title: String
     let value: String
@@ -350,7 +335,7 @@ private struct SessionTimelineAnalysis: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(segments, id: \.startMinute) { segment in
-                            DetailTimeSegmentBar(segment: segment)
+                            TimeSegmentBar(segment: segment)
                         }
                     }
                     .padding(.vertical, 4)
@@ -371,7 +356,7 @@ private struct SessionTimelineAnalysis: View {
     }
 
     // 5분 단위 세그먼트 생성
-    private var segments: [DetailTimeSegment] {
+    private var segments: [TimeSegment] {
         let segmentDuration = 300 // 5분
         guard !session.focusRecords.isEmpty else { return [] }
 
@@ -384,43 +369,30 @@ private struct SessionTimelineAnalysis: View {
             guard startIndex < session.focusRecords.count else { return nil }
 
             let slice = Array(session.focusRecords[startIndex..<endIndex])
+            let focused = slice.filter { $0.focusLevel == .focused }.count
+            let focusRate = Double(focused) / Double(slice.count) * 100
 
-            // focusScore 기반 평균
-            let scores = slice.map { $0.focusScore > 0 ? $0.focusScore : focusValueFallback(for: $0.focusLevel) }
-            let avgScore = scores.reduce(0, +) / Double(scores.count)
-
-            return DetailTimeSegment(
+            return TimeSegment(
                 startMinute: i * 5,
-                focusRate: avgScore,
+                focusRate: focusRate,
                 drowsyCount: slice.filter { $0.focusLevel == .drowsy }.count,
                 awayCount: slice.filter { $0.focusLevel == .away }.count
             )
         }
     }
-
-    private func focusValueFallback(for level: FocusLevel) -> Double {
-        switch level {
-        case .focused: return 85
-        case .warning: return 60
-        case .unfocused: return 30
-        case .drowsy: return 15
-        case .away: return 10
-        case .unknown: return 50
-        }
-    }
 }
 
-// MARK: - Detail Time Segment
-private struct DetailTimeSegment {
+// MARK: - Time Segment
+private struct TimeSegment {
     let startMinute: Int
     let focusRate: Double
     let drowsyCount: Int
     let awayCount: Int
 }
 
-// MARK: - Detail Time Segment Bar
-private struct DetailTimeSegmentBar: View {
-    let segment: DetailTimeSegment
+// MARK: - Time Segment Bar
+private struct TimeSegmentBar: View {
+    let segment: TimeSegment
 
     private var color: Color {
         switch segment.focusRate {
@@ -464,20 +436,19 @@ private struct DetailTimeSegmentBar: View {
 
 // MARK: - Preview
 #Preview {
-    let session = StudySession(startTime: Date().addingTimeInterval(-3600))
-    session.endTime = Date()
-    session.focusRecords = (0..<3600).map { i in
-        FocusRecord(
-            timestamp: Date().addingTimeInterval(-3600 + Double(i)),
-            focusLevel: [.focused, .focused, .focused, .warning, .drowsy].randomElement()!,
-            duration: 1.0,
-            focusScore: Double.random(in: 40...95)
-        )
-    }
-
-    return NavigationStack {
-        SessionDetailView(session: session)
+    NavigationStack {
+        SessionDetailView(session: {
+            var s = StudySession(startTime: Date().addingTimeInterval(-3600))
+            s.endTime = Date()
+            s.focusRecords = (0..<3600).map { i in
+                FocusRecord(
+                    timestamp: Date().addingTimeInterval(-3600 + Double(i)),
+                    focusLevel: [.focused, .focused, .focused, .warning, .drowsy].randomElement()!,
+                    duration: 1.0
+                )
+            }
+            return s
+        }())
     }
     .preferredColorScheme(.dark)
-    .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }

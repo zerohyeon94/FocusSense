@@ -56,22 +56,19 @@ struct CameraDebugView: View {
     
     // MARK: - Main Content
     private var mainContent: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                DebugHeaderView(onClose: { dismiss() })
-
-                CameraPreviewSection(viewModel: viewModel)
-
-                // 분석 상태 디버그
-                SimpleDebugSection(debugInfo: viewModel.focusService.debugInfo)
-
-                // 집중도 세부 점수
-                FocusScoreDebugSection(scoreBreakdown: viewModel.focusScoreService.scoreBreakdown)
-
-                AnalysisDataSection(data: viewModel.faceAnalysisData)
-            }
-            .padding()
+        VStack(spacing: 16) {
+            DebugHeaderView(onClose: { dismiss() })
+            
+            CameraPreviewSection(viewModel: viewModel)
+            
+            // 새로운 디버그 섹션
+            SimpleDebugSection(debugInfo: viewModel.focusService.debugInfo)
+            
+            AnalysisDataSection(data: viewModel.faceAnalysisData)
+            
+            Spacer()
         }
+        .padding()
     }
 }
 
@@ -320,7 +317,7 @@ struct SimpleDebugSection: View {
                         
                         RoundedRectangle(cornerRadius: 4)
                             .fill(earRatioColor)
-                            .frame(width: geometry.size.width * min(debugInfo.earRatio, 1.0))
+                            .frame(width: geometry.size.width * min(debugInfo.earRatio, 1.2))
                     }
                 }
                 .frame(height: 6)
@@ -435,55 +432,57 @@ struct AnalysisDataSection: View {
     let data: FaceAnalysisData
     
     var body: some View {
-        VStack(spacing: 12) {
-            // 섹션 타이틀
-            HStack {
-                Image(systemName: "chart.bar.xaxis")
-                    .foregroundColor(.cyan)
-                Text("상세 데이터")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer()
+        ScrollView {
+            VStack(spacing: 12) {
+                // 섹션 타이틀
+                HStack {
+                    Image(systemName: "chart.bar.xaxis")
+                        .foregroundColor(.cyan)
+                    Text("상세 데이터")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Spacer()
+                }
+                
+                // 데이터 그리드 (간소화)
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    DataCard(
+                        icon: "eye",
+                        title: "왼쪽 눈 EAR",
+                        value: String(format: "%.3f", data.leftEAR),
+                        color: data.leftEAR < 0.2 ? .red : .green
+                    )
+                    
+                    DataCard(
+                        icon: "eye",
+                        title: "오른쪽 눈 EAR",
+                        value: String(format: "%.3f", data.rightEAR),
+                        color: data.rightEAR < 0.2 ? .red : .green
+                    )
+                    
+                    DataCard(
+                        icon: "arrow.left.and.right",
+                        title: "좌우 (Yaw)",
+                        value: String(format: "%.1f°", data.yaw),
+                        color: .blue
+                    )
+                    
+                    DataCard(
+                        icon: "arrow.up.and.down",
+                        title: "상하 (Pitch)",
+                        value: String(format: "%.1f°", data.pitch),
+                        color: .purple
+                    )
+                }
+                
+                // 집중 상태 요약
+                FocusSummaryBar(level: data.focusLevel, ear: data.averageEAR)
             }
-
-            // 데이터 그리드 (간소화)
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                DataCard(
-                    icon: "eye",
-                    title: "왼쪽 눈 EAR",
-                    value: String(format: "%.3f", data.leftEAR),
-                    color: data.leftEAR < 0.2 ? .red : .green
-                )
-
-                DataCard(
-                    icon: "eye",
-                    title: "오른쪽 눈 EAR",
-                    value: String(format: "%.3f", data.rightEAR),
-                    color: data.rightEAR < 0.2 ? .red : .green
-                )
-
-                DataCard(
-                    icon: "arrow.left.and.right",
-                    title: "좌우 (Yaw)",
-                    value: String(format: "%.1f°", data.yaw),
-                    color: .blue
-                )
-
-                DataCard(
-                    icon: "arrow.up.and.down",
-                    title: "상하 (Pitch)",
-                    value: String(format: "%.1f°", data.pitch),
-                    color: .purple
-                )
-            }
-
-            // 집중 상태 요약
-            FocusSummaryBar(level: data.focusLevel, ear: data.averageEAR)
+            .padding()
         }
-        .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.05))
@@ -591,146 +590,6 @@ struct EARGauge: View {
         if value < 0.2 { return .red }
         else if value < 0.25 { return .yellow }
         else { return .green }
-    }
-}
-
-// MARK: - Focus Score Debug Section
-struct FocusScoreDebugSection: View {
-    let scoreBreakdown: FocusScoreBreakdown
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // 헤더
-            HStack {
-                Image(systemName: "chart.bar.fill")
-                    .foregroundColor(.cyan)
-                Text("집중도 세부 점수")
-                    .font(.headline)
-                    .foregroundColor(.white)
-
-                Spacer()
-
-                Text(String(format: "%.0f%%", scoreBreakdown.totalScore))
-                    .font(.title3.monospaced().bold())
-                    .foregroundColor(totalScoreColor)
-            }
-
-            // 종합 점수 바
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.gray.opacity(0.3))
-
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(totalScoreGradient)
-                        .frame(width: geometry.size.width * min(scoreBreakdown.totalScore / 100, 1.0))
-                }
-            }
-            .frame(height: 10)
-
-            Divider().background(Color.gray.opacity(0.5))
-
-            // 6개 지표 상세
-            ScoreBarRow(label: "기본", weight: "30%", score: scoreBreakdown.baseScore, color: .green)
-            ScoreBarRow(label: "깜빡임", weight: "20%", score: scoreBreakdown.blinkScore, color: .blue)
-            ScoreBarRow(label: "머리안정", weight: "15%", score: scoreBreakdown.headStabilityScore, color: .purple)
-            ScoreBarRow(label: "EAR안정", weight: "15%", score: scoreBreakdown.earStabilityScore, color: .cyan)
-            ScoreBarRow(label: "연속집중", weight: "10%", score: scoreBreakdown.continuousScore, color: .orange)
-            ScoreBarRow(label: "이벤트", weight: "10%", score: scoreBreakdown.eventScore, color: .yellow)
-
-            Divider().background(Color.gray.opacity(0.5))
-
-            // 부가 정보
-            HStack(spacing: 16) {
-                Label(String(format: "%.0f회/분", scoreBreakdown.blinksPerMinute), systemImage: "eye")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-
-                Label(formatDuration(scoreBreakdown.continuousDuration), systemImage: "timer")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-
-                Label(String(format: "%.1f°", scoreBreakdown.headStdDev), systemImage: "move.3d")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.cyan.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-
-    private var totalScoreColor: Color {
-        if scoreBreakdown.totalScore >= 80 { return .green }
-        else if scoreBreakdown.totalScore >= 60 { return .yellow }
-        else if scoreBreakdown.totalScore >= 40 { return .orange }
-        else { return .red }
-    }
-
-    private var totalScoreGradient: LinearGradient {
-        LinearGradient(
-            colors: [totalScoreColor.opacity(0.8), totalScoreColor],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
-    }
-
-    private func formatDuration(_ seconds: TimeInterval) -> String {
-        let mins = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%d:%02d", mins, secs)
-    }
-}
-
-// MARK: - Score Bar Row
-struct ScoreBarRow: View {
-    let label: String
-    let weight: String
-    let score: Double
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.gray)
-                .frame(width: 50, alignment: .leading)
-
-            Text(weight)
-                .font(.caption2.monospaced())
-                .foregroundColor(.gray.opacity(0.7))
-                .frame(width: 28, alignment: .trailing)
-
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.gray.opacity(0.2))
-
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(color.opacity(0.8))
-                        .frame(width: geometry.size.width * min(score / 100, 1.0))
-                }
-            }
-            .frame(height: 6)
-
-            Text(String(format: "%.0f", score))
-                .font(.caption.monospaced())
-                .foregroundColor(scoreColor)
-                .frame(width: 30, alignment: .trailing)
-        }
-    }
-
-    private var scoreColor: Color {
-        if score >= 80 { return .green }
-        else if score >= 60 { return .yellow }
-        else if score >= 40 { return .orange }
-        else { return .red }
     }
 }
 

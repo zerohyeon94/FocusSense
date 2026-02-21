@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct HistoryView: View {
     @ObservedObject var sessionStore: StudySessionStore
@@ -87,7 +86,7 @@ struct HistoryView: View {
             } else if calendar.isDateInYesterday(date) {
                 return "어제"
             } else if let daysAgo = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: Date())).day, daysAgo < 7 {
-                formatter.dateFormat = "EEEE"
+                formatter.dateFormat = "EEEE" // 요일
                 return formatter.string(from: date)
             } else {
                 formatter.dateFormat = "M월 d일 (E)"
@@ -200,5 +199,4 @@ struct FocusRateCircle: View {
 #Preview {
     HistoryView(sessionStore: StudySessionStore())
         .preferredColorScheme(.dark)
-        .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
 }

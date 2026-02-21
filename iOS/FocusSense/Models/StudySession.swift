@@ -15,15 +15,22 @@ final class StudySession {
     var startTime: Date
     var endTime: Date?
 
-    /// SwiftData에서 관계 설정: cascade 삭제
     @Relationship(deleteRule: .cascade, inverse: \FocusRecord.session)
     var focusRecords: [FocusRecord]
+
+    // MARK: - 학습 계획 연동 (스냅샷)
+    var studyPlanId: UUID?
+    var studyPlanTitle: String?
+    var studyPlanColorHex: String?
 
     init(id: UUID = UUID(), startTime: Date = Date()) {
         self.id = id
         self.startTime = startTime
         self.endTime = nil
         self.focusRecords = []
+        self.studyPlanId = nil
+        self.studyPlanTitle = nil
+        self.studyPlanColorHex = nil
     }
 
     // MARK: - Computed Properties
@@ -43,15 +50,10 @@ final class StudySession {
             .reduce(0) { $0 + $1.duration }
     }
 
-    /// 집중률 (%) - 종합 집중도 점수 평균
+    /// 집중률 (%)
     var focusRate: Double {
-        let scored = focusRecords.filter { $0.focusScore > 0 }
-        guard !scored.isEmpty else {
-            // focusScore가 없는 기존 데이터 호환: 기존 로직 fallback
-            guard totalDuration > 0 else { return 0 }
-            return (netFocusTime / totalDuration) * 100
-        }
-        return scored.map { $0.focusScore }.reduce(0, +) / Double(scored.count)
+        guard totalDuration > 0 else { return 0 }
+        return (netFocusTime / totalDuration) * 100
     }
 
     /// 졸음 감지 횟수
@@ -98,26 +100,18 @@ final class StudySession {
 final class FocusRecord {
     var id: UUID
     var timestamp: Date
-    var focusLevelRaw: String  // FocusLevel.rawValue 저장
-    var duration: TimeInterval  // 해당 상태 지속 시간
-    var focusScore: Double      // 종합 집중도 점수 (0~100)
-
-    /// 소속 세션 (inverse)
+    var focusLevelRaw: String
+    var duration: TimeInterval
+    var focusScore: Double
     var session: StudySession?
 
-    /// FocusLevel computed property
+    /// FocusLevel computed property (focusLevelRaw ↔ FocusLevel)
     var focusLevel: FocusLevel {
         get { FocusLevel(rawValue: focusLevelRaw) ?? .unknown }
         set { focusLevelRaw = newValue.rawValue }
     }
 
-    init(
-        id: UUID = UUID(),
-        timestamp: Date = Date(),
-        focusLevel: FocusLevel,
-        duration: TimeInterval = 1.0,
-        focusScore: Double = 0
-    ) {
+    init(id: UUID = UUID(), timestamp: Date = Date(), focusLevel: FocusLevel, duration: TimeInterval = 1.0, focusScore: Double = 0.0) {
         self.id = id
         self.timestamp = timestamp
         self.focusLevelRaw = focusLevel.rawValue

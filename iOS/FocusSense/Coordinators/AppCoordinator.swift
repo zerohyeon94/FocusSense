@@ -87,7 +87,7 @@ final class AppCoordinator: ObservableObject {
     }
 
     func showSettings() {
-        switchToTab(4)
+        switchToTab(3)
     }
     
     // MARK: - Sheet Methods

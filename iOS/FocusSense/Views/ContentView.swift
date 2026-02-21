@@ -10,14 +10,10 @@ import SwiftData
 
 struct ContentView: View {
     /// @StateObject: 이 View가 ViewModel을 생성하고 소유함
-    /// - 이 View가 사라지면 ViewModel도 함께 사라짐
-    /// - 자식 View에게는 @ObservedObject로 전달
     @StateObject private var timerViewModel: TimerViewModel
     @StateObject private var dashboardViewModel: DashboardViewModel
 
     /// @State: View 내부에서 변하는 단순한 값
-    /// - 현재 선택된 탭 번호
-    /// - 값이 바뀌면 View가 다시 그려짐
     @State private var selectedTab = 0
 
     /// SwiftData ModelContext (환경에서 주입)
@@ -31,7 +27,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // 홈/대시보드 탭 (학습 잔디 그래프)
+            // 홈 (대시보드) 탭
             DashboardView(
                 dashboardViewModel: dashboardViewModel,
                 selectedTab: $selectedTab
@@ -50,7 +46,7 @@ struct ContentView: View {
                 }
                 .tag(1)
 
-            // 통계 탭
+            // 통계 탭 (학습 기록은 통계 내에서 접근)
             AnalyticsView(viewModel: timerViewModel)
                 .tabItem {
                     Image(systemName: "chart.xyaxis.line")
@@ -58,26 +54,19 @@ struct ContentView: View {
                 }
                 .tag(2)
 
-            // 학습 기록 탭
-            HistoryView(sessionStore: timerViewModel.sessionStore)
-                .tabItem {
-                    Image(systemName: "clock.arrow.circlepath")
-                    Text("기록")
-                }
-                .tag(3)
-
             // 설정 탭
-            SettingsView()
+            SettingsView(studyPlanStore: timerViewModel.studyPlanStore)
                 .tabItem {
                     Image(systemName: "gearshape")
                     Text("설정")
                 }
-                .tag(4)
+                .tag(3)
         }
-        .tint(.orange) // 선택된 탭 색상
+        .tint(.orange)
         .onAppear {
-            // SwiftData ModelContext를 SessionStore에 주입
+            // SwiftData ModelContext를 Store에 주입
             timerViewModel.sessionStore.configure(with: modelContext)
+            timerViewModel.studyPlanStore.configure(with: modelContext)
         }
     }
 }
@@ -85,6 +74,6 @@ struct ContentView: View {
 // MARK: - Preview
 #Preview {
     ContentView()
-        .preferredColorScheme(.dark) // 다크모드로 미리보기
-        .modelContainer(for: [StudySession.self, FocusRecord.self], inMemory: true)
+        .preferredColorScheme(.dark)
+        .modelContainer(for: [StudySession.self, FocusRecord.self, StudyPlan.self], inMemory: true)
 }

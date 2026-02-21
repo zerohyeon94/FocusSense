@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftData
-import SwiftUI
 
 // MARK: - Study Session Store
 @MainActor
@@ -21,22 +20,21 @@ final class StudySessionStore: ObservableObject {
 
     // MARK: - Initialization
     init() {
-        // ModelContext는 나중에 configure()로 주입됨
         print("✅ StudySessionStore 초기화 (SwiftData)")
     }
 
-    // MARK: - Configure with ModelContext
-    /// App 시작 시 ModelContainer에서 ModelContext를 주입받음
-    func configure(with modelContext: ModelContext) {
-        self.modelContext = modelContext
+    // MARK: - Configure
+    /// ContentView.onAppear에서 ModelContext를 주입
+    func configure(with context: ModelContext) {
+        self.modelContext = context
         loadAllSessions()
         migrateJSONDataIfNeeded()
-        print("✅ StudySessionStore 설정 완료: \(sessions.count)개 세션 로드")
+        print("✅ StudySessionStore configured: \(sessions.count)개 세션 로드")
     }
 
     // MARK: - Save Session
     func saveSession(_ session: StudySession) {
-        guard let modelContext = modelContext else {
+        guard let modelContext else {
             print("❌ ModelContext가 설정되지 않았습니다")
             return
         }
@@ -51,7 +49,7 @@ final class StudySessionStore: ObservableObject {
             return
         }
 
-        // SwiftData에 삽입
+        // 이미 context에 있지 않으면 insert
         modelContext.insert(session)
 
         do {
@@ -65,7 +63,7 @@ final class StudySessionStore: ObservableObject {
 
     // MARK: - Load All Sessions
     func loadAllSessions() {
-        guard let modelContext = modelContext else { return }
+        guard let modelContext else { return }
 
         do {
             let descriptor = FetchDescriptor<StudySession>(
@@ -80,10 +78,7 @@ final class StudySessionStore: ObservableObject {
 
     // MARK: - Delete Session
     func deleteSession(_ session: StudySession) {
-        guard let modelContext = modelContext else {
-            print("❌ ModelContext가 설정되지 않았습니다")
-            return
-        }
+        guard let modelContext else { return }
 
         modelContext.delete(session)
 
@@ -133,15 +128,14 @@ final class StudySessionStore: ObservableObject {
         return today.map { $0.focusRate }.reduce(0, +) / Double(today.count)
     }
 
-    // MARK: - JSON Migration (기존 JSON 데이터 → SwiftData 마이그레이션)
+    // MARK: - JSON → SwiftData Migration
     private func migrateJSONDataIfNeeded() {
-        guard let modelContext = modelContext else { return }
+        guard let modelContext else { return }
 
         let fileManager = FileManager.default
         let documentsDir = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let sessionsDir = documentsDir.appendingPathComponent("StudySessions", isDirectory: true)
 
-        // JSON 디렉토리가 없으면 마이그레이션 불필요
         guard fileManager.fileExists(atPath: sessionsDir.path) else { return }
 
         do {
@@ -152,71 +146,57 @@ final class StudySessionStore: ObservableObject {
 
             guard !fileURLs.isEmpty else { return }
 
-            print("🔄 JSON → SwiftData 마이그레이션 시작: \(fileURLs.count)개 파일")
+            print("🔄 JSON 데이터 마이그레이션 시작: \(fileURLs.count)개 파일")
 
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
 
             var migratedCount = 0
-
             for url in fileURLs {
                 do {
                     let data = try Data(contentsOf: url)
-                    let jsonSession = try decoder.decode(LegacyStudySession.self, from: data)
-
-                    // 중복 확인: 이미 SwiftData에 같은 ID 세션이 있으면 스킵
-                    let existingDescriptor = FetchDescriptor<StudySession>(
-                        predicate: #Predicate { $0.id == jsonSession.id }
-                    )
-                    let existing = try modelContext.fetch(existingDescriptor)
-                    guard existing.isEmpty else { continue }
+                    let legacySession = try decoder.decode(LegacyStudySession.self, from: data)
 
                     // SwiftData 모델로 변환
                     let session = StudySession(
-                        id: jsonSession.id,
-                        startTime: jsonSession.startTime
+                        id: legacySession.id,
+                        startTime: legacySession.startTime
                     )
-                    session.endTime = jsonSession.endTime
+                    session.endTime = legacySession.endTime
 
-                    modelContext.insert(session)
-
-                    // FocusRecord 변환
-                    for record in jsonSession.focusRecords {
-                        let focusRecord = FocusRecord(
-                            id: record.id,
-                            timestamp: record.timestamp,
-                            focusLevel: record.focusLevel,
-                            duration: record.duration,
-                            focusScore: record.focusScore
+                    for legacyRecord in legacySession.focusRecords {
+                        let record = FocusRecord(
+                            id: legacyRecord.id,
+                            timestamp: legacyRecord.timestamp,
+                            focusLevel: legacyRecord.focusLevel,
+                            duration: legacyRecord.duration
                         )
-                        focusRecord.session = session
-                        session.focusRecords.append(focusRecord)
+                        record.session = session
+                        session.focusRecords.append(record)
                     }
 
+                    modelContext.insert(session)
                     migratedCount += 1
                 } catch {
-                    print("⚠️ JSON 마이그레이션 실패: \(url.lastPathComponent) - \(error)")
+                    print("⚠️ JSON 파일 마이그레이션 실패: \(url.lastPathComponent) - \(error)")
                 }
             }
 
             if migratedCount > 0 {
                 try modelContext.save()
                 loadAllSessions()
-                print("✅ JSON → SwiftData 마이그레이션 완료: \(migratedCount)개 세션")
 
-                // 마이그레이션 완료 후 JSON 디렉토리 백업 이동
-                let backupDir = documentsDir.appendingPathComponent("StudySessions_backup", isDirectory: true)
-                try? fileManager.moveItem(at: sessionsDir, to: backupDir)
-                print("✅ JSON 파일 백업 완료: StudySessions_backup/")
+                // 마이그레이션 완료 후 JSON 디렉토리 삭제
+                try? fileManager.removeItem(at: sessionsDir)
+                print("✅ JSON 마이그레이션 완료: \(migratedCount)개 세션")
             }
         } catch {
-            print("❌ JSON 마이그레이션 오류: \(error)")
+            print("❌ JSON 마이그레이션 실패: \(error)")
         }
     }
 }
 
 // MARK: - Legacy Models (JSON 마이그레이션용)
-/// 기존 JSON 파일의 Codable 구조체 (마이그레이션 전용)
 private struct LegacyStudySession: Codable {
     let id: UUID
     let startTime: Date
@@ -229,14 +209,4 @@ private struct LegacyFocusRecord: Codable {
     let timestamp: Date
     let focusLevel: FocusLevel
     let duration: TimeInterval
-    let focusScore: Double
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        timestamp = try container.decode(Date.self, forKey: .timestamp)
-        focusLevel = try container.decode(FocusLevel.self, forKey: .focusLevel)
-        duration = try container.decode(TimeInterval.self, forKey: .duration)
-        focusScore = try container.decodeIfPresent(Double.self, forKey: .focusScore) ?? 0
-    }
 }

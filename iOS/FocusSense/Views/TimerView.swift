@@ -42,7 +42,12 @@ struct TimerView: View {
                     )
                     
                     Spacer() // 빈 공간 (유연하게 늘어남)
-                    
+
+                    // 선택된 학습 계획 배지
+                    if let plan = viewModel.selectedPlan, viewModel.timerState != .idle {
+                        SelectedPlanBadge(plan: plan)
+                    }
+
                     // 집중 상태 인디케이터
                     FocusStatusIndicator(focusState: viewModel.currentFocusState)
                     
@@ -102,6 +107,15 @@ struct TimerView: View {
                 viewModel: viewModel,
                 calibrationService: viewModel.calibrationService
             )
+        }
+        // 학습 계획 선택 시트
+        .sheet(isPresented: $viewModel.showPlanPicker) {
+            StudyPlanPickerView(
+                studyPlanStore: viewModel.studyPlanStore
+            ) { plan in
+                viewModel.startTimerWithPlan(plan)
+            }
+            .presentationDetents([.medium, .large])
         }
     }
     
@@ -423,6 +437,32 @@ struct DebugToolbar: View {
             .disabled(!isRunning)
             .opacity(isRunning ? 1 : 0.5)
         }
+    }
+}
+
+// MARK: - Selected Plan Badge
+struct SelectedPlanBadge: View {
+    let plan: StudyPlan
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(plan.color)
+                .frame(width: 8, height: 8)
+            Text(plan.title)
+                .font(.caption.bold())
+                .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(plan.color.opacity(0.25))
+                .overlay(
+                    Capsule()
+                        .strokeBorder(plan.color.opacity(0.5), lineWidth: 1)
+                )
+        )
     }
 }
 

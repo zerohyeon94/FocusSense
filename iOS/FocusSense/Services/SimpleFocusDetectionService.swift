@@ -244,8 +244,7 @@ final class SimpleFocusDetectionService: ObservableObject, FocusDetectionService
             focusLevel: focusLevel,
             ear: smoothedEAR,
             headPose: headPose,
-            faceRect: face.boundingBox,
-            combinedDrowsyScore: combinedDrowsyScore
+            faceRect: face.boundingBox
         )
     }
     
@@ -501,21 +500,19 @@ final class SimpleFocusDetectionService: ObservableObject, FocusDetectionService
         focusLevel: FocusLevel,
         ear: Double,
         headPose: HeadPose,
-        faceRect: CGRect,
-        combinedDrowsyScore: Double = 0
+        faceRect: CGRect
     ) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-
+            
             self.isAnalyzing = false
-
+            
             self.currentState = FocusState(
                 level: focusLevel,
                 eyeAspectRatio: ear,
                 isLookingAtScreen: focusLevel == .focused || focusLevel == .warning,
                 isFaceDetected: focusLevel != .away && focusLevel != .unknown,
-                headPose: headPose,
-                combinedDrowsyScore: combinedDrowsyScore
+                headPose: headPose
             )
             
             self.faceAnalysisData.focusLevel = focusLevel
