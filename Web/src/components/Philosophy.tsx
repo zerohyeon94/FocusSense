@@ -30,6 +30,7 @@ export default function Philosophy() {
               icon={item.icon}
               title={item.title}
               description={item.description}
+              delay={index * 0.2} // 핵심! 첫 번째는 0초, 두 번째는 0.2초, 세 번째는 0.4초 뒤에 실행
             />
           ))}
         </div>
