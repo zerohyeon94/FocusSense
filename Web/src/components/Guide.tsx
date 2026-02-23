@@ -1,5 +1,22 @@
+/**
+ * ============================================================
+ * Guide.tsx — 기기 배치 및 시작 가이드 섹션
+ * ============================================================
+ * 앱을 올바르게 사용하기 위한 4단계 환경 설정 방법을 안내합니다.
+ * 두 개의 서브 컴포넌트로 구성됩니다:
+ *   1. PhoneMockupStand — 거치대에 올린 스마트폰 정적 일러스트
+ *   2. Guide (default export) — 단계 목록 + 폰 목업 레이아웃
+ * ============================================================
+ */
+
 import { motion } from 'framer-motion';
 
+/**
+ * steps: 사용 시작 단계 데이터
+ * number: 단계 번호 (원형 배지에 표시)
+ * icon  : 이모지 아이콘 (제목 왼쪽에 표시)
+ * tip   : 팁 뱃지에 표시되는 단축 조언
+ */
 const steps = [
   {
     number: '01',
@@ -31,10 +48,28 @@ const steps = [
   },
 ];
 
+/**
+ * PhoneMockupStand 컴포넌트
+ * 거치대(스탠드)에 올려진 스마트폰을 CSS로 묘사한 정적 일러스트입니다.
+ * 구성 요소:
+ *   - Ambient glow  : 배경 발광 효과
+ *   - Phone body    : 스마트폰 본체
+ *   - Camera feed   : 카메라 뷰파인더 시뮬레이션
+ *   - Face outline  : 얼굴 감지 오버레이
+ *   - Corner lines  : 스캔 UI 모서리 선
+ *   - Stand neck    : 거치대 기둥
+ *   - Stand base    : 거치대 받침
+ *   - Desk surface  : 책상 표면 선
+ */
 function PhoneMockupStand() {
   return (
+    /* 수직 flex 컨테이너 — 폰 + 거치대 + 책상을 세로로 쌓습니다 */
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-      {/* Ambient glow */}
+
+      {/* 주변 발광(Ambient Glow) 효과
+          position: absolute + zIndex: 0 으로 폰 뒤에 배치
+          filter: blur(20px): 흐릿하게 처리하여 은은한 빛 효과
+          pointerEvents: none: 마우스 이벤트를 통과시킴 */}
       <div style={{
         position: 'absolute',
         top: '20%', left: '50%',
@@ -46,7 +81,8 @@ function PhoneMockupStand() {
         zIndex: 0,
       }} />
 
-      {/* Phone */}
+      {/* 스마트폰 본체
+          zIndex: 1 — 글로우 효과 위에 표시 */}
       <div style={{
         width: '180px',
         height: '360px',
@@ -63,12 +99,13 @@ function PhoneMockupStand() {
         padding: '16px 14px 20px',
         gap: '10px',
       }}>
-        {/* Notch */}
+        {/* 노치 */}
         <div style={{ width: '70px', height: '5px', backgroundColor: '#333344', borderRadius: '3px', flexShrink: 0 }} />
 
-        {/* Face detection overlay */}
+        {/* 얼굴 감지 오버레이 컨테이너 (카메라 뷰파인더 영역) */}
         <div style={{ width: '100%', flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Camera feed simulation */}
+
+          {/* 카메라 피드 시뮬레이션 — 어두운 배경으로 카메라 화면 표현 */}
           <div style={{
             width: '100%', height: '100%',
             borderRadius: '16px',
@@ -77,33 +114,42 @@ function PhoneMockupStand() {
             position: 'relative',
             overflow: 'hidden',
           }}>
-            {/* Face outline */}
+
+            {/* 얼굴 윤곽선
+                borderRadius: '50% / 45% 45% 55% 55%'
+                — X축 50%, Y축 상단 45%/하단 55%의 비대칭 타원으로 얼굴 모양 표현
+                  (CSS border-radius의 / 문법: 가로/세로 반경을 각각 지정) */}
             <div style={{
               width: '80px', height: '100px',
               borderRadius: '50% / 45% 45% 55% 55%',
               border: '1.5px solid rgba(0,122,255,0.6)',
-              boxShadow: '0 0 20px rgba(0,122,255,0.2)',
+              boxShadow: '0 0 20px rgba(0,122,255,0.2)', /* 파란 글로우로 AI 감지 느낌 */
               position: 'relative',
             }}>
-              {/* Eyes */}
+              {/* 왼쪽 눈 — 타원형으로 표현 */}
               <div style={{ position: 'absolute', top: '35%', left: '18%', width: '18px', height: '7px', borderRadius: '50%', background: 'rgba(0,122,255,0.8)' }} />
+              {/* 오른쪽 눈 */}
               <div style={{ position: 'absolute', top: '35%', right: '18%', width: '18px', height: '7px', borderRadius: '50%', background: 'rgba(0,122,255,0.8)' }} />
-              {/* EAR lines */}
+              {/* EAR 측정선 (왼쪽) — 초록 가로선으로 눈 위의 측정 포인트 표현 */}
               <div style={{ position: 'absolute', top: '29%', left: '16%', width: '22px', height: '1px', background: 'rgba(48,209,88,0.7)' }} />
+              {/* EAR 측정선 (오른쪽) */}
               <div style={{ position: 'absolute', top: '29%', right: '16%', width: '22px', height: '1px', background: 'rgba(48,209,88,0.7)' }} />
             </div>
 
-            {/* Corner scan lines */}
+            {/* 코너 스캔 라인 — 카메라 뷰파인더 UI의 네 모서리 표시
+                배열의 스타일 객체를 map()으로 렌더링합니다.
+                스프레드 연산자(...s)로 각 모서리의 위치/테두리를 적용합니다. */}
             {[
-              { top: '8px', left: '8px', borderTop: '2px solid #007AFF', borderLeft: '2px solid #007AFF' },
-              { top: '8px', right: '8px', borderTop: '2px solid #007AFF', borderRight: '2px solid #007AFF' },
-              { bottom: '8px', left: '8px', borderBottom: '2px solid #007AFF', borderLeft: '2px solid #007AFF' },
-              { bottom: '8px', right: '8px', borderBottom: '2px solid #007AFF', borderRight: '2px solid #007AFF' },
+              { top: '8px',    left: '8px',  borderTop:    '2px solid #007AFF', borderLeft:   '2px solid #007AFF' },
+              { top: '8px',    right: '8px', borderTop:    '2px solid #007AFF', borderRight:  '2px solid #007AFF' },
+              { bottom: '8px', left: '8px',  borderBottom: '2px solid #007AFF', borderLeft:   '2px solid #007AFF' },
+              { bottom: '8px', right: '8px', borderBottom: '2px solid #007AFF', borderRight:  '2px solid #007AFF' },
             ].map((s, i) => (
               <div key={i} style={{ position: 'absolute', width: '16px', height: '16px', ...s }} />
             ))}
 
-            {/* Status bar */}
+            {/* 집중 상태 표시 뱃지 (카메라 화면 하단 중앙)
+                position: absolute + left: 50% + transform: translateX(-50%): 수평 중앙 정렬 */}
             <div style={{
               position: 'absolute',
               bottom: '10px', left: '50%', transform: 'translateX(-50%)',
@@ -113,13 +159,14 @@ function PhoneMockupStand() {
               background: 'rgba(48,209,88,0.15)',
               border: '1px solid rgba(48,209,88,0.3)',
             }}>
+              {/* 초록 점 — boxShadow로 빛나는 효과 */}
               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#30D158', boxShadow: '0 0 6px #30D158' }} />
               <span style={{ fontSize: '0.6rem', color: '#30D158', fontWeight: 600 }}>집중 중</span>
             </div>
           </div>
         </div>
 
-        {/* EAR value display */}
+        {/* EAR 값 표시 바 (폰 하단) */}
         <div style={{
           width: '100%',
           padding: '8px 10px',
@@ -131,11 +178,13 @@ function PhoneMockupStand() {
           flexShrink: 0,
         }}>
           <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>EAR 비율</span>
+          {/* 0.82: 정상 눈뜸 상태의 EAR 값 (정상 ~0.3, 졸음 <0.2 기준 비율) */}
           <span style={{ fontFamily: 'monospace', fontSize: '0.65rem', color: '#30D158', fontWeight: 600 }}>0.82</span>
         </div>
       </div>
 
-      {/* Stand neck */}
+      {/* 거치대 기둥(Neck)
+          marginTop: -2px: 폰 하단과 자연스럽게 이어지도록 약간 겹침 */}
       <div style={{
         width: '10px',
         height: '50px',
@@ -144,7 +193,7 @@ function PhoneMockupStand() {
         marginTop: '-2px',
       }} />
 
-      {/* Stand base */}
+      {/* 거치대 받침(Base) */}
       <div style={{
         width: '160px',
         height: '14px',
@@ -154,11 +203,11 @@ function PhoneMockupStand() {
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
       }} />
 
-      {/* Desk surface */}
+      {/* 책상 표면 선 — 받침 아래의 얇은 가로선 */}
       <div style={{
         width: '220px',
         height: '3px',
-        background: 'var(--border)',
+        background: 'var(--border)', /* 테마에 따라 색상이 자동 변경 */
         borderRadius: '2px',
         marginTop: '8px',
         zIndex: 1,
@@ -167,10 +216,17 @@ function PhoneMockupStand() {
   );
 }
 
+/**
+ * Guide 컴포넌트 (기본 export)
+ * id="guide": '#guide' 앵커와 연결
+ * 좌: 4단계 가이드 목록 / 우: PhoneMockupStand 일러스트
+ */
 export default function Guide() {
   return (
     <section id="guide" className="section" style={{ backgroundColor: 'var(--bg-main)', transition: 'background-color 0.3s' }}>
       <div className="container">
+
+        {/* ── 섹션 헤더 ── */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -185,14 +241,17 @@ export default function Guide() {
           </p>
         </motion.div>
 
+        {/* ── 본문: 좌(단계 목록) + 우(폰 일러스트) ── */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '80px',
-          flexWrap: 'wrap',
+          flexWrap: 'wrap',        /* 모바일에서 세로로 쌓임 */
           justifyContent: 'center',
         }}>
-          {/* Left: Steps */}
+
+          {/* ── 왼쪽: 단계 목록 ──
+              x: -24 → 0 (왼쪽에서 오른쪽으로 슬라이드 등장) */}
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -206,44 +265,52 @@ export default function Guide() {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
+                /* 각 단계 100ms 간격 순차 등장 */
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 style={{
                   display: 'flex',
                   gap: '20px',
+                  /* 마지막 항목은 하단 여백 없음 */
                   marginBottom: i < steps.length - 1 ? '32px' : 0,
                   position: 'relative',
                 }}
               >
-                {/* Connector line */}
+                {/* 단계 연결선 (세로 점선)
+                    마지막 항목(i === steps.length - 1)에는 렌더링하지 않습니다.
+                    position: absolute, left: 21px (원형 배지 중앙)
+                    height: calc(100% + 12px): 다음 단계까지 이어지는 길이 */}
                 {i < steps.length - 1 && (
                   <div style={{
                     position: 'absolute',
-                    left: '21px',
-                    top: '44px',
+                    left: '21px',                    /* 44px 원형 배지의 중앙 */
+                    top: '44px',                     /* 원형 배지 아래에서 시작 */
                     width: '2px',
-                    height: 'calc(100% + 12px)',
+                    height: 'calc(100% + 12px)',     /* 다음 단계까지 연결 */
                     background: 'var(--border)',
                   }} />
                 )}
 
-                {/* Step number circle */}
+                {/* 단계 번호 원형 배지
+                    zIndex: 1 — 연결선 위에 표시 */}
                 <div style={{
                   width: '44px', height: '44px',
                   borderRadius: '50%',
                   background: 'var(--bg-sub)',
-                  border: '2px solid var(--primary)',
+                  border: '2px solid var(--primary)', /* 파란 테두리 */
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
+                  flexShrink: 0,                      /* flex에서 줄어들지 않도록 */
                   fontSize: '0.75rem',
                   fontWeight: 800,
                   color: 'var(--primary)',
                   fontFamily: 'monospace',
-                  zIndex: 1,
+                  zIndex: 1,                          /* 연결선 위 레이어 */
                 }}>
                   {step.number}
                 </div>
 
+                {/* 단계 콘텐츠 영역 */}
                 <div style={{ paddingTop: '6px' }}>
+                  {/* 이모지 아이콘 + 제목 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span style={{ fontSize: '1.1rem' }}>{step.icon}</span>
                     <h3 style={{
@@ -255,6 +322,8 @@ export default function Guide() {
                       {step.title}
                     </h3>
                   </div>
+
+                  {/* 단계 설명 */}
                   <p style={{
                     fontSize: '0.875rem',
                     color: 'var(--text-secondary)',
@@ -263,6 +332,8 @@ export default function Guide() {
                   }}>
                     {step.description}
                   </p>
+
+                  {/* 팁 뱃지 — 인라인 flex로 💡 + 텍스트 정렬 */}
                   <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -280,7 +351,9 @@ export default function Guide() {
             ))}
           </motion.div>
 
-          {/* Right: Visual */}
+          {/* ── 오른쪽: 폰 거치대 일러스트 ──
+              x: 24 → 0 (오른쪽에서 왼쪽으로 슬라이드)
+              delay: 0.2 → 왼쪽 콘텐츠보다 0.2초 늦게 등장 */}
           <motion.div
             initial={{ opacity: 0, x: 24 }}
             whileInView={{ opacity: 1, x: 0 }}

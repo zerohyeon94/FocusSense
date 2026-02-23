@@ -1,60 +1,114 @@
+/* ============================================================
+   index.css — 전역(Global) 스타일시트
+   ============================================================
+   이 파일은 프로젝트 전체에 적용되는 CSS를 정의합니다.
+   구성:
+     1. CSS Custom Properties (CSS 변수) — 라이트/다크 테마 색상
+     2. Reset & Base — 브라우저 기본 스타일 초기화
+     3. Typography Utilities — 공통 텍스트 클래스
+     4. Layout Utilities — 컨테이너, 섹션 레이아웃
+     5. Gradient Text — 그라디언트 텍스트 효과
+     6. Button Styles — 버튼 공통 스타일
+     7. Card Base — 카드 컴포넌트 공통 스타일
+     8. Scrollbar — 커스텀 스크롤바
+     9. Accessibility — 키보드 포커스 링
+    10. Responsive Breakpoints — 반응형 미디어 쿼리
+   ============================================================ */
+
+
 /* ===========================
-   CSS Custom Properties
+   1. CSS Custom Properties (CSS 변수)
+   ===========================
+   CSS 변수는 --이름: 값; 형식으로 선언합니다.
+   var(--이름)으로 어디서든 재사용할 수 있습니다.
+   한 곳에서 색상을 바꾸면 전체 UI에 반영됩니다.
+
+   :root 선택자: 문서의 최상위 요소(html)에 적용되어
+   모든 하위 요소에서 변수를 참조할 수 있습니다.
    =========================== */
 :root {
-  --primary: #007AFF;
-  --primary-dark: #0055CC;
-  --primary-light: #4DA3FF;
-  --accent: #30D158;
-  --warning: #FFD60A;
-  --danger: #FF453A;
+  /* 브랜드 색상 (Apple 블루 계열) */
+  --primary: #007AFF;       /* 주요 강조색 — 버튼, 링크, 아이콘 등 */
+  --primary-dark: #0055CC;  /* 호버(hover) 시 더 어두운 파란색 */
+  --primary-light: #4DA3FF; /* 그라디언트나 보조 강조에 사용 */
+  --accent: #30D158;        /* 초록색 — 집중 중/성공 상태 표시 */
+  --warning: #FFD60A;       /* 노란색 — 주의/경고 상태 표시 */
+  --danger: #FF453A;        /* 빨간색 — 졸음/에러 상태 표시 */
 
-  --text-primary: #1d1d1f;
-  --text-secondary: #6e6e73;
-  --text-tertiary: #86868b;
+  /* 텍스트 색상 계층 (라이트 모드) */
+  --text-primary: #1d1d1f;   /* 제목, 강조 텍스트 — 거의 검정 */
+  --text-secondary: #6e6e73; /* 본문, 설명 텍스트 — 중간 회색 */
+  --text-tertiary: #86868b;  /* 부가 정보, 메타 텍스트 — 옅은 회색 */
 
-  --bg-main: #ffffff;
-  --bg-sub: #f5f5f7;
-  --bg-card: #ffffff;
-  --bg-elevated: #f9f9fb;
+  /* 배경 색상 계층 (라이트 모드) */
+  --bg-main: #ffffff;     /* 기본 배경 — 흰색 */
+  --bg-sub: #f5f5f7;      /* 섹션 구분용 배경 — 매우 연한 회색 */
+  --bg-card: #ffffff;     /* 카드 컴포넌트 배경 */
+  --bg-elevated: #f9f9fb; /* 팝업, 툴팁 등 떠있는 요소 배경 */
 
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.15);
+  /* 테두리 색상
+     rgba(r, g, b, a) — a는 투명도 (0=완전 투명, 1=불투명) */
+  --border: rgba(0, 0, 0, 0.08);       /* 기본 테두리 — 8% 불투명 검정 */
+  --border-strong: rgba(0, 0, 0, 0.15); /* 강조 테두리 — 15% 불투명 검정 */
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+  /* 그림자 (box-shadow)
+     형식: offset-x offset-y blur-radius color */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);   /* 작은 그림자 */
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);  /* 중간 그림자 — 카드 호버 */
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12); /* 큰 그림자 — 모달, 팝업 */
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  /* 테두리 반경 (border-radius) — 둥근 모서리 크기 */
+  --radius-sm: 10px; /* 작은 태그, 뱃지 */
+  --radius-md: 16px; /* 중간 UI 요소 */
+  --radius-lg: 24px; /* 카드 컴포넌트 */
+  --radius-xl: 32px; /* 큰 컨테이너 */
 
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 트랜지션 (애니메이션 속도/가속도)
+     cubic-bezier: 베지어 곡선으로 가속도를 세밀하게 제어합니다.
+     (0.4, 0, 0.2, 1)은 Material Design의 'ease' 커브입니다. */
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);       /* 기본 전환 */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* 빠른 전환 */
 }
 
+/* ──────────────────────────────────────────────────────
+   다크 모드 테마
+   body.dark: App.tsx에서 isDarkMode가 true일 때
+              document.body.classList.add('dark')로 추가됩니다.
+   같은 변수 이름을 덮어씌워 모든 컴포넌트가 자동으로 다크 색상을 사용합니다.
+   ────────────────────────────────────────────────────── */
 body.dark {
+  /* 텍스트 색상 (다크 모드 — 어두운 배경에 밝은 텍스트) */
   --text-primary: #f5f5f7;
   --text-secondary: #ababaf;
   --text-tertiary: #787880;
 
+  /* 배경 색상 (다크 모드 — 짙은 남색 계열) */
   --bg-main: #0f0f1a;
   --bg-sub: #1a1a2e;
   --bg-card: #1c1c1e;
   --bg-elevated: #252530;
 
+  /* 테두리 (다크 모드 — 흰색 반투명) */
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.15);
 
+  /* 그림자 (다크 모드 — 어두운 배경에서 더 진한 그림자) */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
+
 /* ===========================
-   Reset & Base
+   2. Reset & Base
+   ===========================
+   브라우저마다 기본 스타일이 달라 통일성을 잃을 수 있습니다.
+   Reset CSS로 브라우저 기본값을 제거하고 일관된 기준점을 만듭니다.
    =========================== */
+
+/* 유니버설 셀렉터: 모든 요소 + 가상 요소에 적용
+   box-sizing: border-box — padding/border를 width에 포함시킵니다.
+   (기본값 content-box는 padding이 추가되어 크기 계산이 복잡해집니다) */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -62,118 +116,161 @@ body.dark {
 }
 
 html {
+  /* 앵커(#섹션) 클릭 시 부드럽게 스크롤 이동 */
   scroll-behavior: smooth;
+  /* 고정 헤더(64px) 높이만큼 스크롤 위치를 offset하여
+     헤더에 가려지지 않도록 합니다 */
   scroll-padding-top: 64px;
+  /* 폰트 안티앨리어싱 — 맥OS/WebKit에서 텍스트를 더 선명하게 렌더링 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 body {
+  /* 시스템 폰트 스택: 각 OS의 기본 폰트를 우선 사용합니다.
+     -apple-system    → macOS/iOS의 San Francisco
+     BlinkMacSystemFont → Chrome on macOS
+     "SF Pro Display" → 명시적 San Francisco 지정
+     "Segoe UI"       → Windows
+     Roboto           → Android/Chrome
+     Arial, sans-serif → 최후 대비 폰트 */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  line-height: 1.6;
+  line-height: 1.6;       /* 행 간격 — 텍스트 가독성을 위해 1.6배 */
   color: var(--text-primary);
   background-color: var(--bg-main);
+  /* 다크모드 전환 시 배경/텍스트 색상이 부드럽게 변화 */
   transition: background-color var(--transition), color var(--transition);
+  /* 가로 스크롤바 숨김 — 레이아웃 오버플로우 방지 */
   overflow-x: hidden;
 }
 
+/* 링크 기본 스타일 제거 — 각 컴포넌트에서 직접 스타일링 */
 a {
-  text-decoration: none;
-  color: inherit;
+  text-decoration: none; /* 밑줄 제거 */
+  color: inherit;        /* 부모 요소의 색상 상속 */
 }
 
+/* 목록 불릿(•) 제거 */
 ul {
   list-style: none;
 }
 
+/* 이미지 반응형 처리 — 부모 컨테이너를 초과하지 않도록 */
 img {
   max-width: 100%;
 }
 
+
 /* ===========================
-   Typography Utilities
+   3. Typography Utilities (텍스트 유틸리티 클래스)
    =========================== */
+
+/* 섹션 상단에 표시되는 작은 레이블 (예: "핵심 기능", "작동 원리") */
 .section-label {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.1em; /* 자간을 넓혀 대문자 가독성 향상 */
+  text-transform: uppercase; /* 소문자를 자동으로 대문자로 변환 */
   color: var(--primary);
   margin-bottom: 16px;
 }
 
+/* 섹션 대제목 — clamp()로 화면 크기에 따라 폰트 크기가 자동 조절됩니다.
+   clamp(최솟값, 선호값, 최댓값)
+   → 뷰포트 너비(vw)가 변해도 2rem~3rem 사이에서 유동적으로 크기가 결정됩니다. */
 .section-title {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.03em; /* 큰 제목은 자간을 좁혀 더 단단하게 보이도록 */
   line-height: 1.1;
   color: var(--text-primary);
   margin-bottom: 20px;
 }
 
+/* 섹션 부제목 — 제목 아래에 오는 설명 텍스트 */
 .section-subtitle {
   font-size: 1.15rem;
   color: var(--text-secondary);
   line-height: 1.6;
-  max-width: 560px;
+  max-width: 560px; /* 너무 길어지지 않도록 최대 너비 제한 */
 }
 
+
 /* ===========================
-   Layout Utilities
+   4. Layout Utilities (레이아웃 유틸리티)
    =========================== */
+
+/* 콘텐츠 최대 너비 컨테이너
+   - max-width: 1100px — 넓은 화면에서 콘텐츠가 너무 퍼지지 않도록 제한
+   - margin: 0 auto — 좌우 여백을 동등하게 주어 가운데 정렬
+   - padding: 0 24px — 좌우 여백으로 화면 가장자리에 붙지 않도록 */
 .container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
+/* 각 섹션의 상하 여백 — 섹션 간 충분한 공간 확보 */
 .section {
   padding: 120px 0;
 }
 
-/* ===========================
-   Gradient Text
-   =========================== */
-.gradient-text {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, #a78bfa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* ===========================
-   Button Styles
+   5. Gradient Text (그라디언트 텍스트)
+   ===========================
+   텍스트에 그라디언트(색상 그라데이션)를 적용하는 기법입니다.
+   일반 CSS color 속성으로는 단색만 가능하므로
+   background-clip: text 트릭을 사용합니다.
    =========================== */
+.gradient-text {
+  /* 135도 방향으로 파란색 → 연파란색 → 보라색으로 그라디언트 배경 생성 */
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, #a78bfa 100%);
+  /* 배경을 텍스트 모양으로 자릅니다 */
+  -webkit-background-clip: text; /* Safari/Chrome 접두사 버전 */
+  /* 텍스트 색상을 투명하게 만들어 배경이 비쳐 보이도록 합니다 */
+  -webkit-text-fill-color: transparent;
+  background-clip: text; /* 표준 속성 */
+}
+
+
+/* ===========================
+   6. Button Styles (버튼 스타일)
+   =========================== */
+
+/* 주요 액션 버튼 (파란 배경) */
 .btn-primary {
-  display: inline-flex;
+  display: inline-flex;  /* 아이콘과 텍스트를 가로로 정렬하기 위해 flex 사용 */
   align-items: center;
-  gap: 8px;
+  gap: 8px;              /* 아이콘과 텍스트 사이 간격 */
   background: var(--primary);
   color: white;
   border: none;
   padding: 14px 28px;
-  border-radius: 50px;
+  border-radius: 50px;   /* pill(캡슐) 모양의 버튼 */
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition); /* 호버 시 모든 속성 부드럽게 변화 */
   letter-spacing: -0.01em;
 }
 
+/* 주요 버튼 호버(마우스 올림) 상태 */
 .btn-primary:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+  background: var(--primary-dark); /* 더 어두운 파란색으로 변경 */
+  transform: translateY(-2px);     /* 2px 위로 살짝 올라가는 효과 */
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4); /* 파란 글로우 효과 */
 }
 
+/* 보조 액션 버튼 (아웃라인 스타일) */
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: transparent;
+  background: transparent;           /* 배경 없음 */
   color: var(--primary);
-  border: 1.5px solid var(--primary);
+  border: 1.5px solid var(--primary); /* 파란 테두리만 표시 */
   padding: 14px 28px;
   border-radius: 50px;
   font-size: 1rem;
@@ -182,65 +279,93 @@ img {
   transition: all var(--transition);
 }
 
+/* 보조 버튼 호버 상태 */
 .btn-secondary:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(0, 122, 255, 0.08); /* 반투명 파란 배경으로 변경 */
   transform: translateY(-2px);
 }
 
+
 /* ===========================
-   Card Base
+   7. Card Base (카드 기본 스타일)
+   ===========================
+   기능 카드, 철학 카드 등 재사용되는 카드 컴포넌트의 공통 스타일입니다.
+   className="card"를 추가하면 자동으로 이 스타일이 적용됩니다.
    =========================== */
 .card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg); /* 24px 둥근 모서리 */
   border: 1px solid var(--border);
   transition: all var(--transition);
 }
 
+/* 카드 호버 시 위로 살짝 올라가며 그림자 생성 */
 .card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-4px);
+  transform: translateY(-4px); /* 4px 위로 이동 */
 }
 
+
 /* ===========================
-   Scrollbar
+   8. Scrollbar (커스텀 스크롤바)
+   ===========================
+   Webkit 기반 브라우저(Chrome, Safari, Edge)에서만 동작합니다.
+   Firefox는 별도의 scrollbar-width, scrollbar-color 속성을 사용합니다.
    =========================== */
+
+/* 스크롤바 너비 */
 ::-webkit-scrollbar {
   width: 6px;
 }
 
+/* 스크롤바 트랙(배경 영역) */
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent; /* 투명하게 처리 */
 }
 
+/* 스크롤바 썸(실제 이동하는 막대) */
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: var(--border-strong); /* 테두리 색상과 동일하게 */
   border-radius: 3px;
 }
 
-/* ===========================
-   Focus Ring Accessibility
-   =========================== */
-:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
 
 /* ===========================
-   Responsive Breakpoints
+   9. Focus Ring Accessibility (접근성 — 키보드 포커스)
+   ===========================
+   키보드 Tab 키로 탐색할 때 현재 포커스된 요소를 시각적으로 표시합니다.
+   :focus-visible — 마우스 클릭 시에는 표시되지 않고,
+                   키보드 탐색 시에만 표시됩니다.
+   (웹 접근성 WCAG 가이드라인 준수)
    =========================== */
+:focus-visible {
+  outline: 2px solid var(--primary); /* 파란 아웃라인 */
+  outline-offset: 2px;               /* 요소와 아웃라인 사이 간격 */
+}
+
+
+/* ===========================
+   10. Responsive Breakpoints (반응형 미디어 쿼리)
+   ===========================
+   @media (max-width: Npx): 화면 너비가 N픽셀 이하일 때 적용됩니다.
+   "모바일 퍼스트" 방식과 반대로 데스크톱 기준으로 작성하고
+   좁아질수록 스타일을 덮어씁니다.
+   =========================== */
+
+/* 태블릿 이하 (768px 이하 — 일반적인 태블릿 가로 너비) */
 @media (max-width: 768px) {
   .section {
-    padding: 80px 0;
+    padding: 80px 0; /* 섹션 상하 여백 축소 */
   }
 
   .section-title {
-    font-size: 2rem;
+    font-size: 2rem; /* 제목 크기 고정 (clamp 대신 직접 지정) */
   }
 }
 
+/* 모바일 이하 (480px 이하 — 스마트폰 세로 너비) */
 @media (max-width: 480px) {
   .container {
-    padding: 0 16px;
+    padding: 0 16px; /* 컨테이너 좌우 여백 더 축소 */
   }
 }
