@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with the FocusSense repository.
 
 ## Project Overview
 
@@ -12,120 +12,75 @@ FocusSense is an iOS study timer app that measures user focus in real-time using
 > Users looking at a monitor while coding should be considered **focused**.
 > They don't need to face the phone camera directly.
 
-## Build & Run
+## Repository Structure
 
-### iOS App
-- Open `iOS/FocusSense.xcodeproj` in Xcode 15+
-- Target: iOS 17.0+
-- **Must run on physical device** (camera required, simulator won't work)
+```
+FocusSense/
+├── iOS/    - SwiftUI iOS app (Swift, Xcode 15+, iOS 17+)
+├── ML/     - ML training pipeline (Python, PyTorch → CoreML)
+└── Web/    - Landing page (React 19, TypeScript, Vite)
+```
 
-### ML Pipeline
+Each sub-project has its own `CLAUDE.md` with project-specific guidance.
+Read the relevant sub-project `CLAUDE.md` before making changes.
+
+## Git Worktree Workflow
+
+This project uses **git worktrees** to enable parallel development across features.
+
+### Worktree Rules
+
+- **Branch naming**: `feature/<name>`, `fix/<name>`, `docs/<name>`
+- **NEVER create branches prefixed with `claude/`** — those are reserved for Claude Code internal sessions and must not be manually created
+- Each worktree is an independent working directory; changes are isolated until merged
+
+### Creating a New Worktree
+
 ```bash
-cd ML
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Create a new feature branch worktree
+git worktree add ../<worktree-name> -b feature/<name>
 
-# Train
-python training/train.py \
-  --train_dir ./data/drowsiness/train \
-  --val_dir ./data/drowsiness/val \
-  --epochs 50
+# List active worktrees
+git worktree list
 
-# Convert to CoreML
-python conversion/convert_to_coreml.py
+# Remove a worktree after merging
+git worktree remove ../<worktree-name>
+git branch -d feature/<name>
 ```
 
-## Architecture
+### Worktree Tips
 
-**Pattern**: MVVM + Services
+- Work only within your worktree's directory — do not cross-edit other worktrees
+- Always branch from `main` or `develop`, never from a `claude/` branch
+- PRs should target `develop`; `main` is for releases only
+
+## Branch Strategy
 
 ```
-Views (SwiftUI) → ViewModels (@MainActor) → Services
-                                            ├── SimpleFocusDetectionService (core analysis)
-                                            ├── CameraService
-                                            └── CalibrationService
+main        ← production releases only
+develop     ← integration branch (default PR target)
+feature/*   ← new features
+fix/*       ← bug fixes
+docs/*      ← documentation only changes
 ```
 
-### Key Files
-- `SimpleFocusDetectionService.swift` - **Core detection logic**: Vision EAR + CoreML hybrid
-- `TimerViewModel.swift` - Main ViewModel, handles auto-pause/resume
-- `CameraService.swift` - Camera management and frame delivery
-- `CalibrationService.swift` - User-specific baseline calibration
+## Commit Style
 
-## Focus Detection Logic
-
-### Hybrid Scoring (Vision 70% + CoreML 30%)
-```swift
-let combinedDrowsyScore = 0.7 * visionDrowsyScore + 0.3 * coreMLDrowsyProb
+```
+feat: add calibration reset button
+fix: correct EAR threshold for low-light conditions
+docs: update ML training instructions
+refactor: extract eye state logic into helper
 ```
 
-### State Determination
-| Combined Score | Eye State | Focus Level |
-|----------------|-----------|-------------|
-| < 0.3 | open | focused |
-| 0.3 - 0.6 | halfClosed | warning |
-| > 0.6 (2s+) | closed | drowsy → auto-pause |
-| No face (3s+) | - | away → auto-pause |
+## General Code Style
 
-### EAR (Eye Aspect Ratio)
-```swift
-// EAR = (|p2-p6| + |p3-p5|) / (2 × |p1-p4|)
-// Normal: ~0.3, Drowsy: < 0.2
-// Use ratio against calibrated baseline, not absolute values
-let earRatio = currentEAR / calibrationData.baselineEAR
-```
+- Avoid over-engineering; implement only what is asked
+- Do not add comments, docstrings, or type annotations to code you did not change
+- Do not add error handling for impossible scenarios
+- Follow the existing style of each sub-project (see per-project CLAUDE.md)
 
-## Critical Guidelines
+## Console Log Conventions (iOS)
 
-### DO NOT judge focus by camera direction
-```swift
-// ❌ WRONG
-if headPose.yaw > 30 { return .unfocused }
-
-// ✅ CORRECT
-if !isFaceDetected { return .away }      // No face → away
-if eyeState == .closed { return .drowsy } // Eyes closed → drowsy
-// Otherwise → focused (even when looking at monitor)
-```
-
-### Use time-based thresholds
-```swift
-private let awayThreshold: TimeInterval = 3.0   // 3s no face → away
-private let drowsyThreshold: TimeInterval = 2.0 // 2s eyes closed → drowsy
-```
-
-### Swift Concurrency
-```swift
-// Use Task instead of DispatchQueue
-// ❌ DispatchQueue.main.async { }
-// ✅ Task { @MainActor in }
-
-// Delegate methods need nonisolated + Task
-nonisolated func cameraService(_ service: CameraService, didOutput sampleBuffer: CMSampleBuffer) {
-    Task { @MainActor in
-        self.focusService.processFrame(sampleBuffer)
-    }
-}
-```
-
-## Debugging
-
-Run app → Start timer → Tap "AI 분석 보기" to see:
-- Presence state (present/away/returning)
-- Eye state (open/halfClosed/closed)
-- EAR values (current/baseline/ratio)
-- CoreML drowsy probability
-- Combined score
-
-Console log conventions:
 - `✅` success, `❌` failure, `⚠️` warning
 - `🔄` reset, `👋` return detected, `🚶` away
-
-## Code Style
-
-- Use `// MARK: -` sections
-- `@MainActor` for UI-updating classes
-- `nonisolated` for delegate methods
-- Services: `~Service`, ViewModels: `~ViewModel`
-- Split Views into separate structs when > 100 lines
