@@ -11,6 +11,21 @@ import SwiftUI
 struct ContributionGraphCard: View {
     @ObservedObject var viewModel: DashboardViewModel
 
+    private let spacing: CGFloat = 3
+    private let labelWidth: CGFloat = 16
+
+    private var columnCount: Int {
+        viewModel.weeklyGrid.first?.count ?? 0
+    }
+
+    private var cellSize: CGFloat {
+        let screenWidth = UIScreen.main.bounds.width
+        let totalHorizontalPadding: CGFloat = 64 // 16*2 (outer) + 16*2 (card)
+        let availableWidth = screenWidth - totalHorizontalPadding - labelWidth - spacing
+        guard columnCount > 0 else { return 14 }
+        return (availableWidth - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // 헤더
@@ -23,43 +38,36 @@ struct ContributionGraphCard: View {
             }
 
             // 월 라벨
-            MonthLabelsRow(viewModel: viewModel)
+            MonthLabelsRow(viewModel: viewModel, cellSize: cellSize, labelWidth: labelWidth)
 
             // 그리드
-            HStack(alignment: .top, spacing: 3) {
-                // 요일 라벨
-                VStack(spacing: 3) {
+            HStack(alignment: .top, spacing: spacing) {
+                // 요일 라벨 (전체 표시)
+                VStack(spacing: spacing) {
                     ForEach(0..<7, id: \.self) { row in
-                        if row == 1 || row == 3 || row == 5 {
-                            Text(["", "월", "", "수", "", "금", ""][row])
-                                .font(.system(size: 9))
-                                .foregroundColor(.secondary)
-                                .frame(width: 16, height: 14)
-                        } else {
-                            Color.clear
-                                .frame(width: 16, height: 14)
-                        }
+                        Text(["일", "월", "화", "수", "목", "금", "토"][row])
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary)
+                            .frame(width: labelWidth, height: cellSize)
                     }
                 }
 
                 // 잔디 셀 그리드
-                ScrollView(.horizontal, showsIndicators: false) {
-                    let columnCount = viewModel.weeklyGrid.first?.count ?? 0
-                    HStack(spacing: 3) {
-                        ForEach(0..<columnCount, id: \.self) { col in
-                            VStack(spacing: 3) {
-                                ForEach(0..<7, id: \.self) { row in
-                                    if row < viewModel.weeklyGrid.count {
-                                        ContributionCell(
-                                            activity: viewModel.weeklyGrid[row][col],
-                                            isSelected: isSelected(row: row, col: col),
-                                            onTap: {
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    viewModel.selectedDay = viewModel.weeklyGrid[row][col]
-                                                }
+                HStack(spacing: spacing) {
+                    ForEach(0..<columnCount, id: \.self) { col in
+                        VStack(spacing: spacing) {
+                            ForEach(0..<7, id: \.self) { row in
+                                if row < viewModel.weeklyGrid.count {
+                                    ContributionCell(
+                                        activity: viewModel.weeklyGrid[row][col],
+                                        isSelected: isSelected(row: row, col: col),
+                                        cellSize: cellSize,
+                                        onTap: {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                viewModel.selectedDay = viewModel.weeklyGrid[row][col]
                                             }
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -96,19 +104,21 @@ struct ContributionGraphCard: View {
 // MARK: - Month Labels Row
 struct MonthLabelsRow: View {
     @ObservedObject var viewModel: DashboardViewModel
+    let cellSize: CGFloat
+    let labelWidth: CGFloat
 
     var body: some View {
         let columnCount = viewModel.weeklyGrid.first?.count ?? 0
         HStack(spacing: 3) {
-            Color.clear.frame(width: 16) // 요일 라벨 영역 오프셋
+            Color.clear.frame(width: labelWidth)
             ForEach(0..<columnCount, id: \.self) { col in
                 if let label = viewModel.monthLabel(for: col) {
                     Text(label)
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
-                        .frame(width: 14, alignment: .leading)
+                        .frame(width: cellSize, alignment: .leading)
                 } else {
-                    Color.clear.frame(width: 14)
+                    Color.clear.frame(width: cellSize)
                 }
             }
         }
@@ -119,20 +129,26 @@ struct MonthLabelsRow: View {
 struct ContributionCell: View {
     let activity: DayActivity?
     let isSelected: Bool
+    let cellSize: CGFloat
     let onTap: () -> Void
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 3)
-            .fill(activity?.level.color ?? Color.white.opacity(0.03))
-            .frame(width: 14, height: 14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 3)
-                    .strokeBorder(
-                        isSelected ? Color.orange : Color.clear,
-                        lineWidth: isSelected ? 2 : 0
-                    )
-            )
-            .onTapGesture(perform: onTap)
+        if let activity {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(activity.level.color)
+                .frame(width: cellSize, height: cellSize)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3)
+                        .strokeBorder(
+                            isSelected ? Color.orange : Color.clear,
+                            lineWidth: isSelected ? 2 : 0
+                        )
+                )
+                .onTapGesture(perform: onTap)
+        } else {
+            Color.clear
+                .frame(width: cellSize, height: cellSize)
+        }
     }
 }
 
