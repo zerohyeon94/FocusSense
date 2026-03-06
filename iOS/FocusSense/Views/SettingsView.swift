@@ -5,6 +5,36 @@
 //  앱 설정 화면
 //
 
+// ============================================================================
+// 📚 [파일 개요] SettingsView - 앱 설정 화면
+// ============================================================================
+//
+// 📚 [@AppStorage - UserDefaults 영속 저장]
+//   @AppStorage("key")는 UserDefaults를 SwiftUI 프로퍼티 래퍼로 감싼 것입니다.
+//   - 값이 변경되면 자동으로 UserDefaults에 저장되고, 앱 재시작 후에도 유지됩니다.
+//   - @State처럼 값이 변경되면 View가 자동 갱신됩니다.
+//   - 예: @AppStorage("hapticEnabled") var hapticEnabled = true
+//     → UserDefaults.standard.bool(forKey: "hapticEnabled")와 동일
+//
+// 📚 [List + Section 패턴]
+//   iOS 설정 앱과 동일한 구조입니다:
+//   List {
+//       Section("카테고리 제목") { ... 행들 ... }
+//       Section("다른 카테고리") { ... 행들 ... }
+//   }
+//   Section은 시각적 그룹핑과 헤더/푸터 텍스트를 제공합니다.
+//
+// 📚 [NavigationLink - 푸시 내비게이션]
+//   NavigationLink는 탭하면 새 화면을 오른쪽에서 밀어 넣는(push) 내비게이션입니다.
+//   NavigationStack 안에서만 동작하며, 자동으로 뒤로가기 버튼이 생성됩니다.
+//
+// 📚 [.task 수정자 - 비동기 작업]
+//   .task { await ... }는 View가 나타날 때 비동기 작업을 실행합니다.
+//   .onAppear와 달리 async/await를 직접 사용할 수 있고,
+//   View가 사라지면 자동으로 Task가 취소됩니다.
+//
+// ============================================================================
+
 import SwiftUI
 
 struct SettingsView: View {

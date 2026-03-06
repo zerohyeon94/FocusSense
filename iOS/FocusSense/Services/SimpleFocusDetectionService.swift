@@ -7,6 +7,50 @@
 //  하이브리드: Vision EAR (70%) + CoreML (30%)
 //
 
+// ============================================================================
+// 📚 [파일 개요] SimpleFocusDetectionService - 앱의 핵심 엔진
+// ============================================================================
+//
+// 📚 이 파일은 FocusSense 앱의 **가장 중요한 파일**입니다.
+//    카메라에서 받은 영상 프레임을 분석하여 "집중/주의/졸음/자리비움"을 판단합니다.
+//
+// 📚 [하이브리드 분석 파이프라인] - 프레임 1장이 처리되는 5단계:
+//    Step 1. Vision Framework로 얼굴 감지 (VNDetectFaceLandmarksRequest)
+//    Step 2. 눈 랜드마크 6개 포인트로 EAR(Eye Aspect Ratio) 계산
+//    Step 3. CoreML 모델로 졸음 확률 추론 (얼굴 영역만 크롭하여 입력)
+//    Step 4. 하이브리드 점수 = Vision EAR 70% + CoreML 30% 가중 합산
+//    Step 5. 결합 점수 → 눈 상태(EyeState) → 최종 집중도(FocusLevel) 결정
+//
+// 📚 [핵심 원칙: 시선 방향으로 판단하지 않는다!]
+//    사용자가 모니터를 보며 코딩 중이면 카메라를 안 봐도 "집중 중"입니다.
+//    yaw(좌우 회전)로 unfocused를 판단하면 안 됩니다.
+//    판단 기준은 오직: (1) 얼굴 존재 여부 (2) 눈 감김 상태
+//
+// 📚 [이 파일에 정의된 타입들]:
+//    - PresenceState (enum) : 사용자 존재 상태 (present/away/returning)
+//    - EyeState (enum)      : 눈 상태 (open/halfClosed/closed/unknown)
+//    - SimpleDebugInfo      : "AI 분석 보기" 디버그 화면에 표시할 데이터
+//    - SimpleFocusDetectionService (class) : 핵심 서비스 클래스
+//
+// 📚 [EAR 계산 공식]:
+//    EAR = (|p2-p6| + |p3-p5|) / (2 × |p1-p4|)
+//    - p1~p6: 눈 윤곽 6개 포인트 (Vision Framework 제공)
+//    - 정상 눈: ~0.3 | 졸음: < 0.2
+//    - 캘리브레이션 기준값 대비 비율(earRatio)로 개인차를 보정합니다
+//
+// 📚 [시간 기반 임계값 (오판 방지)]:
+//    - 3초간 얼굴 미감지 → away (깜빡임과 구분)
+//    - 2초간 눈 감김 → drowsy (의도적 감김과 구분)
+//    - 일반 깜빡임(~0.3초)은 이 임계값 이하이므로 무시됩니다
+//
+// 📚 [ObservableObject + @Published 패턴]:
+//    final class ... : ObservableObject는 SwiftUI에게 "이 객체가 변하면 UI 갱신"을 알립니다.
+//    @Published var currentState → 값이 바뀔 때마다 이 객체를 @ObservedObject로 관찰 중인
+//    모든 View가 자동으로 다시 그려집니다(re-render).
+//    final: 상속 불가를 명시하여 컴파일러 최적화(정적 디스패치)를 가능하게 합니다.
+//
+// ============================================================================
+
 import Foundation
 import Vision
 import AVFoundation

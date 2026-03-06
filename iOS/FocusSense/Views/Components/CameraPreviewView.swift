@@ -5,6 +5,33 @@
 //  UIKit의 AVCaptureVideoPreviewLayer를 SwiftUI에서 사용
 //
 
+// ============================================================================
+// 📚 [파일 개요] CameraPreviewView - UIKit 카메라 프리뷰를 SwiftUI에서 사용하기
+// ============================================================================
+//
+// UIViewRepresentable: UIKit ↔ SwiftUI 브릿지 프로토콜
+//   SwiftUI에는 카메라 프리뷰를 직접 표시하는 뷰가 없다.
+//   AVCaptureVideoPreviewLayer는 CALayer 기반이므로 반드시 UIView 위에서 동작한다.
+//   UIViewRepresentable을 채택하면 UIKit의 UIView를 SwiftUI 뷰 계층에 임베딩할 수 있다.
+//
+// 라이프사이클 메서드:
+//   - makeUIView(context:)   → UIView 인스턴스를 최초 1회 생성
+//   - updateUIView(_:context:) → SwiftUI 상태가 변경될 때마다 호출되어 UIView를 갱신
+//   SwiftUI가 뷰를 재생성하면 makeUIView → updateUIView 순서로 실행된다.
+//
+// 비동기 설정 패턴 (Task + Task.detached):
+//   AVCaptureVideoPreviewLayer 생성은 무거운 작업이므로 Task.detached로
+//   백그라운드 스레드에서 수행한 뒤, @MainActor로 돌아와 UI를 갱신한다.
+//   setupTask를 저장해두고, 뷰 해제(deinit) 시 cancel()하여 메모리 누수를 방지한다.
+//
+// CATransaction.setDisableActions(true):
+//   layoutSubviews()에서 previewLayer의 frame을 업데이트할 때,
+//   Core Animation의 암시적 애니메이션을 비활성화한다.
+//   이를 사용하지 않으면 화면 회전/크기 변경 시 레이어가 부드럽게 이동하며
+//   프리뷰 영상이 잠깐 어긋나 보이는 문제가 발생한다.
+//
+// ============================================================================
+
 import SwiftUI
 import AVFoundation
 

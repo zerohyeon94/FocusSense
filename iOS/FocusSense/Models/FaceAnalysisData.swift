@@ -5,6 +5,33 @@
 //  얼굴 분석 결과 데이터 (디버그 시각화용)
 //
 
+// ============================================================================
+// 📚 [파일 개요] FaceAnalysisData - 얼굴 분석의 모든 데이터를 담는 컨테이너
+// ============================================================================
+//
+// 📚 이 파일의 역할:
+//    CameraDebugView("AI 분석 보기" 화면)에서 표시하는 모든 분석 데이터를
+//    하나의 struct로 모아둡니다.
+//
+// 📚 데이터 흐름:
+//    FocusDetectionService / SimpleFocusDetectionService
+//        └── 매 프레임마다 FaceAnalysisData 업데이트
+//            └── CameraDebugView에서 실시간 표시
+//
+// 📚 [struct vs class 선택 기준]
+//    struct를 사용한 이유:
+//    - SwiftData 저장이 필요 없는 일시적 데이터 (프레임마다 새로 생성)
+//    - Equatable 자동 합성: 모든 프로퍼티가 Equatable이면 자동으로 == 생성
+//    - SwiftUI의 변경 감지에 유리: 값이 바뀌면 View가 자동 갱신
+//
+// 📚 [정규화된 좌표 (Normalized Coordinates)]
+//    Vision Framework는 0~1 범위의 정규화된 좌표를 반환합니다.
+//    - (0,0) = 이미지 좌하단 (Vision 좌표계)
+//    - (1,1) = 이미지 우상단
+//    - 화면에 표시할 때 Y축 반전이 필요합니다 (UIKit은 좌상단이 원점)
+//
+// ============================================================================
+
 import Foundation
 import SwiftUI
 
@@ -180,6 +207,11 @@ struct FaceAnalysisData: Equatable {
 }
 
 // MARK: - Debug Overlay Style
+
+// 📚 [DebugOverlayStyle - 디버그 오버레이 스타일 상수]
+//    FaceOverlayView에서 사용하는 색상/크기 상수를 한곳에 모아둡니다.
+//    static let으로 선언하여 인스턴스 생성 없이 DebugOverlayStyle.eyeColor로 접근합니다.
+//    디자인 변경 시 이 파일만 수정하면 전체 오버레이 스타일이 바뀝니다.
 struct DebugOverlayStyle {
     // 색상
     static let faceBoundingBoxColor = Color.green
