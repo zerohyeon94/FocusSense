@@ -44,6 +44,7 @@ struct SettingsView: View {
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("autoPauseEnabled") private var autoPauseEnabled = true
     @AppStorage("drowsinessThreshold") private var drowsinessThreshold = 3.0
+    @AppStorage("contributionDisplayMode") private var contributionDisplayMode = "grass"
 
     @State private var notificationStatus: String = ""
 
@@ -84,6 +85,25 @@ struct SettingsView: View {
                     Text("학습 계획")
                 } footer: {
                     Text("학습 계획을 등록하면 타이머 시작 시 과목을 선택하고, 설정된 시간에 알림을 받을 수 있습니다.")
+                }
+
+                // 화면 표시
+                Section {
+                    Picker(selection: $contributionDisplayMode) {
+                        Label("학습 잔디", systemImage: "square.grid.3x3.fill")
+                            .tag("grass")
+                        Label("별자리", systemImage: "star.fill")
+                            .tag("constellation")
+                    } label: {
+                        SettingRow(
+                            icon: "paintbrush.fill",
+                            title: "학습 그래프 스타일",
+                            color: .yellow
+                        )
+                    }
+                    .pickerStyle(.menu)
+                } header: {
+                    Text("화면 표시")
                 }
 
                 // 알림 설정

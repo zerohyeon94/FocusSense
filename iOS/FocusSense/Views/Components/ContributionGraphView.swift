@@ -42,6 +42,9 @@ import SwiftUI
 // MARK: - Contribution Graph Card
 struct ContributionGraphCard: View {
     @ObservedObject var viewModel: DashboardViewModel
+    @AppStorage("contributionDisplayMode") private var displayMode = "grass"
+
+    private var isConstellation: Bool { displayMode == "constellation" }
 
     private let spacing: CGFloat = 3
     private let labelWidth: CGFloat = 16
@@ -62,9 +65,9 @@ struct ContributionGraphCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // 헤더
             HStack {
-                Image(systemName: "square.grid.3x3.fill")
-                    .foregroundColor(.green)
-                Text("학습 잔디")
+                Image(systemName: isConstellation ? "star.fill" : "square.grid.3x3.fill")
+                    .foregroundColor(isConstellation ? .yellow : .green)
+                Text(isConstellation ? "학습 별자리" : "학습 잔디")
                     .font(.headline)
                 Spacer()
             }
@@ -73,37 +76,45 @@ struct ContributionGraphCard: View {
             MonthLabelsRow(viewModel: viewModel, cellSize: cellSize, labelWidth: labelWidth)
 
             // 그리드
-            HStack(alignment: .top, spacing: spacing) {
-                // 요일 라벨 (전체 표시)
-                VStack(spacing: spacing) {
-                    ForEach(0..<7, id: \.self) { row in
-                        Text(["일", "월", "화", "수", "목", "금", "토"][row])
-                            .font(.system(size: 9))
-                            .foregroundColor(.secondary)
-                            .frame(width: labelWidth, height: cellSize)
+            ZStack(alignment: .topLeading) {
+                HStack(alignment: .top, spacing: spacing) {
+                    // 요일 라벨 (전체 표시)
+                    VStack(spacing: spacing) {
+                        ForEach(0..<7, id: \.self) { row in
+                            Text(["일", "월", "화", "수", "목", "금", "토"][row])
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                                .frame(width: labelWidth, height: cellSize)
+                        }
                     }
-                }
 
-                // 잔디 셀 그리드
-                HStack(spacing: spacing) {
-                    ForEach(0..<columnCount, id: \.self) { col in
-                        VStack(spacing: spacing) {
-                            ForEach(0..<7, id: \.self) { row in
-                                if row < viewModel.weeklyGrid.count {
-                                    ContributionCell(
-                                        activity: viewModel.weeklyGrid[row][col],
-                                        isSelected: isSelected(row: row, col: col),
-                                        cellSize: cellSize,
-                                        onTap: {
-                                            withAnimation(.easeInOut(duration: 0.2)) {
-                                                viewModel.selectedDay = viewModel.weeklyGrid[row][col]
+                    // 셀 그리드
+                    HStack(spacing: spacing) {
+                        ForEach(0..<columnCount, id: \.self) { col in
+                            VStack(spacing: spacing) {
+                                ForEach(0..<7, id: \.self) { row in
+                                    if row < viewModel.weeklyGrid.count {
+                                        ContributionCell(
+                                            activity: viewModel.weeklyGrid[row][col],
+                                            isSelected: isSelected(row: row, col: col),
+                                            cellSize: cellSize,
+                                            isConstellation: isConstellation,
+                                            onTap: {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    viewModel.selectedDay = viewModel.weeklyGrid[row][col]
+                                                }
                                             }
-                                        }
-                                    )
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                // 별자리 연결선 오버레이
+                if isConstellation {
+                    constellationLinesOverlay()
                 }
             }
 
@@ -115,13 +126,61 @@ struct ContributionGraphCard: View {
             }
 
             // 범례
-            ContributionLegend()
+            ContributionLegend(isConstellation: isConstellation)
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color.white.opacity(0.05))
         )
+    }
+
+    // MARK: - Constellation Lines Overlay
+    @ViewBuilder
+    private func constellationLinesOverlay() -> some View {
+        Canvas { context, size in
+            let grid = viewModel.weeklyGrid
+            guard !grid.isEmpty else { return }
+            let cols = grid[0].count
+
+            func cellCenter(row: Int, col: Int) -> CGPoint {
+                let x = labelWidth + spacing + CGFloat(col) * (cellSize + spacing) + cellSize / 2
+                let y = CGFloat(row) * (cellSize + spacing) + cellSize / 2
+                return CGPoint(x: x, y: y)
+            }
+
+            func hasActivity(row: Int, col: Int) -> Bool {
+                guard row < grid.count, col < cols else { return false }
+                guard let activity = grid[row][col] else { return false }
+                return activity.level != .none
+            }
+
+            for row in 0..<7 {
+                for col in 0..<cols {
+                    guard hasActivity(row: row, col: col) else { continue }
+                    let from = cellCenter(row: row, col: col)
+
+                    // 가로 연결 (오른쪽 이웃)
+                    if col + 1 < cols && hasActivity(row: row, col: col + 1) {
+                        let to = cellCenter(row: row, col: col + 1)
+                        var path = Path()
+                        path.move(to: from)
+                        path.addLine(to: to)
+                        context.stroke(path, with: .color(.white.opacity(0.15)), lineWidth: 0.8)
+                    }
+
+                    // 세로 연결 (아래쪽 이웃)
+                    if row + 1 < 7 && hasActivity(row: row + 1, col: col) {
+                        let to = cellCenter(row: row + 1, col: col)
+                        var path = Path()
+                        path.move(to: from)
+                        path.addLine(to: to)
+                        context.stroke(path, with: .color(.white.opacity(0.15)), lineWidth: 0.8)
+                    }
+                }
+            }
+        }
+        .allowsHitTesting(false)
     }
 
     private func isSelected(row: Int, col: Int) -> Bool {
@@ -162,25 +221,67 @@ struct ContributionCell: View {
     let activity: DayActivity?
     let isSelected: Bool
     let cellSize: CGFloat
+    let isConstellation: Bool
     let onTap: () -> Void
 
     var body: some View {
         if let activity {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(activity.level.color)
-                .frame(width: cellSize, height: cellSize)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 3)
-                        .strokeBorder(
-                            isSelected ? Color.orange : Color.clear,
-                            lineWidth: isSelected ? 2 : 0
-                        )
-                )
-                .onTapGesture(perform: onTap)
+            if isConstellation {
+                constellationBody(activity: activity)
+            } else {
+                grassBody(activity: activity)
+            }
         } else {
             Color.clear
                 .frame(width: cellSize, height: cellSize)
         }
+    }
+
+    // 잔디 모드
+    @ViewBuilder
+    private func grassBody(activity: DayActivity) -> some View {
+        RoundedRectangle(cornerRadius: 3)
+            .fill(activity.level.color)
+            .frame(width: cellSize, height: cellSize)
+            .overlay(
+                RoundedRectangle(cornerRadius: 3)
+                    .strokeBorder(
+                        isSelected ? Color.orange : Color.clear,
+                        lineWidth: isSelected ? 2 : 0
+                    )
+            )
+            .onTapGesture(perform: onTap)
+    }
+
+    // 별자리 모드
+    @ViewBuilder
+    private func constellationBody(activity: DayActivity) -> some View {
+        ZStack {
+            if activity.level == .none {
+                Circle()
+                    .fill(activity.level.starColor)
+                    .frame(width: cellSize * 0.2, height: cellSize * 0.2)
+            } else {
+                Image(systemName: "star.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(
+                        width: cellSize * activity.level.starScale,
+                        height: cellSize * activity.level.starScale
+                    )
+                    .foregroundColor(activity.level.starColor)
+                    .shadow(color: activity.level.starColor.opacity(0.6), radius: 3)
+            }
+        }
+        .frame(width: cellSize, height: cellSize)
+        .overlay(
+            RoundedRectangle(cornerRadius: 3)
+                .strokeBorder(
+                    isSelected ? Color.yellow : Color.clear,
+                    lineWidth: isSelected ? 1.5 : 0
+                )
+        )
+        .onTapGesture(perform: onTap)
     }
 }
 
@@ -234,6 +335,8 @@ struct SelectedDayPopup: View {
 
 // MARK: - Contribution Legend
 struct ContributionLegend: View {
+    var isConstellation: Bool = false
+
     var body: some View {
         HStack(spacing: 4) {
             Spacer()
@@ -241,10 +344,26 @@ struct ContributionLegend: View {
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
 
-            ForEach(ActivityLevel.allCases, id: \.rawValue) { level in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(level.color)
-                    .frame(width: 10, height: 10)
+            if isConstellation {
+                // 별자리 범례: 작은 점 → 크기 증가하는 별
+                Circle()
+                    .fill(Color.white.opacity(0.15))
+                    .frame(width: 4, height: 4)
+                ForEach([ActivityLevel.low, .medium, .high, .veryHigh], id: \.rawValue) { level in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 6 + CGFloat(level.rawValue) * 2,
+                               height: 6 + CGFloat(level.rawValue) * 2)
+                        .foregroundColor(level.starColor)
+                }
+            } else {
+                // 잔디 범례
+                ForEach(ActivityLevel.allCases, id: \.rawValue) { level in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(level.color)
+                        .frame(width: 10, height: 10)
+                }
             }
 
             Text("많음")
