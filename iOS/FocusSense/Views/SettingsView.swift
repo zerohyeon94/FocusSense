@@ -94,6 +94,8 @@ struct SettingsView: View {
                             .tag("grass")
                         Label("별자리", systemImage: "star.fill")
                             .tag("constellation")
+                        Label("물방울", systemImage: "drop.fill")
+                            .tag("waterDrop")
                     } label: {
                         SettingRow(
                             icon: "paintbrush.fill",

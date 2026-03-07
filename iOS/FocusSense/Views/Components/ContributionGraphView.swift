@@ -44,8 +44,6 @@ struct ContributionGraphCard: View {
     @ObservedObject var viewModel: DashboardViewModel
     @AppStorage("contributionDisplayMode") private var displayMode = "grass"
 
-    private var isConstellation: Bool { displayMode == "constellation" }
-
     private let spacing: CGFloat = 3
     private let labelWidth: CGFloat = 16
 
@@ -65,9 +63,9 @@ struct ContributionGraphCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // 헤더
             HStack {
-                Image(systemName: isConstellation ? "star.fill" : "square.grid.3x3.fill")
-                    .foregroundColor(isConstellation ? .yellow : .green)
-                Text(isConstellation ? "학습 별자리" : "학습 잔디")
+                Image(systemName: headerIcon)
+                    .foregroundColor(headerColor)
+                Text(headerTitle)
                     .font(.headline)
                 Spacer()
             }
@@ -98,7 +96,7 @@ struct ContributionGraphCard: View {
                                             activity: viewModel.weeklyGrid[row][col],
                                             isSelected: isSelected(row: row, col: col),
                                             cellSize: cellSize,
-                                            isConstellation: isConstellation,
+                                            displayMode: displayMode,
                                             onTap: {
                                                 withAnimation(.easeInOut(duration: 0.2)) {
                                                     viewModel.selectedDay = viewModel.weeklyGrid[row][col]
@@ -113,7 +111,7 @@ struct ContributionGraphCard: View {
                 }
 
                 // 별자리 연결선 오버레이
-                if isConstellation {
+                if displayMode == "constellation" {
                     constellationLinesOverlay()
                 }
             }
@@ -126,7 +124,7 @@ struct ContributionGraphCard: View {
             }
 
             // 범례
-            ContributionLegend(isConstellation: isConstellation)
+            ContributionLegend(displayMode: displayMode)
         }
         .padding()
         .background(
@@ -183,6 +181,31 @@ struct ContributionGraphCard: View {
         .allowsHitTesting(false)
     }
 
+    // MARK: - Header Properties
+    private var headerIcon: String {
+        switch displayMode {
+        case "constellation": return "star.fill"
+        case "waterDrop":     return "drop.fill"
+        default:              return "square.grid.3x3.fill"
+        }
+    }
+
+    private var headerColor: Color {
+        switch displayMode {
+        case "constellation": return .yellow
+        case "waterDrop":     return .cyan
+        default:              return .green
+        }
+    }
+
+    private var headerTitle: String {
+        switch displayMode {
+        case "constellation": return "학습 별자리"
+        case "waterDrop":     return "학습 물방울"
+        default:              return "학습 잔디"
+        }
+    }
+
     private func isSelected(row: Int, col: Int) -> Bool {
         guard let selected = viewModel.selectedDay,
               row < viewModel.weeklyGrid.count,
@@ -221,14 +244,17 @@ struct ContributionCell: View {
     let activity: DayActivity?
     let isSelected: Bool
     let cellSize: CGFloat
-    let isConstellation: Bool
+    let displayMode: String
     let onTap: () -> Void
 
     var body: some View {
         if let activity {
-            if isConstellation {
+            switch displayMode {
+            case "constellation":
                 constellationBody(activity: activity)
-            } else {
+            case "waterDrop":
+                waterDropBody(activity: activity)
+            default:
                 grassBody(activity: activity)
             }
         } else {
@@ -278,6 +304,50 @@ struct ContributionCell: View {
             RoundedRectangle(cornerRadius: 3)
                 .strokeBorder(
                     isSelected ? Color.yellow : Color.clear,
+                    lineWidth: isSelected ? 1.5 : 0
+                )
+        )
+        .onTapGesture(perform: onTap)
+    }
+
+    // 물방울 모드
+    @ViewBuilder
+    private func waterDropBody(activity: DayActivity) -> some View {
+        ZStack {
+            if activity.level == .none {
+                Circle()
+                    .fill(activity.level.dropColor)
+                    .frame(width: cellSize * 0.2, height: cellSize * 0.2)
+            } else {
+                let dropSize = cellSize * activity.level.dropScale
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                activity.level.dropColor.opacity(0.3),
+                                activity.level.dropColor
+                            ],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: dropSize / 2
+                        )
+                    )
+                    .frame(width: dropSize, height: dropSize)
+                    .overlay(
+                        // 하이라이트 (물방울 반사광)
+                        Circle()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: dropSize * 0.3, height: dropSize * 0.3)
+                            .offset(x: -dropSize * 0.15, y: -dropSize * 0.15)
+                    )
+                    .shadow(color: activity.level.dropColor.opacity(0.4), radius: 2)
+            }
+        }
+        .frame(width: cellSize, height: cellSize)
+        .overlay(
+            RoundedRectangle(cornerRadius: 3)
+                .strokeBorder(
+                    isSelected ? Color.cyan : Color.clear,
                     lineWidth: isSelected ? 1.5 : 0
                 )
         )
@@ -335,7 +405,7 @@ struct SelectedDayPopup: View {
 
 // MARK: - Contribution Legend
 struct ContributionLegend: View {
-    var isConstellation: Bool = false
+    var displayMode: String = "grass"
 
     var body: some View {
         HStack(spacing: 4) {
@@ -344,7 +414,8 @@ struct ContributionLegend: View {
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
 
-            if isConstellation {
+            switch displayMode {
+            case "constellation":
                 // 별자리 범례: 작은 점 → 크기 증가하는 별
                 Circle()
                     .fill(Color.white.opacity(0.15))
@@ -357,7 +428,20 @@ struct ContributionLegend: View {
                                height: 6 + CGFloat(level.rawValue) * 2)
                         .foregroundColor(level.starColor)
                 }
-            } else {
+
+            case "waterDrop":
+                // 물방울 범례: 작은 점 → 크기 증가하는 원
+                Circle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(width: 4, height: 4)
+                ForEach([ActivityLevel.low, .medium, .high, .veryHigh], id: \.rawValue) { level in
+                    Circle()
+                        .fill(level.dropColor)
+                        .frame(width: 6 + CGFloat(level.rawValue) * 2,
+                               height: 6 + CGFloat(level.rawValue) * 2)
+                }
+
+            default:
                 // 잔디 범례
                 ForEach(ActivityLevel.allCases, id: \.rawValue) { level in
                     RoundedRectangle(cornerRadius: 2)

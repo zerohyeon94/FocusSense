@@ -25,7 +25,7 @@ import SwiftUI
 
 // MARK: - Contribution Display Mode
 
-/// 학습 그래프 표시 모드 (잔디 / 별자리)
+/// 학습 그래프 표시 모드 (잔디 / 별자리 / 물방울)
 ///
 /// 📚 String RawValue를 사용하는 이유:
 /// @AppStorage는 기본적으로 String, Int, Bool 등 기본 타입만 저장 가능합니다.
@@ -35,6 +35,7 @@ import SwiftUI
 enum ContributionDisplayMode: String, CaseIterable {
     case grass = "grass"                 // 학습 잔디 (기본)
     case constellation = "constellation" // 별자리
+    case waterDrop = "waterDrop"         // 물방울
 }
 
 // MARK: - Activity Level
@@ -105,6 +106,30 @@ enum ActivityLevel: Int, CaseIterable {
         case .medium:   return Color.orange.opacity(0.7)
         case .high:     return Color.orange.opacity(0.85)
         case .veryHigh: return Color.orange.opacity(1.0)
+        }
+    }
+
+    // MARK: - Water Drop Mode Properties
+
+    /// 물방울 모드에서 크기 (cellSize 대비 비율)
+    var dropScale: CGFloat {
+        switch self {
+        case .none:     return 0.0
+        case .low:      return 0.35
+        case .medium:   return 0.55
+        case .high:     return 0.75
+        case .veryHigh: return 0.95
+        }
+    }
+
+    /// 물방울 모드에서 색상 (시안/블루 계열)
+    var dropColor: Color {
+        switch self {
+        case .none:     return Color.white.opacity(0.08)
+        case .low:      return Color.cyan.opacity(0.4)
+        case .medium:   return Color.cyan.opacity(0.6)
+        case .high:     return Color.cyan.opacity(0.8)
+        case .veryHigh: return Color.cyan
         }
     }
 }
