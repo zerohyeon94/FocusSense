@@ -1,86 +1,62 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with the FocusSense repository.
+이 파일은 Claude Code가 ZipJoong 저장소에서 작업할 때 참고하는 가이드입니다.
 
-## Project Overview
+## 프로젝트 개요
 
-FocusSense is an iOS study timer app that measures user focus in real-time using the device camera. It uses a **hybrid approach** combining Vision Framework (70%) and CoreML (30%) for drowsiness detection.
+ZipJoong(집중)은 사용자가 공부 또는 업무에 얼마나 집중하는지 기록하기 위한 iOS 앱입니다.
+카메라로 사용자의 얼굴을 인식하고, **Apple Vision Framework(70%)와 자체 학습 CoreML 모델(30%)**을 결합한 하이브리드 분석을 통해 집중도를 측정합니다.
 
-### Core Principle
-> **"Determine focus by presence + eye state, NOT camera direction"**
+### 핵심 원칙
+> **"집중 여부는 존재 + 눈 상태로 판단한다. 카메라 방향이 아니다."**
 >
-> Users looking at a monitor while coding should be considered **focused**.
-> They don't need to face the phone camera directly.
+> 모니터를 보며 코딩하는 사용자는 **집중 상태**로 판단해야 합니다.
+> 휴대폰 카메라를 정면으로 바라볼 필요가 없습니다.
 
-## Repository Structure
-
-```
-FocusSense/
-├── iOS/    - SwiftUI iOS app (Swift, Xcode 15+, iOS 17+)
-├── ML/     - ML training pipeline (Python, PyTorch → CoreML)
-└── Web/    - Landing page (React 19, TypeScript, Vite)
-```
-
-Each sub-project has its own `CLAUDE.md` with project-specific guidance.
-Read the relevant sub-project `CLAUDE.md` before making changes.
-
-## Git Worktree Workflow
-
-This project uses **git worktrees** to enable parallel development across features.
-
-### Worktree Rules
-
-- **Branch naming**: `feature/<name>`, `fix/<name>`, `docs/<name>`
-- **NEVER create branches prefixed with `claude/`** — those are reserved for Claude Code internal sessions and must not be manually created
-- Each worktree is an independent working directory; changes are isolated until merged
-
-### Creating a New Worktree
-
-```bash
-# Create a new feature branch worktree
-git worktree add ../<worktree-name> -b feature/<name>
-
-# List active worktrees
-git worktree list
-
-# Remove a worktree after merging
-git worktree remove ../<worktree-name>
-git branch -d feature/<name>
-```
-
-### Worktree Tips
-
-- Work only within your worktree's directory — do not cross-edit other worktrees
-- Always branch from `main` or `develop`, never from a `claude/` branch
-- PRs should target `develop`; `main` is for releases only
-
-## Branch Strategy
+## 저장소 구조
 
 ```
-main        ← production releases only
-develop     ← integration branch (default PR target)
-feature/*   ← new features
-fix/*       ← bug fixes
-docs/*      ← documentation only changes
+ZipJoong/
+├── iOS/    - SwiftUI iOS 앱 (Swift, Xcode 15+, iOS 17+)
+├── ML/     - ML 학습 파이프라인 (Python, PyTorch → CoreML)
+└── Web/    - 랜딩 페이지 (React 19, TypeScript, Vite)
 ```
 
-## Commit Style
+각 하위 프로젝트에는 별도의 `CLAUDE.md`가 있습니다.
+변경 작업 전에 해당 하위 프로젝트의 `CLAUDE.md`를 반드시 읽어주세요.
+
+## 브랜치 전략
 
 ```
-feat: add calibration reset button
-fix: correct EAR threshold for low-light conditions
-docs: update ML training instructions
-refactor: extract eye state logic into helper
+main        ← 프로덕션 릴리즈 전용
+develop     ← 통합 브랜치 (PR 기본 대상)
+feature/*   ← 새 기능
+fix/*       ← 버그 수정
+docs/*      ← 문서 변경 전용
 ```
 
-## General Code Style
+### 브랜치 규칙
+- **브랜치 네이밍**: `feature/<이름>`, `fix/<이름>`, `docs/<이름>`
+- **`claude/` 접두사 브랜치는 절대 생성하지 말 것** — Claude Code 내부 세션 전용
+- PR은 `develop` 대상으로 생성, `main`은 릴리즈 전용
 
-- Avoid over-engineering; implement only what is asked
-- Do not add comments, docstrings, or type annotations to code you did not change
-- Do not add error handling for impossible scenarios
-- Follow the existing style of each sub-project (see per-project CLAUDE.md)
+## 커밋 스타일
 
-## Console Log Conventions (iOS)
+```
+feat: 캘리브레이션 초기화 버튼 추가
+fix: 저조도 환경 EAR 임계값 보정
+docs: ML 학습 가이드 업데이트
+refactor: 눈 상태 판별 로직 헬퍼 분리
+```
 
-- `✅` success, `❌` failure, `⚠️` warning
-- `🔄` reset, `👋` return detected, `🚶` away
+## 일반 코드 스타일
+
+- 과도한 엔지니어링 금지; 요청된 것만 구현
+- 변경하지 않은 코드에 주석, docstring, 타입 어노테이션 추가 금지
+- 불가능한 시나리오에 대한 에러 핸들링 추가 금지
+- 각 하위 프로젝트의 기존 스타일을 따를 것 (하위 프로젝트 CLAUDE.md 참고)
+
+## 콘솔 로그 규칙 (iOS)
+
+- `✅` 성공, `❌` 실패, `⚠️` 경고
+- `🔄` 리셋, `👋` 복귀 감지, `🚶` 자리 비움
