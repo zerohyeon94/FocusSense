@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  ============================================================
+  index.html — 앱의 진입점 (Entry Point)
+  ============================================================
+  웹 브라우저가 가장 먼저 읽는 파일입니다.
+  React 앱은 이 HTML 파일을 뼈대로 삼아 동작합니다.
+  ============================================================
+-->
+<html lang="en">
+  <head>
+    <!--
+      charset: 문자 인코딩 설정
+      UTF-8은 한글을 포함한 전 세계 문자를 표시할 수 있는 표준 인코딩입니다.
+    -->
+    <meta charset="UTF-8" />
+
+    <!--
+      rel="icon": 브라우저 탭에 표시되는 작은 아이콘 (파비콘, Favicon)
+      /vite.svg는 public 폴더의 정적 파일을 가리킵니다.
+    -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!--
+      viewport: 모바일 반응형(Responsive Design)을 위한 필수 메타 태그
+      - width=device-width : 화면 너비를 기기의 실제 너비로 설정
+      - initial-scale=1.0  : 초기 줌(확대) 배율을 1배(원본 크기)로 설정
+      이 설정이 없으면 모바일에서 데스크톱 화면이 축소되어 표시됩니다.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- 브라우저 탭과 검색 결과에 표시되는 페이지 제목 -->
+    <title>web</title>
+  </head>
+  <body>
+    <!--
+      id="root": React가 컴포넌트를 렌더링하는 마운트 지점(Mount Point)
+      처음에는 빈 div이지만, JavaScript가 실행되면
+      main.tsx가 이 요소를 찾아 React 앱 전체를 여기에 삽입합니다.
+    -->
+    <div id="root"></div>
+
+    <!--
+      type="module": ES Modules 방식으로 JavaScript를 로드
+      Vite 개발 서버에서 TypeScript(.tsx)를 실시간으로 처리합니다.
+      빌드(npm run build) 후에는 번들링된 JS 파일로 자동 교체됩니다.
+    -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

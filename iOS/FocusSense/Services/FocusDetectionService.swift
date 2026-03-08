@@ -8,7 +8,42 @@
 //  - Head Pose 추정으로 이탈 감지
 //
 
-import Vision
+/*
+ 카메라 영상 → 집중 상태 판단
+┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
+│ Camera Frame │ ──→ │ Apple Vision API │ ──→ │  FocusState  │
+│   (이미지)     │     │   (얼굴/눈 분석)    │     │   (결과)      │
+└──────────────┘     └──────────────────┘     └──────────────┘
+*/
+
+// ============================================================================
+// 📚 [파일 개요] FocusDetectionService - Vision 단독 집중도 감지 구현체
+// ============================================================================
+//
+// 📌 Vision Framework 단독 방식
+//    Apple Vision Framework만 사용하여 얼굴 랜드마크를 추출하고,
+//    EAR(Eye Aspect Ratio) 계산으로 졸음 여부를 판단합니다.
+//    CoreML 모델 없이도 동작하는 경량 구현입니다.
+//
+// 📌 EAR (Eye Aspect Ratio) 알고리즘
+//    눈의 6개 랜드마크 포인트(p1~p6)에서 세로/가로 비율을 계산합니다.
+//    공식: EAR = (|p2-p6| + |p3-p5|) / (2 × |p1-p4|)
+//    - 눈을 떴을 때: EAR ≈ 0.3~0.4
+//    - 눈을 감았을 때: EAR < 0.2
+//    Vision Framework가 VNFaceLandmarks2D를 통해 눈 포인트를 제공합니다.
+//
+// 📌 Delegate 패턴
+//    FocusDetectionDelegate 프로토콜을 통해 상태 변화를 외부에 알립니다.
+//    이 패턴은 iOS의 전통적인 콜백 방식으로,
+//    서비스와 ViewModel 사이의 느슨한 결합을 유지합니다.
+//
+// 📌 현재 상태
+//    SimpleFocusDetectionService(Vision 70% + CoreML 30% 하이브리드)가
+//    메인 서비스로 사용되며, 이 파일은 Vision 단독 대안 구현입니다.
+//
+// ============================================================================
+
+import Vision // Apple의 컴퓨터 비전 프레임워크
 import AVFoundation
 import UIKit
 
@@ -18,16 +53,17 @@ protocol FocusDetectionDelegate: AnyObject {
 }
 
 // MARK: - Focus Detection Service
-final class FocusDetectionService: ObservableObject {
+final class FocusDetectionService: ObservableObject, FocusDetectionServiceProtocol {
     
     // MARK: - Published Properties
     @Published var currentState: FocusState = FocusState()
     @Published var isAnalyzing = false
+    @Published var faceAnalysisData: FaceAnalysisData = FaceAnalysisData()  // 디버그용 상세 데이터
     
     // MARK: - Properties
     weak var delegate: FocusDetectionDelegate?
     
-    // Vision Request
+    // Vision Request - "이 이미지에서 얼굴 랜드마크를 찾아줘"
     private var faceDetectionRequest: VNDetectFaceLandmarksRequest?
     private let sequenceHandler = VNSequenceRequestHandler()
     
@@ -39,6 +75,10 @@ final class FocusDetectionService: ObservableObject {
     private var earHistory: [Double] = []
     private let earHistorySize = 10
     
+    // 개별 EAR 저장 (디버그용)
+    private var lastLeftEAR: Double = 0
+    private var lastRightEAR: Double = 0
+    
     // MARK: - Initialization
     init() {
         setupVisionRequest()
@@ -46,7 +86,7 @@ final class FocusDetectionService: ObservableObject {
     
     // MARK: - Vision Request Setup
     private func setupVisionRequest() {
-        faceDetectionRequest = VNDetectFaceLandmarksRequest { [weak self] request, error in
+        faceDetectionRequest = VNDetectFaceLandmarksRequest { [weak self] request, error in // 결과가 오면 해당 클로저 실행
             if let error = error {
                 print("❌ Face detection error: \(error)")
                 return
@@ -58,8 +98,10 @@ final class FocusDetectionService: ObservableObject {
         faceDetectionRequest?.revision = VNDetectFaceLandmarksRequestRevision3
     }
     
-    // MARK: - Process Video Frame
+    // MARK: - Process Video Frame (카메라 프레임 처리)
     func processFrame(_ sampleBuffer: CMSampleBuffer) {
+        // CMSampleBuffer: 카메라에서 온 raw 데이터
+        // PixelBuffer: Vision이 처리할 수 있는 형태로 변환
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let request = faceDetectionRequest else {
             return
@@ -68,6 +110,10 @@ final class FocusDetectionService: ObservableObject {
         isAnalyzing = true
         
         do {
+            // Vision API 실행
+            // [request]: 요청 목록
+            // pixelBuffer: 이미지 데이터
+            // orientation: 이미지 방향
             try sequenceHandler.perform([request], on: pixelBuffer, orientation: .up)
         } catch {
             print("❌ Vision request failed: \(error)")
@@ -96,13 +142,25 @@ final class FocusDetectionService: ObservableObject {
         let headPose = calculateHeadPose(from: face)
         
         // 3. 시선 방향 추정
-        let isLookingAtScreen = estimateGazeDirection(from: landmarks, headPose: headPose)
+        let gazeDirection = estimateGazeDirection(from: landmarks, headPose: headPose)
+        let isLookingAtScreen = gazeDirection == .center
         
         // 4. 종합적인 집중도 판단
         let focusLevel = determineFocusLevel(
             ear: ear,
             headPose: headPose,
             isLookingAtScreen: isLookingAtScreen
+        )
+        
+        // 5. 상세 분석 데이터 업데이트 (디버그용)
+        updateAnalysisData(
+            isFaceDetected: true,
+            face: face,
+            landmarks: landmarks,
+            headPose: headPose,
+            ear: ear,
+            gazeDirection: gazeDirection,
+            focusLevel: focusLevel
         )
         
         updateState(
@@ -114,21 +172,116 @@ final class FocusDetectionService: ObservableObject {
         )
     }
     
-    // MARK: - EAR (Eye Aspect Ratio) Calculation
+    // MARK: - Update Analysis Data (디버그용)
+    private func updateAnalysisData(
+        isFaceDetected: Bool,
+        face: VNFaceObservation? = nil,
+        landmarks: VNFaceLandmarks2D? = nil,
+        headPose: HeadPose? = nil,
+        ear: Double = 0,
+        gazeDirection: GazeDirection = .center,
+        focusLevel: FocusLevel = .unknown
+    ) {
+        var data = FaceAnalysisData()
+        data.isFaceDetected = isFaceDetected
+        
+        if let face = face {
+            data.faceBoundingBox = face.boundingBox
+        }
+        
+        if let landmarks = landmarks {
+            // 눈 위치 추출
+            if let leftEye = landmarks.leftEye {
+                data.leftEyePoints = leftEye.normalizedPoints
+                data.leftEyeCenter = calculateCenter(of: leftEye.normalizedPoints)
+            }
+            
+            if let rightEye = landmarks.rightEye {
+                data.rightEyePoints = rightEye.normalizedPoints
+                data.rightEyeCenter = calculateCenter(of: rightEye.normalizedPoints)
+            }
+            
+            // 코 위치
+            if let nose = landmarks.nose {
+                data.nosePosition = calculateCenter(of: nose.normalizedPoints)
+            }
+            
+            // 입 위치
+            if let outerLips = landmarks.outerLips {
+                data.mouthPoints = outerLips.normalizedPoints
+            }
+            
+            // 얼굴 윤곽
+            if let faceContour = landmarks.faceContour {
+                data.faceContourPoints = faceContour.normalizedPoints
+            }
+        }
+        
+        if let headPose = headPose {
+            data.yaw = headPose.yaw
+            data.pitch = headPose.pitch
+            data.roll = headPose.roll
+        }
+        
+        data.leftEAR = lastLeftEAR
+        data.rightEAR = lastRightEAR
+        data.averageEAR = ear
+        data.gazeDirection = gazeDirection
+        data.isLookingAtScreen = gazeDirection == .center
+        data.focusLevel = focusLevel
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.faceAnalysisData = data
+        }
+    }
+    
+    /// 점들의 중심점 계산
+    private func calculateCenter(of points: [CGPoint]) -> CGPoint {
+        guard !points.isEmpty else { return .zero }
+        
+        let sumX = points.reduce(0) { $0 + $1.x }
+        let sumY = points.reduce(0) { $0 + $1.y }
+        
+        return CGPoint(
+            x: sumX / CGFloat(points.count),
+            y: sumY / CGFloat(points.count)
+        )
+    }
+    
+    // MARK: - EAR (Eye Aspect Ratio) Calculation - 졸음 감지 핵심 알고리즘
     /// 눈의 세로/가로 비율을 계산하여 졸음 감지
     /// EAR = (|p2-p6| + |p3-p5|) / (2 * |p1-p4|)
+    /*
+    눈이 떠있을 때:              눈이 감겼을 때:
+        p2    p3                    p2  p3
+      ●────────●                  ●──────●
+     /          \                  ──────
+    p1            p4    →     p1  ──────  p4
+     \          /                  ──────
+      ●────────●                  ●──────●
+        p6    p5                    p6  p5
+
+    EAR = (|p2-p6| + |p3-p5|) / (2 × |p1-p4|)
+        = 세로길이 / 가로길이
+
+    - 눈 떴을 때: EAR ≈ 0.3 ~ 0.4
+    - 눈 감았을 때: EAR ≈ 0.1 이하
+    - 졸음 판정: EAR < 0.2가 3초 이상 지속
+    */
+    
     private func calculateEAR(from landmarks: VNFaceLandmarks2D) -> Double {
         guard let leftEye = landmarks.leftEye,
               let rightEye = landmarks.rightEye else {
             return 0.3  // 기본값 (정상 범위)
         }
         
+        // 양쪽 눈의 EAR 평균
         let leftEAR = calculateSingleEyeEAR(eyePoints: leftEye.normalizedPoints)
         let rightEAR = calculateSingleEyeEAR(eyePoints: rightEye.normalizedPoints)
         
         let averageEAR = (leftEAR + rightEAR) / 2.0
         
-        // EAR 히스토리 업데이트 (스무딩)
+        // EAR 히스토리 업데이트 (스무딩 - 급격한 변화 방지 (이동 평균))
         earHistory.append(averageEAR)
         if earHistory.count > earHistorySize {
             earHistory.removeFirst()
@@ -188,13 +341,28 @@ final class FocusDetectionService: ObservableObject {
     }
     
     // MARK: - Gaze Direction Estimation
-    private func estimateGazeDirection(from landmarks: VNFaceLandmarks2D, headPose: HeadPose) -> Bool {
-        // 동공 위치가 없으므로 Head Pose로 간접 추정
-        // 얼굴이 정면을 향하고 있으면 화면을 보는 것으로 판단
-        return headPose.isLookingForward
+    private func estimateGazeDirection(from landmarks: VNFaceLandmarks2D, headPose: HeadPose) -> GazeDirection {
+        // Head Pose 기반 시선 방향 추정
+        
+        // Yaw 기반 좌우 판단
+        if headPose.yaw < -20 {
+            return .left
+        } else if headPose.yaw > 20 {
+            return .right
+        }
+        
+        // Pitch 기반 상하 판단
+        if headPose.pitch < -15 {
+            return .down
+        } else if headPose.pitch > 15 {
+            return .up
+        }
+        
+        // 정면
+        return .center
     }
     
-    // MARK: - Focus Level Determination
+    // MARK: - Focus Level Determination (집중 레벨 최종 판정)
     private func determineFocusLevel(
         ear: Double,
         headPose: HeadPose,
@@ -234,7 +402,6 @@ final class FocusDetectionService: ObservableObject {
         headPose: HeadPose? = nil
     ) {
         let newState = FocusState(
-            timestamp: Date(),
             level: level,
             eyeAspectRatio: ear,
             isLookingAtScreen: isLookingAtScreen,
@@ -254,6 +421,9 @@ final class FocusDetectionService: ObservableObject {
     func reset() {
         lowEARFrameCount = 0
         earHistory.removeAll()
+        lastLeftEAR = 0
+        lastRightEAR = 0
         currentState = FocusState()
+        faceAnalysisData = FaceAnalysisData()
     }
 }
