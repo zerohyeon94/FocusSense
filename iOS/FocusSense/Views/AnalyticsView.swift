@@ -5,6 +5,31 @@
 //  집중도 통계 및 분석 화면
 //
 
+// ============================================================================
+// 📚 [파일 개요] AnalyticsView - 집중도 통계 및 차트 분석 화면
+// ============================================================================
+//
+// 📚 [Swift Charts 프레임워크 (iOS 16+)]
+//   Apple의 공식 차트 라이브러리로, 선언적 문법으로 차트를 생성합니다.
+//   - LineMark: 선 그래프 (시간별 집중도 추이)
+//   - AreaMark: 영역 그래프 (선 아래를 색으로 채움)
+//   - BarMark: 막대 그래프 (일별/주별 비교)
+//   Chart { ForEach(data) { item in LineMark(x: ..., y: ...) } }
+//   .chartXAxis, .chartYScale 등으로 축과 범위를 커스터마이징합니다.
+//
+// 📚 [computed property를 활용한 데이터 집계]
+//   todaySessions, todayTotalDuration, todayAverageFocusRate 등은
+//   모두 computed property로 구현되어, 원본 데이터가 변경되면
+//   자동으로 재계산됩니다. SwiftUI의 반응형 시스템과 자연스럽게 연동됩니다.
+//
+// 📚 [카드 기반 UI 구성 패턴]
+//   통계 화면은 여러 개의 "카드" 컴포넌트로 구성됩니다:
+//   - 각 카드는 독립적인 struct (SummaryCard, ChartCard 등)
+//   - RoundedRectangle 배경 + padding으로 카드 외형을 만듭니다
+//   - ScrollView 안에 VStack으로 카드들을 수직 배치합니다
+//
+// ============================================================================
+
 import SwiftUI
 import Charts
 

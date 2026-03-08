@@ -7,6 +7,36 @@
 //  - CoreML: 졸음 분류 (awake/drowsy)
 //
 
+// ============================================================================
+// 📚 [파일 개요] MLFocusDetectionService - CoreML + Vision 파이프라인 구현체
+// ============================================================================
+//
+// 📌 CoreML + Vision 파이프라인
+//    두 프레임워크를 직렬로 연결하여 사용합니다:
+//    1단계: Vision Framework로 얼굴 감지 + 랜드마크 추출 (EAR 계산)
+//    2단계: CoreML 모델로 얼굴 영역을 분류 (awake/drowsy)
+//    Vision이 감지한 얼굴 영역(faceRect)을 CoreML에 전달하여
+//    불필요한 배경을 제외하고 얼굴만 분석합니다.
+//
+// 📌 VNCoreMLModel과 VNCoreMLRequest
+//    VNCoreMLModel: CoreML 모델(.mlmodel)을 Vision 파이프라인에서
+//    사용할 수 있도록 래핑하는 클래스입니다.
+//    VNCoreMLRequest: Vision의 이미지 분석 요청에 CoreML 모델을 연결합니다.
+//    regionOfInterest를 설정하면 이미지의 특정 영역만 모델에 입력됩니다.
+//
+// 📌 캘리브레이션 통합
+//    CalibrationService와 연결하여 사용자별 기준값을 적용합니다.
+//    캘리브레이션 데이터가 있으면: 사용자의 평소 자세/EAR 대비 편차로 판단
+//    캘리브레이션 데이터가 없으면: 절대 임계값으로 판단 (정확도 저하)
+//    이를 통해 개인차(눈 크기, 앉는 자세 등)를 보정합니다.
+//
+// 📌 스무딩 (이동 평균, Moving Average)
+//    ML 추론 결과(drowsinessProb)에 이동 평균(크기 5)을 적용합니다.
+//    단일 프레임의 오분류가 즉시 상태 변화로 이어지지 않도록 하여,
+//    안정적이고 일관된 졸음 판정을 제공합니다.
+//
+// ============================================================================
+
 import CoreML
 import Vision
 import AVFoundation

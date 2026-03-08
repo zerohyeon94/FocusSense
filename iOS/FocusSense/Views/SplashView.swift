@@ -51,7 +51,7 @@ struct SplashView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 12) {
-                Text("Focus")
+                Text("ZipJoong")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     // 📚 .shadow(): 텍스트 뒤에 그림자를 추가합니다.
@@ -62,7 +62,7 @@ struct SplashView: View {
                     //    glowOpacity가 0→0.6으로 변하면서 빛나는 효과가 나타납니다.
                     .shadow(color: .orange.opacity(glowOpacity), radius: 20, x: 0, y: 0)
 
-                Text("Sense your focus")
+                Text("AI가 지켜주는 나의 진짜 집중 시간")
                     .font(.subheadline)
                     // 📚 .opacity(0.5): 부제목을 반투명하게 하여 시각적 위계(hierarchy)를 만듭니다.
                     //    제목(Focus)은 불투명, 부제목은 반투명 → 자연스러운 강조 효과

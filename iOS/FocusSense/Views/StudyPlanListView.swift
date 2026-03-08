@@ -5,6 +5,37 @@
 //  학습 계획 관리 화면
 //
 
+// ============================================================================
+// 📚 [파일 개요] StudyPlanListView - 학습 계획 CRUD 관리 화면
+// ============================================================================
+//
+// CRUD 흐름:
+//   Create: + 버튼 → editingPlan = nil → showingEditSheet = true → 새 계획 생성
+//   Read:   List + ForEach로 studyPlanStore.plans를 순회하며 표시
+//   Update: 행 탭 → editingPlan = plan → showingEditSheet = true → 기존 계획 편집
+//   Delete: 스와이프 → .onDelete(perform:) → deletePlans(at:) → 계획 삭제
+//
+// List + ForEach + .onDelete 패턴:
+//   SwiftUI의 List 안에 ForEach를 넣고 .onDelete 수식어를 추가하면
+//   자동으로 스와이프-투-딜리트 기능이 활성화된다.
+//   onDelete는 IndexSet을 전달하며, 이를 통해 삭제할 항목의 인덱스를 알 수 있다.
+//
+// .sheet를 이용한 모달 표시:
+//   showingEditSheet 바인딩이 true가 되면 StudyPlanEditSheet가 모달로 표시된다.
+//   시트가 닫히면 자동으로 false로 돌아간다.
+//
+// 편집 vs 생성 분기 (editingPlan: StudyPlan?):
+//   editingPlan이 nil이면 "새 학습 계획" 생성 모드로 동작한다.
+//   editingPlan에 기존 객체가 있으면 "학습 계획 편집" 모드로 동작한다.
+//   하나의 StudyPlanEditSheet로 생성과 편집을 모두 처리하는 패턴이다.
+//
+// Form + Section으로 설정 스타일 입력:
+//   StudyPlanEditSheet는 Form { Section("제목") { ... } } 구조를 사용한다.
+//   Form은 iOS 설정 앱과 동일한 그룹화된 입력 UI를 자동으로 만들어준다.
+//   Section은 관련 입력 필드를 논리적으로 묶고 헤더 텍스트를 표시한다.
+//
+// ============================================================================
+
 import SwiftUI
 
 // MARK: - Study Plan List View

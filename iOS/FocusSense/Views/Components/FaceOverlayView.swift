@@ -9,6 +9,34 @@
 //  - 시선 방향 화살표
 //
 
+// ============================================================================
+// 📚 [파일 개요] FaceOverlayView - Vision 좌표계 변환과 얼굴 랜드마크 오버레이
+// ============================================================================
+//
+// Vision 좌표계 변환 (핵심 개념):
+//   Apple Vision 프레임워크는 좌하단 원점(0,0), 우상단(1,1)의 정규화 좌표를 사용한다.
+//   UIKit/SwiftUI는 좌상단 원점(0,0), 우하단(width,height)의 좌표를 사용한다.
+//   따라서 Y축을 반전해야 한다: screenY = (1 - visionY) * frameHeight
+//
+// convertPoint 함수 패턴:
+//   이 파일의 여러 컴포넌트(EyeView, EyeContourPath, LandmarkPointView,
+//   GazeDirectionIndicator)가 동일한 좌표 변환 로직을 반복 사용한다.
+//   각 컴포넌트는 독립적인 struct이므로 자체 convertPoint를 가진다.
+//   변환 공식: 얼굴 바운딩 박스의 화면 좌표를 구한 뒤,
+//   정규화된 랜드마크 좌표를 바운딩 박스 내의 절대 좌표로 매핑한다.
+//
+// Shape 프로토콜 (EyeContourPath):
+//   SwiftUI의 Shape 프로토콜을 채택하면 path(in:) 메서드에서 자유로운 경로를 그릴 수 있다.
+//   EyeContourPath는 눈 윤곽점들을 연결하여 닫힌 경로를 만든다.
+//   Shape를 사용하면 .stroke(), .fill() 등 SwiftUI 수식어를 바로 적용할 수 있다.
+//
+// ZStack 레이어 합성:
+//   FaceOverlayView는 ZStack으로 여러 오버레이를 겹쳐 표시한다:
+//   바운딩 박스 → 눈 랜드마크 → 코 위치 → 시선 화살표 → 집중 상태 배지
+//   각 레이어는 독립된 struct으로 분리되어 있어 개별 테스트와 재사용이 가능하다.
+//
+// ============================================================================
+
 import SwiftUI
 
 // MARK: - Face Overlay View
