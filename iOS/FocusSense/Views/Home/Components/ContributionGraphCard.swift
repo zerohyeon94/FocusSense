@@ -1,12 +1,12 @@
 //
-//  ContributionGraphView.swift
+//  ContributionGraphCard.swift
 //  FocusSense
 //
 //  GitHub 스타일 잔디 그래프 UI 컴포넌트
 //
 
 // ============================================================================
-// 📚 [파일 개요] ContributionGraphView - GitHub 스타일 학습 잔디(Heatmap) 차트
+// 📚 [파일 개요] ContributionGraphCard - GitHub 스타일 학습 잔디(Heatmap) 차트
 // ============================================================================
 //
 // "학습 잔디"란:
@@ -54,6 +54,7 @@ struct ContributionGraphCard: View {
     private var cellSize: CGFloat {
         let screenWidth = UIScreen.main.bounds.width
         let totalHorizontalPadding: CGFloat = 64 // 16*2 (outer) + 16*2 (card)
+        /// 가용 폭 = 화면 너비 - 패딩(64) - 요일 Label 너비(16) - spacing(3)
         let availableWidth = screenWidth - totalHorizontalPadding - labelWidth - spacing
         guard columnCount > 0 else { return 14 }
         return (availableWidth - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)
@@ -202,7 +203,7 @@ struct ContributionGraphCard: View {
         switch displayMode {
         case "constellation": return "학습 별자리"
         case "waterDrop":     return "학습 물방울"
-        default:              return "학습 잔디"
+        default:              return "학습 잔디밭"
         }
     }
 
@@ -454,118 +455,5 @@ struct ContributionLegend: View {
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
         }
-    }
-}
-
-// MARK: - Quick Stats Card
-struct QuickStatsCard: View {
-    let streak: Int
-    let todayTime: TimeInterval
-    let weekTime: TimeInterval
-
-    var body: some View {
-        HStack(spacing: 0) {
-            QuickStatItem(
-                title: "연속",
-                value: "\(streak)일",
-                icon: "flame.fill",
-                color: .orange
-            )
-
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.2))
-
-            QuickStatItem(
-                title: "오늘",
-                value: formatShortDuration(todayTime),
-                icon: "clock.fill",
-                color: .green
-            )
-
-            Divider()
-                .frame(height: 40)
-                .background(Color.white.opacity(0.2))
-
-            QuickStatItem(
-                title: "이번 주",
-                value: formatShortDuration(weekTime),
-                icon: "calendar",
-                color: .blue
-            )
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.05))
-        )
-    }
-
-    private func formatShortDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
-        if hours > 0 {
-            return "\(hours)시간 \(minutes)분"
-        } else {
-            return "\(minutes)분"
-        }
-    }
-}
-
-// MARK: - Quick Stat Item
-struct QuickStatItem: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(color)
-            Text(value)
-                .font(.subheadline.bold())
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Quick Start Card
-struct QuickStartCard: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("학습 시작하기")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    Text("타이머를 시작하고 집중도를 측정해보세요")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "play.circle.fill")
-                    .font(.system(size: 36))
-                    .foregroundColor(.orange)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.orange.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(.plain)
     }
 }

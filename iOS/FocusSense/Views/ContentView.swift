@@ -33,6 +33,13 @@
 import SwiftUI
 import SwiftData
 
+enum Tab {
+    case home
+    case timer
+    case analytics
+    case settings
+}
+
 struct ContentView: View {
     // 📚 @StateObject: 이 View가 ViewModel의 **소유자(Owner)** 입니다.
     //    ContentView가 파괴되지 않는 한 이 ViewModel들은 유지됩니다.
@@ -42,9 +49,9 @@ struct ContentView: View {
     /// @StateObject: 이 View가 ViewModel을 생성하고 소유함
     @StateObject private var timerViewModel: TimerViewModel
     @StateObject private var dashboardViewModel: DashboardViewModel
-
+    
     /// @State: View 내부에서 변하는 단순한 값
-    @State private var selectedTab = 0
+    @State private var selectedTab: Tab = .home
 
     // 📚 @Environment(\.modelContext): SwiftData의 ModelContext를 환경에서 가져옵니다.
     //    ModelContext는 데이터의 CRUD(생성/조회/수정/삭제) 작업을 수행하는 객체입니다.
@@ -88,7 +95,7 @@ struct ContentView: View {
             // 📚 .tag(): 이 탭의 고유 식별자입니다.
             //    selection의 값과 tag 값이 일치하는 탭이 선택됩니다.
             //    예: selectedTab = 0이면 tag(0)인 이 탭이 활성화됩니다.
-            .tag(0)
+            .tag(Tab.home)
 
             // 타이머 탭
             TimerView(viewModel: timerViewModel)
@@ -96,7 +103,7 @@ struct ContentView: View {
                     Image(systemName: "timer")
                     Text("타이머")
                 }
-                .tag(1)
+                .tag(Tab.timer)
 
             // 통계 탭 (학습 기록은 통계 내에서 접근)
             AnalyticsView(viewModel: timerViewModel)
@@ -104,7 +111,7 @@ struct ContentView: View {
                     Image(systemName: "chart.xyaxis.line")
                     Text("통계")
                 }
-                .tag(2)
+                .tag(Tab.analytics)
 
             // 설정 탭
             SettingsView(studyPlanStore: timerViewModel.studyPlanStore)
@@ -112,7 +119,7 @@ struct ContentView: View {
                     Image(systemName: "gearshape")
                     Text("설정")
                 }
-                .tag(3)
+                .tag(Tab.settings)
         }
         // 📚 .tint(): 앱 전체의 강조 색상을 설정합니다.
         //    탭 아이콘의 선택 색상, 버튼 색상 등에 적용됩니다.
