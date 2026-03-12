@@ -78,7 +78,7 @@ final class DashboardViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Constants
-    private let weeksToShow = 16
+    private let weeksToShow = 12 // 12주를 보여줌
 
     // MARK: - Initialization
     init(sessionStore: StudySessionStore) {
