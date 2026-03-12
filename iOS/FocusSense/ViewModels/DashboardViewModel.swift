@@ -180,8 +180,7 @@ final class DashboardViewModel: ObservableObject {
         var activities: [Date: DayActivity] = [:]
         for (date, sessions) in grouped {
             let totalDuration = sessions.reduce(0) { $0 + $1.totalDuration }
-            let avgFocusRate: Double = sessions.isEmpty ? 0 :
-                sessions.map { $0.focusRate }.reduce(0, +) / Double(sessions.count)
+            let avgFocusRate: Double = sessions.isEmpty ? 0 : sessions.map { $0.focusRate }.reduce(0, +) / Double(sessions.count)
 
             activities[date] = DayActivity(
                 date: date,
@@ -217,9 +216,9 @@ final class DashboardViewModel: ObservableObject {
 
         // 그리드 시작점: weeksToShow주 전의 일요일
         let todayDayOffset = todayWeekday - 1 // 일요일부터 오늘까지 오프셋
-        let totalColumns = weeksToShow + 1
+        let totalColumns = weeksToShow + 1 // 전체 열 갯수
         guard let gridStartDate = calendar.date(byAdding: .day, value: -(weeksToShow * 7 + todayDayOffset), to: today) else { return }
-
+        
         // 📚 [Array(repeating:count:)로 2차원 배열 초기화]
         //    Array(repeating: nil, count: totalColumns)로 한 행을 nil로 초기화하고,
         //    그것을 7번 반복하여 7행짜리 2차원 배열을 만듭니다.

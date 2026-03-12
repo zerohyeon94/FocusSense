@@ -59,6 +59,31 @@ struct ContributionGraphCard: View {
         guard columnCount > 0 else { return 14 }
         return (availableWidth - spacing * CGFloat(columnCount - 1)) / CGFloat(columnCount)
     }
+    
+    // MARK: - Header Properties
+    private var headerIcon: String {
+        switch displayMode {
+        case "constellation": return "star.fill"
+        case "waterDrop":     return "drop.fill"
+        default:              return "square.grid.3x3.fill"
+        }
+    }
+
+    private var headerColor: Color {
+        switch displayMode {
+        case "constellation": return .yellow
+        case "waterDrop":     return .cyan
+        default:              return .green
+        }
+    }
+
+    private var headerTitle: String {
+        switch displayMode {
+        case "constellation": return "학습 별자리"
+        case "waterDrop":     return "학습 물방울"
+        default:              return "학습 잔디밭"
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -180,31 +205,6 @@ struct ContributionGraphCard: View {
             }
         }
         .allowsHitTesting(false)
-    }
-
-    // MARK: - Header Properties
-    private var headerIcon: String {
-        switch displayMode {
-        case "constellation": return "star.fill"
-        case "waterDrop":     return "drop.fill"
-        default:              return "square.grid.3x3.fill"
-        }
-    }
-
-    private var headerColor: Color {
-        switch displayMode {
-        case "constellation": return .yellow
-        case "waterDrop":     return .cyan
-        default:              return .green
-        }
-    }
-
-    private var headerTitle: String {
-        switch displayMode {
-        case "constellation": return "학습 별자리"
-        case "waterDrop":     return "학습 물방울"
-        default:              return "학습 잔디밭"
-        }
     }
 
     private func isSelected(row: Int, col: Int) -> Bool {
