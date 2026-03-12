@@ -48,6 +48,42 @@ struct SettingsView: View {
 
     @State private var notificationStatus: String = ""
 
+    /// 각 선택된 모드에 따른 적용
+    var selectedIconColor: Color {
+        switch contributionDisplayMode {
+        case "grass": return .green
+        case "constellation": return .yellow
+        case "waterDrop": return .cyan
+        default: return .gray
+        }
+    }
+
+    var selectedTitle: String {
+        switch contributionDisplayMode {
+        case "grass": return "잔디밭"
+        case "constellation": return "별자리"
+        case "waterDrop": return "물방울"
+        default: return ""
+        }
+    }
+
+    var selectedIcon: String {
+        switch contributionDisplayMode {
+        case "grass": return "square.grid.3x3.fill"
+        case "constellation": return "star.fill"
+        case "waterDrop": return "drop.fill"
+        default: return ""
+        }
+    }
+    
+    var appVersion: String {
+        guard let dictionary = Bundle.main.infoDictionary,
+              let version = dictionary["CFBundleShortVersionString"] as? String else {
+            return "알 수 없음"
+        }
+        return version
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -89,25 +125,40 @@ struct SettingsView: View {
 
                 // 화면 표시
                 Section {
-                    Picker(selection: $contributionDisplayMode) {
-                        Label("학습 잔디", systemImage: "square.grid.3x3.fill")
-                            .tag("grass")
-                        Label("별자리", systemImage: "star.fill")
-                            .tag("constellation")
-                        Label("물방울", systemImage: "drop.fill")
-                            .tag("waterDrop")
-                    } label: {
+                    HStack {
                         SettingRow(
                             icon: "paintbrush.fill",
                             title: "학습 그래프 스타일",
                             color: .yellow
                         )
+                        
+                        Spacer()
+                        
+                        Menu {
+                            Picker("학습 그래프 스타일", selection: $contributionDisplayMode) {
+                                Label("잔디밭", systemImage: "square.grid.3x3.fill").tag("grass")
+                                Label("별자리", systemImage: "star.fill").tag("constellation")
+                                Label("물방울", systemImage: "drop.fill").tag("waterDrop")
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: selectedIcon)
+                                    .foregroundColor(selectedIconColor)
+                                
+                                Text(selectedTitle)
+                                    .foregroundColor(.primary)
+                                
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .contentShape(Rectangle())
+                        }
                     }
-                    .pickerStyle(.menu)
                 } header: {
                     Text("화면 표시")
                 }
-
+                
                 // 알림 설정
                 Section {
                     Toggle(isOn: $hapticEnabled) {
@@ -176,7 +227,7 @@ struct SettingsView: View {
                                 .font(.headline)
                         }
 
-                        Text("FocusSense는 모든 영상 분석을 기기 내에서만 처리합니다. 카메라 영상은 절대 외부 서버로 전송되지 않습니다.")
+                        Text("ZipJoong은 모든 영상 분석을 기기 내에서만 처리합니다. 카메라 영상은 절대 외부 서버로 전송되지 않습니다.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -190,7 +241,7 @@ struct SettingsView: View {
                     HStack {
                         Text("버전")
                         Spacer()
-                        Text("1.0.0")
+                        Text(appVersion)
                             .foregroundColor(.secondary)
                     }
 
@@ -212,7 +263,8 @@ struct SettingsView: View {
             }
             .navigationTitle("설정")
             .navigationBarTitleDisplayMode(.large)
-            .task {
+            .listSectionSpacing(.default) // HIG 기반 최적화 - 유동적으로 변경되도록 구현
+            .task { // 화면이 그려질 때, 동작
                 await updateNotificationStatus()
             }
         }
@@ -234,24 +286,6 @@ struct SettingsView: View {
             notificationStatus = "임시"
         @unknown default:
             notificationStatus = "알 수 없음"
-        }
-    }
-}
-
-// MARK: - Setting Row
-struct SettingRow: View {
-    let icon: String
-    let title: String
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.body)
-                .foregroundColor(color)
-                .frame(width: 24)
-
-            Text(title)
         }
     }
 }
