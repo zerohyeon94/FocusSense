@@ -74,10 +74,14 @@ struct TimerView: View {
                     
                     Spacer() // 빈 공간 (유연하게 늘어남)
 
-                    // 선택된 학습 계획 배지
-                    if let plan = viewModel.selectedPlan, viewModel.timerState != .idle {
-                        SelectedPlanBadge(plan: plan)
+                    // 선택된 학습 계획 배지 (항상 공간 확보 → 레이아웃 안정)
+                    ZStack {
+                        if let plan = viewModel.selectedPlan, viewModel.timerState != .idle {
+                            SelectedPlanBadge(plan: plan)
+                                .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                        }
                     }
+                    .frame(height: 28)
 
                     // 집중 상태 인디케이터
                     FocusStatusIndicator(focusState: viewModel.currentFocusState)
@@ -298,15 +302,14 @@ struct TimerControls: View {
     
     var body: some View {
         HStack(spacing: 20) {
-            // 리셋 버튼
-            if timerState != .idle {
-                ControlButton(
-                    icon: "arrow.counterclockwise",
-                    color: .gray,
-                    action: onReset
-                )
-            }
-            
+            // 리셋 버튼 (항상 공간 확보 → 레이아웃 안정)
+            ControlButton(
+                icon: "arrow.counterclockwise",
+                color: .gray,
+                action: onReset
+            )
+            .opacity(timerState != .idle ? 1 : 0)
+
             // 메인 버튼 (시작/일시정지/재개)
             MainControlButton(
                 timerState: timerState,
@@ -314,15 +317,14 @@ struct TimerControls: View {
                 onPause: onPause,
                 onResume: onResume
             )
-            
-            // 정지 버튼
-            if timerState == .running || timerState == .paused || timerState == .autoPaused {
-                ControlButton(
-                    icon: "stop.fill",
-                    color: .red,
-                    action: onStop
-                )
-            }
+
+            // 정지 버튼 (항상 공간 확보 → 레이아웃 안정)
+            ControlButton(
+                icon: "stop.fill",
+                color: .red,
+                action: onStop
+            )
+            .opacity(timerState == .running || timerState == .paused || timerState == .autoPaused ? 1 : 0)
         }
     }
 }
