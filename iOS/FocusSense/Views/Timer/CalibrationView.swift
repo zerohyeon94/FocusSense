@@ -44,24 +44,28 @@ struct CalibrationView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
                 // 헤더
                 headerView
+                    .padding(.bottom, 24)
                 
-                // 카메라 프리뷰
-                cameraPreviewSection
-                
-                // 현재 상태 표시
-                CurrentStatusCard(data: viewModel.faceAnalysisData)
-                
-                // 캘리브레이션 진행 상태
-                calibrationStatusSection
-                
-                Spacer()
-                
-                // 버튼
-                buttonSection
+                VStack(spacing: 24) {
+                    // 카메라 프리뷰
+                    cameraPreviewSection
+                    
+                    // 현재 상태 표시 (해당 부분은 Debug에서만 사용되게 구현)
+    //                CurrentStatusCard(data: viewModel.faceAnalysisData)
+                    
+                    // 캘리브레이션 진행 상태
+                    calibrationStatusSection
+                    
+                    Spacer()
+                    
+                    // 버튼
+                    buttonSection
+                }
             }
+            .frame(maxHeight: .infinity, alignment: .top)
         }
         .onAppear {
             // ✅ 카메라 시작
@@ -103,7 +107,7 @@ struct CalibrationView: View {
         Group {
             if let session = viewModel.captureSession {
                 CameraPreviewView(session: session)
-                    .frame(height: 300)
+                    .frame(height: 400)
                     .cornerRadius(16)
                     .overlay(
                         FaceGuideOverlay(
@@ -115,13 +119,124 @@ struct CalibrationView: View {
             } else {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.gray.opacity(0.3))
-                    .frame(height: 300)
+                    .frame(maxHeight: .infinity)
                     .overlay(
                         Text("카메라 로딩 중...")
                             .foregroundColor(.gray)
                     )
                     .padding(.horizontal)
             }
+        }
+    }
+    
+    // MARK: - Face Guide Overlay
+    struct FaceGuideOverlay: View {
+        let faceDetected: Bool
+        let isCalibrating: Bool
+        
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack {
+                    // 가이드 원
+                    Circle()
+                        .stroke(
+                            isCalibrating ? Color.green :
+                                (faceDetected ? Color.blue : Color.gray),
+                            lineWidth: isCalibrating ? 4 : 2
+                        )
+                        .frame(width: 200, height: 200)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .animation(.easeInOut, value: isCalibrating)
+                    
+                    // 안내 텍스트
+                    VStack {
+                        Spacer()
+                        
+                        Text(statusText)
+                            .font(.caption)
+                            .foregroundColor(statusColor)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.black.opacity(0.7))
+                            .cornerRadius(8)
+                            .padding(.bottom, 16)
+                    }
+                }
+            }
+        }
+        
+        private var statusText: String {
+            if isCalibrating {
+                return "📍 위치 기록 중... 자세를 유지하세요"
+            } else if faceDetected {
+                return "✅ 얼굴 감지됨 - 버튼을 눌러 설정하세요"
+            } else {
+                return "😕 얼굴을 화면에 맞춰주세요"
+            }
+        }
+        
+        private var statusColor: Color {
+            if isCalibrating {
+                return .green
+            } else if faceDetected {
+                return .blue
+            } else {
+                return .orange
+            }
+        }
+    }
+    
+    // MARK: - Current Status Card (Debug용)
+    struct StatusItem: View {
+        let title: String
+        let value: String
+        let icon: String
+        
+        var body: some View {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .foregroundColor(.cyan)
+                Text(value)
+                    .font(.title3.bold())
+                    .foregroundColor(.white)
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+    
+    struct CurrentStatusCard: View {
+        let data: FaceAnalysisData
+        
+        var body: some View {
+            VStack(spacing: 12) {
+                Text("현재 감지값")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                
+                HStack(spacing: 20) {
+                    StatusItem(
+                        title: "좌우",
+                        value: String(format: "%.0f°", data.yaw),
+                        icon: "arrow.left.arrow.right"
+                    )
+                    StatusItem(
+                        title: "상하",
+                        value: String(format: "%.0f°", data.pitch),
+                        icon: "arrow.up.arrow.down"
+                    )
+                    StatusItem(
+                        title: "EAR",
+                        value: String(format: "%.2f", data.averageEAR),
+                        icon: "eye"
+                    )
+                }
+            }
+            .padding()
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(12)
+            .padding(.horizontal)
         }
     }
     
@@ -217,117 +332,6 @@ struct CalibrationView: View {
     }
 }
 
-// MARK: - Face Guide Overlay
-struct FaceGuideOverlay: View {
-    let faceDetected: Bool
-    let isCalibrating: Bool
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // 가이드 원
-                Circle()
-                    .stroke(
-                        isCalibrating ? Color.green :
-                            (faceDetected ? Color.blue : Color.gray),
-                        lineWidth: isCalibrating ? 4 : 2
-                    )
-                    .frame(width: 200, height: 200)
-                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                    .animation(.easeInOut, value: isCalibrating)
-                
-                // 안내 텍스트
-                VStack {
-                    Spacer()
-                    
-                    Text(statusText)
-                        .font(.caption)
-                        .foregroundColor(statusColor)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(8)
-                        .padding(.bottom, 16)
-                }
-            }
-        }
-    }
-    
-    private var statusText: String {
-        if isCalibrating {
-            return "📍 위치 기록 중... 자세를 유지하세요"
-        } else if faceDetected {
-            return "✅ 얼굴 감지됨 - 버튼을 눌러 설정하세요"
-        } else {
-            return "😕 얼굴을 화면에 맞춰주세요"
-        }
-    }
-    
-    private var statusColor: Color {
-        if isCalibrating {
-            return .green
-        } else if faceDetected {
-            return .blue
-        } else {
-            return .orange
-        }
-    }
-}
-
-// MARK: - Current Status Card
-struct CurrentStatusCard: View {
-    let data: FaceAnalysisData
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("현재 감지값")
-                .font(.caption)
-                .foregroundColor(.gray)
-            
-            HStack(spacing: 20) {
-                StatusItem(
-                    title: "좌우",
-                    value: String(format: "%.0f°", data.yaw),
-                    icon: "arrow.left.arrow.right"
-                )
-                StatusItem(
-                    title: "상하",
-                    value: String(format: "%.0f°", data.pitch),
-                    icon: "arrow.up.arrow.down"
-                )
-                StatusItem(
-                    title: "EAR",
-                    value: String(format: "%.2f", data.averageEAR),
-                    icon: "eye"
-                )
-            }
-        }
-        .padding()
-        .background(Color.white.opacity(0.1))
-        .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-struct StatusItem: View {
-    let title: String
-    let value: String
-    let icon: String
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Image(systemName: icon)
-                .foregroundColor(.cyan)
-            Text(value)
-                .font(.title3.bold())
-                .foregroundColor(.white)
-            Text(title)
-                .font(.caption2)
-                .foregroundColor(.gray)
-        }
-    }
-}
-
 // MARK: - Calibration Progress View
 struct CalibrationProgressView: View {
     let progress: Double
@@ -378,4 +382,11 @@ struct CalibrationCompleteCard: View {
         .cornerRadius(12)
         .padding(.horizontal)
     }
+}
+
+// MARK: - Preview
+#Preview {
+    CalibrationView(
+        viewModel: TimerViewModel(),
+        calibrationService: CalibrationService())
 }
