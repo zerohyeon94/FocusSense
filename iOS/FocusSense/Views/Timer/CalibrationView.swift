@@ -58,9 +58,11 @@ struct CalibrationView: View {
                     
                     // 캘리브레이션 진행 상태
                     calibrationStatusSection
-                    
-                    Spacer()
-                    
+                }
+                
+                Spacer()
+                
+                VStack(spacing: 0) {
                     // 버튼
                     buttonSection
                 }
@@ -100,6 +102,7 @@ struct CalibrationView: View {
             Color.clear.frame(width: 44)
         }
         .padding()
+        .fixedSize(horizontal: false, vertical: true)
     }
     
     // MARK: - Camera Preview
