@@ -246,12 +246,13 @@ struct CalibrationView: View {
     // MARK: - Calibration Status
     @ViewBuilder
     private var calibrationStatusSection: some View {
+        // Calibration 진행중
         if calibrationService.isCalibrating {
             CalibrationProgressView(
                 progress: calibrationService.calibrationProgress,
                 message: calibrationService.calibrationMessage
             )
-        } else if calibrationService.calibrationData.isCalibrated {
+        } else if calibrationService.calibrationData.isCalibrated { // Calibration 완료된 경우
             CalibrationCompleteCard(data: calibrationService.calibrationData)
         } else {
             // 캘리브레이션 안내
@@ -267,6 +268,72 @@ struct CalibrationView: View {
             }
             .padding()
             .background(Color.blue.opacity(0.1))
+            .cornerRadius(12)
+            .padding(.horizontal)
+        }
+    }
+    
+    // MARK: - Calibration Progress View
+    struct CalibrationProgressView: View {
+        let progress: Double
+        let message: String
+        
+        var body: some View {
+            VStack(spacing: 12) {
+                ProgressView(value: progress)
+                    .tint(.green)
+                
+                Text(message)
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            .padding()
+            .background(Color.green.opacity(0.2))
+            .cornerRadius(12)
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Calibration Complete Card
+    struct CalibrationCompleteCard: View {
+        let data: CalibrationData
+        
+        private var dateFormatter: DateFormatter {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "ko_KR")
+            
+            formatter.amSymbol = "오전"
+            formatter.amSymbol = "오후"
+            
+            formatter.dateFormat = "yyyy년 MM월 dd일 EEEE a h시 mm분 ss초"
+            
+            return formatter
+        }
+        
+        var body: some View {
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("설정 완료")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                
+                Text("위치: \(data.positionDescription)")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                
+                if let date = data.calibrationDate {
+                    let settingDate = dateFormatter.string(from: date)
+                    
+                    Text("설정일: \(settingDate)")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding()
+            .background(Color.green.opacity(0.1))
             .cornerRadius(12)
             .padding(.horizontal)
         }
@@ -332,58 +399,6 @@ struct CalibrationView: View {
     
     private func startCalibration() {
         calibrationService.startCalibration()
-    }
-}
-
-// MARK: - Calibration Progress View
-struct CalibrationProgressView: View {
-    let progress: Double
-    let message: String
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            ProgressView(value: progress)
-                .tint(.green)
-            
-            Text(message)
-                .font(.caption)
-                .foregroundColor(.white)
-        }
-        .padding()
-        .background(Color.green.opacity(0.2))
-        .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Calibration Complete Card
-struct CalibrationCompleteCard: View {
-    let data: CalibrationData
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                Text("설정 완료")
-                    .font(.headline)
-                    .foregroundColor(.white)
-            }
-            
-            Text("위치: \(data.positionDescription)")
-                .font(.caption)
-                .foregroundColor(.gray)
-            
-            if let date = data.calibrationDate {
-                Text("설정일: \(date.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-            }
-        }
-        .padding()
-        .background(Color.green.opacity(0.1))
-        .cornerRadius(12)
-        .padding(.horizontal)
     }
 }
 
