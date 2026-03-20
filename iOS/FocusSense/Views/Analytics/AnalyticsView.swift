@@ -222,16 +222,17 @@ struct CurrentSessionCard: View {
             if !session.focusRecords.isEmpty {
                 Chart {
                     ForEach(Array(session.focusRecords.enumerated()), id: \.offset) { index, record in
+                        // AI 점수가 기록된 경우 실제 점수 사용, 없으면 레벨 기반 폴백
                         LineMark(
                             x: .value("Time", index),
-                            y: .value("Focus", focusValue(for: record.focusLevel))
+                            y: .value("Focus", record.focusScore > 0 ? record.focusScore : Double(focusValue(for: record.focusLevel)))
                         )
                         .foregroundStyle(Color.orange.gradient)
                         .interpolationMethod(.catmullRom)
 
                         AreaMark(
                             x: .value("Time", index),
-                            y: .value("Focus", focusValue(for: record.focusLevel))
+                            y: .value("Focus", record.focusScore > 0 ? record.focusScore : Double(focusValue(for: record.focusLevel)))
                         )
                         .foregroundStyle(Color.orange.opacity(0.15).gradient)
                         .interpolationMethod(.catmullRom)

@@ -123,6 +123,8 @@ final class TimerViewModel: ObservableObject {
     let calibrationService = CalibrationService()
     let sessionStore: StudySessionStore
     let studyPlanStore: StudyPlanStore
+    // AI 기반 집중도 점수 서비스 (6개 지표 가중 합산 → 0~100점)
+    let focusScoreService = FocusScoreService()
 
     // MARK: - Computed Properties
 
@@ -153,9 +155,9 @@ final class TimerViewModel: ObservableObject {
     // 📚 [guard 문을 이용한 조기 반환 (Early Return)]
     //    guard문은 조건이 false이면 즉시 반환합니다.
     //    0으로 나누는 오류를 방지하면서 코드의 의도를 명확하게 표현합니다.
+    // AI 기반 실시간 집중률 (FocusScoreService의 6개 지표 가중 합산 점수)
     var focusRate: Double {
-        guard elapsedTime > 0 else { return 0 }
-        return (netFocusTime / elapsedTime) * 100
+        return focusScoreService.totalScore
     }
 
     // MARK: - Timer
@@ -235,10 +237,33 @@ final class TimerViewModel: ObservableObject {
     //    → 구독 결과(AnyCancellable)를 cancellables Set에 저장합니다.
     //    inout 파라미터(&)로 전달하여 Set에 직접 삽입합니다.
     private func setupBindings() {
+        // 자동 일시정지/재개 판단 (SimpleFocusDetectionService 기반)
         focusService.$currentState
             .receive(on: DispatchQueue.main)
             .sink { [weak self] state in
                 self?.handleFocusStateChange(state)
+            }
+            .store(in: &cancellables)
+
+        // AI 집중도 점수 업데이트 (FocusScoreService 기반)
+        // 상태 변경 시마다 6개 지표를 업데이트하여 0~100점 산출
+        focusService.$currentState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] state in
+                guard let self = self,
+                      self.timerState == .running,
+                      state.isFaceDetected else { return }
+
+                let data = self.faceAnalysisData
+                let debugInfo = self.focusService.debugInfo
+
+                self.focusScoreService.updateMetrics(
+                    ear: data.averageEAR,
+                    baselineEAR: debugInfo.earBaseline,
+                    headPose: HeadPose(pitch: data.pitch, yaw: data.yaw, roll: data.roll),
+                    combinedDrowsyScore: debugInfo.combinedDrowsyScore,
+                    focusLevel: state.level
+                )
             }
             .store(in: &cancellables)
     }
@@ -444,6 +469,7 @@ final class TimerViewModel: ObservableObject {
         selectedPlan = nil
 
         focusService.reset()
+        focusScoreService.reset()
 
         print("🔄 타이머 리셋")
     }
@@ -462,10 +488,12 @@ final class TimerViewModel: ObservableObject {
         //    record.session = currentSession 으로 역참조를 설정하고,
         //    currentSession?.focusRecords.append(record) 로 정참조를 설정합니다.
         //    이 양방향 관계 설정은 데이터 모델의 일관성을 보장합니다.
+        // 매초 AI 집중도 점수를 함께 기록하여 세션 분석에 활용
         let record = FocusRecord(
             timestamp: Date(),
             focusLevel: currentFocusState.level,
-            duration: 1.0
+            duration: 1.0,
+            focusScore: focusScoreService.totalScore
         )
         record.session = currentSession
         currentSession?.focusRecords.append(record)

@@ -149,9 +149,16 @@ final class StudySession {
         // $0 = 누적값(처음은 0), $1 = 현재 record
     }
 
-    /// 집중률 (%) = 순수 집중 시간 / 총 학습 시간 × 100
+    /// 집중률 (%) = AI 점수(FocusScoreService)의 평균
+    /// 매초 기록된 focusScore(0~100)의 평균으로 세션 집중률 산출
     var focusRate: Double {
-        guard totalDuration > 0 else { return 0 } // 0으로 나누기 방지
+        // AI 점수가 기록된 레코드만 필터 (focusScore > 0)
+        let scoredRecords = focusRecords.filter { $0.focusScore > 0 }
+        if !scoredRecords.isEmpty {
+            return scoredRecords.map { $0.focusScore }.reduce(0, +) / Double(scoredRecords.count)
+        }
+        // AI 점수 없는 이전 세션은 기존 방식으로 폴백
+        guard totalDuration > 0 else { return 0 }
         return (netFocusTime / totalDuration) * 100
     }
 
