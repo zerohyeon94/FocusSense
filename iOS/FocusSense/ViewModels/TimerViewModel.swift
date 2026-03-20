@@ -539,6 +539,11 @@ extension TimerViewModel: CameraServiceDelegate {
             ear: data.averageEAR,
             faceSize: faceSize
         )
+
+        // 캘리브레이션 완료 시 프레임 간격을 1초(1fps)로 복원하여 배터리/발열 최적화
+        if !calibrationService.isCalibrating {
+            cameraService.disableCalibrationMode()
+        }
     }
 
     nonisolated func cameraService(_ service: CameraService, didFailWithError error: Error) {

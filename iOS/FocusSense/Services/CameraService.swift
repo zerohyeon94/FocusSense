@@ -51,8 +51,8 @@ final class CameraService: NSObject, ObservableObject {
     // 해결책: 1초에 1번만 처리
     /// 마지막으로 프레임을 처리한 시간
     private var lastFrameTime: CFAbsoluteTime = 0
-    /// 프레임 처리 간격 (초) - 1초에 1번만 처리
-    private let frameInterval: CFAbsoluteTime = 1.0  // 1 FPS
+    /// 프레임 처리 간격 (초) - 기본 1초에 1번, 캘리브레이션 시 동적 변경 가능
+    private var frameInterval: CFAbsoluteTime = 1.0
     
     // MARK: - Initialization
     override init() {
@@ -213,8 +213,20 @@ final class CameraService: NSObject, ObservableObject {
     }
     
     private func setFrameInterval(_ interval: CFAbsoluteTime) {
-        // 프레임 간격은 captureOutput에서 체크됨
+        // captureOutput에서 이 값과 비교하여 프레임을 스킵할지 결정
+        frameInterval = interval
         print("📊 Frame interval set to \(interval)s")
+    }
+
+    /// 캘리브레이션 모드: 프레임 간격을 0.17초(≈6fps)로 줄여 빠르게 샘플 수집
+    /// 30샘플 × 0.17초 = 약 5초 만에 캘리브레이션 완료
+    func enableCalibrationMode() {
+        setFrameInterval(0.17)
+    }
+
+    /// 일반 모드: 프레임 간격을 1초(1fps)로 복원하여 배터리/발열 최적화
+    func disableCalibrationMode() {
+        setFrameInterval(1.0)
     }
 }
 

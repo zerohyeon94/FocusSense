@@ -74,11 +74,12 @@ struct CalibrationView: View {
             viewModel.cameraService.startSession()
         }
         .onDisappear {
-            // 캘리브레이션 중이면 취소
+            // 캘리브레이션 중이면 취소 + 프레임 간격 복원
             if calibrationService.isCalibrating {
                 calibrationService.isCalibrating = false
+                viewModel.cameraService.disableCalibrationMode()
             }
-            
+
             // 타이머가 실행 중이 아니면 카메라 정지
             if viewModel.timerState == .idle {
                 viewModel.cameraService.stopSession()
@@ -398,6 +399,9 @@ struct CalibrationView: View {
     }
     
     private func startCalibration() {
+        // 캘리브레이션 중에는 프레임 간격을 0.17초(≈6fps)로 줄여 빠르게 샘플 수집
+        // 기본 1fps → 6fps로 전환하여 30샘플을 약 5초 만에 완료
+        viewModel.cameraService.enableCalibrationMode()
         calibrationService.startCalibration()
     }
 }
