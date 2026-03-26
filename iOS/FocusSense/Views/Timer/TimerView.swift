@@ -128,13 +128,8 @@ struct TimerView: View {
                 }
             }
         }
-        /// 1. fullScreenCover 애니메이션 시작
-        /// 2. CameraDebugView 생성
-        /// 3. CameraPreviewView 생성
-        /// 4. AVCaptureVideoPreviewLayer(session:) 호출 (해당 부분이 느림)
-        /// 5. 메인 스레드가 멈춤.
         .fullScreenCover(isPresented: $viewModel.showDebugView) {
-            CameraDebugView(viewModel: viewModel) // 복잡한 View + 카메라 초기화
+            AIAnalysisView(viewModel: viewModel)
         }
         // 캘리브레이션 화면 (추가!)
         .fullScreenCover(isPresented: $viewModel.showCalibrationView) {
