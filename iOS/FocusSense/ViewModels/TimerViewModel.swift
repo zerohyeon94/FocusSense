@@ -344,6 +344,7 @@ final class TimerViewModel: ObservableObject {
 
             alertMessage = "👋 돌아오셨네요! 타이머를 재개합니다."
             showAlert = true
+            dismissAlertAfterDelay()
 
             hapticGenerator.notificationOccurred(.success)
             print("▶️ 자동 재개 (복귀)")
@@ -351,6 +352,15 @@ final class TimerViewModel: ObservableObject {
             // 졸음으로 일시정지됐던 경우 → 알림만
             alertMessage = "👋 돌아오셨네요! 재개 버튼을 눌러주세요."
             showAlert = true
+        }
+    }
+
+    private func dismissAlertAfterDelay() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if showAlert {
+                showAlert = false
+            }
         }
     }
 
