@@ -68,7 +68,13 @@ struct StudyPlanListView: View {
         .sheet(isPresented: $showingEditSheet) {
             StudyPlanEditSheet(
                 studyPlanStore: studyPlanStore,
-                editingPlan: editingPlan
+                editingPlan: nil
+            )
+        }
+        .sheet(item: $editingPlan) { plan in
+            StudyPlanEditSheet(
+                studyPlanStore: studyPlanStore,
+                editingPlan: plan
             )
         }
     }
@@ -117,7 +123,6 @@ struct StudyPlanListView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         editingPlan = plan
-                        showingEditSheet = true
                     }
             }
             .onDelete(perform: deletePlans)
