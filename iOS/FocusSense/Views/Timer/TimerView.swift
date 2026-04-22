@@ -46,6 +46,7 @@ struct TimerView: View {
     /// @State: 이 View 내부에서만 사용하는 단순 값
     /// - Alert 표시 여부 (true/false)
     @State private var showingResetAlert = false
+    @State private var showingGoalPicker = false
     
     var body: some View {
         /// GeometryReader: 부모 뷰의 크기/위치 정보 제공
@@ -74,6 +75,14 @@ struct TimerView: View {
                     
                     Spacer() // 빈 공간 (유연하게 늘어남)
 
+                    // 목표 시간 설정 버튼 (idle 상태에서만 표시)
+                    if viewModel.timerState == .idle {
+                        GoalTimeButton(
+                            targetDuration: viewModel.targetDuration,
+                            onTap: { showingGoalPicker = true }
+                        )
+                    }
+
                     // 선택된 학습 계획 배지 (항상 공간 확보 → 레이아웃 안정)
                     ZStack {
                         if let plan = viewModel.selectedPlan, viewModel.timerState != .idle {
@@ -88,7 +97,11 @@ struct TimerView: View {
                     
                     // 메인 타이머 디스플레이
                     TimerDisplay(
-                        elapsedTime: viewModel.formattedElapsedTime,
+                        mainTime: viewModel.isCountdownMode
+                            ? viewModel.formattedRemainingTime
+                            : viewModel.formattedElapsedTime,
+                        isCountdown: viewModel.isCountdownMode,
+                        countdownProgress: viewModel.countdownProgress,
                         netFocusTime: viewModel.formattedNetFocusTime,
                         focusRate: viewModel.focusRate
                     )
@@ -104,7 +117,15 @@ struct TimerView: View {
                         onStop: { viewModel.stopTimer() },
                         onReset: { showingResetAlert = true }
                     )
-                    
+
+                    // 뽀모도로 모드 진입 버튼 (idle 상태에서만 표시)
+                    if viewModel.timerState == .idle {
+                        PomodoroModeButton {
+                            viewModel.startPomodoroTimer()
+                        }
+                        .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                    }
+
                     Spacer()
                         .frame(height: 50)
                 }
@@ -123,7 +144,7 @@ struct TimerView: View {
         }
         .alert(viewModel.alertMessage, isPresented: $viewModel.showAlert) {
             Button("확인") {
-                if viewModel.timerState == .autoPaused {
+                if viewModel.timerState == .autoPaused && viewModel.lastAutoPauseReason != .drowsy {
                     viewModel.resumeTimer()
                 }
             }
@@ -138,6 +159,10 @@ struct TimerView: View {
                 calibrationService: viewModel.calibrationService
             )
         }
+        // 뽀모도로 타이머 화면
+        .fullScreenCover(isPresented: $viewModel.showPomodoroView) {
+            PomodoroTimerView(viewModel: viewModel)
+        }
         // 학습 계획 선택 시트
         .sheet(isPresented: $viewModel.showPlanPicker) {
             StudyPlanPickerView(
@@ -146,6 +171,17 @@ struct TimerView: View {
                 viewModel.startTimerWithPlan(plan)
             }
             .presentationDetents([.medium, .large])
+        }
+        // 목표 시간 설정 시트
+        .sheet(isPresented: $showingGoalPicker) {
+            TimerGoalPickerSheet(targetDuration: $viewModel.targetDuration)
+                .presentationDetents([.medium])
+        }
+        // 목표 시간 완료 알럿
+        .alert("목표 시간 완료! 🎉", isPresented: $viewModel.isTimerCompleted) {
+            Button("확인") { viewModel.isTimerCompleted = false }
+        } message: {
+            Text("설정한 목표 시간을 달성했습니다.\n수고하셨습니다!")
         }
     }
     
@@ -231,16 +267,25 @@ struct FocusStatusIndicator: View {
 
 // MARK: - Timer Display
 struct TimerDisplay: View {
-    let elapsedTime: String
+    let mainTime: String
+    let isCountdown: Bool
+    let countdownProgress: Double
     let netFocusTime: String
     let focusRate: Double
-    
+
     var body: some View {
         VStack(spacing: 20) {
-            // 메인 시간 (총 경과 시간)
-            Text(elapsedTime)
+            // 카운트다운 레이블
+            if isCountdown {
+                Text("남은 시간")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+            }
+
+            // 메인 시간 (업카운트 또는 카운트다운)
+            Text(mainTime)
                 .font(.system(size: 72, weight: .light, design: .monospaced))
-                .foregroundColor(.white)
+                .foregroundColor(isCountdown ? .orange : .white)
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
             
             // 순수 집중 시간 & 집중률
@@ -393,6 +438,143 @@ struct MainControlButton: View {
             return .green
         case .autoPaused:
             return .yellow
+        }
+    }
+}
+
+// MARK: - Pomodoro Mode Button
+struct PomodoroModeButton: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 8) {
+                Text("🍅")
+                Text("뽀모도로 시작")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundColor(.orange.opacity(0.85))
+            .padding(.horizontal, 24)
+            .padding(.vertical, 11)
+            .background(
+                Capsule()
+                    .fill(Color.orange.opacity(0.1))
+                    .overlay(
+                        Capsule().strokeBorder(Color.orange.opacity(0.28), lineWidth: 1)
+                    )
+            )
+        }
+    }
+}
+
+// MARK: - Goal Time Button
+struct GoalTimeButton: View {
+    let targetDuration: TimeInterval?
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: "timer")
+                    .font(.caption)
+                Text(targetDuration.map { formatDuration($0) } ?? "목표 시간 설정")
+                    .font(.caption.bold())
+            }
+            .foregroundColor(.white.opacity(0.7))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(Capsule().strokeBorder(Color.white.opacity(0.2), lineWidth: 1))
+            )
+        }
+    }
+
+    private func formatDuration(_ t: TimeInterval) -> String {
+        let h = Int(t) / 3600
+        let m = Int(t) / 60 % 60
+        if h > 0 && m > 0 { return "\(h)시간 \(m)분" }
+        if h > 0 { return "\(h)시간" }
+        return "\(m)분"
+    }
+}
+
+// MARK: - Timer Goal Picker Sheet
+struct TimerGoalPickerSheet: View {
+    @Binding var targetDuration: TimeInterval?
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var selectedHours = 1
+    @State private var selectedMinutes = 0
+
+    private let presets: [(label: String, duration: TimeInterval)] = [
+        ("25분", 25 * 60), ("30분", 30 * 60),
+        ("1시간", 3600), ("1시간 30분", 90 * 60), ("2시간", 7200)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // 프리셋 버튼
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    ForEach(presets, id: \.duration) { preset in
+                        Button(preset.label) {
+                            targetDuration = preset.duration
+                            dismiss()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .padding()
+
+                Divider()
+
+                // 커스텀 시간 피커
+                HStack {
+                    Picker("시간", selection: $selectedHours) {
+                        ForEach(0..<9) { Text("\($0)시간").tag($0) }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+
+                    Picker("분", selection: $selectedMinutes) {
+                        ForEach([0, 5, 10, 15, 20, 25, 30, 45], id: \.self) {
+                            Text("\($0)분").tag($0)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                }
+                .frame(height: 150)
+                .padding(.horizontal)
+
+                // 직접 설정 버튼
+                Button("직접 설정") {
+                    let total = TimeInterval(selectedHours * 3600 + selectedMinutes * 60)
+                    if total > 0 { targetDuration = total }
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(selectedHours == 0 && selectedMinutes == 0)
+                .padding(.bottom)
+            }
+            .navigationTitle("목표 시간")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }
+                }
+                if targetDuration != nil {
+                    ToolbarItem(placement: .destructiveAction) {
+                        Button("해제") {
+                            targetDuration = nil
+                            dismiss()
+                        }
+                        .foregroundColor(.red)
+                    }
+                }
+            }
         }
     }
 }

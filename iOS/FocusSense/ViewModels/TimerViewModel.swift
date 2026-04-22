@@ -41,6 +41,7 @@ import Foundation
 import Combine
 import AVFoundation
 import UIKit
+import UserNotifications
 
 // MARK: - Timer State
 
@@ -60,6 +61,19 @@ enum TimerState {
 enum AutoPauseReason {
     case away       // 자리 비움
     case drowsy     // 졸음
+}
+
+// MARK: - Pomodoro Phase
+enum PomodoroPhase {
+    case focus, shortBreak, longBreak
+
+    var label: String {
+        switch self {
+        case .focus: return "집중"
+        case .shortBreak: return "짧은 휴식"
+        case .longBreak: return "긴 휴식"
+        }
+    }
 }
 
 // MARK: - Timer ViewModel
@@ -112,6 +126,15 @@ final class TimerViewModel: ObservableObject {
     @Published var showPlanPicker = false
     @Published var selectedPlan: StudyPlan?
 
+    // MARK: - Countdown
+    @Published var targetDuration: TimeInterval? = nil  // nil = 업카운트 모드
+    @Published var isTimerCompleted = false
+
+    // MARK: - Pomodoro
+    @Published var showPomodoroView = false
+    @Published var pomodoroPhase: PomodoroPhase = .focus
+    @Published var pomodoroRound: Int = 1
+
     // MARK: - Services
 
     // 📚 [접근 제어와 의존성 주입]
@@ -152,6 +175,24 @@ final class TimerViewModel: ObservableObject {
         formatTime(netFocusTime)
     }
 
+    var isCountdownMode: Bool { targetDuration != nil }
+
+    var isPomodoroBreak: Bool {
+        showPomodoroView && pomodoroPhase != .focus
+    }
+
+    var remainingTime: TimeInterval {
+        guard let target = targetDuration else { return 0 }
+        return max(0, target - elapsedTime)
+    }
+
+    var formattedRemainingTime: String { formatTime(remainingTime) }
+
+    var countdownProgress: Double {
+        guard let target = targetDuration, target > 0 else { return 0 }
+        return min(1.0, elapsedTime / target)
+    }
+
     // 📚 [guard 문을 이용한 조기 반환 (Early Return)]
     //    guard문은 조건이 false이면 즉시 반환합니다.
     //    0으로 나누는 오류를 방지하면서 코드의 의도를 명확하게 표현합니다.
@@ -180,10 +221,15 @@ final class TimerViewModel: ObservableObject {
     // MARK: - Auto Pause
     private var consecutiveDrowsyCount = 0
     private let autoPauseThreshold = 3  // 3번 연속 drowsy면 일시정지
-    private var lastAutoPauseReason: AutoPauseReason?
+    private(set) var lastAutoPauseReason: AutoPauseReason?
 
     // MARK: - Auto Resume Setting
     var autoResumeOnReturn: Bool = true  // 복귀 시 자동 재개 여부
+
+    var pomodoroFocusDuration: TimeInterval = 25 * 60
+    var pomodoroBreakDuration: TimeInterval = 5 * 60
+    var pomodoroLongBreakDuration: TimeInterval = 15 * 60
+    let pomodoroTotalRounds = 4
 
     // MARK: - Haptic
     private let hapticGenerator = UINotificationFeedbackGenerator()
@@ -473,6 +519,8 @@ final class TimerViewModel: ObservableObject {
         stopTimer()
         elapsedTime = 0
         netFocusTime = 0
+        targetDuration = nil
+        isTimerCompleted = false
         currentSession = nil
         consecutiveDrowsyCount = 0
         lastAutoPauseReason = nil
@@ -484,21 +532,137 @@ final class TimerViewModel: ObservableObject {
         print("🔄 타이머 리셋")
     }
 
+    // MARK: - Pomodoro
+
+    func startPomodoroTimer() {
+        pomodoroPhase = .focus
+        pomodoroRound = 1
+        targetDuration = pomodoroFocusDuration
+        showPomodoroView = true
+        startTimerWithPlan(nil)
+    }
+
+    func stopPomodoroTimer() {
+        showPomodoroView = false
+        pomodoroPhase = .focus
+        pomodoroRound = 1
+        resetTimer()
+    }
+
+    func skipPomodoroPhase() {
+        guard timerState == .running || timerState == .paused || timerState == .autoPaused else { return }
+        handlePomodoroPhaseComplete()
+    }
+
+    private func handlePomodoroPhaseComplete() {
+        hapticGenerator.notificationOccurred(.success)
+        timer?.invalidate()
+
+        switch pomodoroPhase {
+        case .focus:
+            currentSession?.endTime = Date()
+            if let session = currentSession {
+                sessionStore.saveSession(session)
+            }
+            currentSession = nil
+            netFocusTime = 0
+            focusScoreService.reset()
+
+            if pomodoroRound >= pomodoroTotalRounds {
+                pomodoroPhase = .longBreak
+                targetDuration = pomodoroLongBreakDuration
+                alertMessage = "🎉 \(pomodoroTotalRounds)번 집중 완료! 긴 휴식 시간입니다."
+            } else {
+                pomodoroPhase = .shortBreak
+                targetDuration = pomodoroBreakDuration
+                alertMessage = "✅ 집중 완료! 잠깐 휴식하세요."
+            }
+            elapsedTime = 0
+            cameraService.stopSession()
+
+        case .shortBreak:
+            pomodoroRound += 1
+            pomodoroPhase = .focus
+            targetDuration = pomodoroFocusDuration
+            elapsedTime = 0
+            alertMessage = "▶️ \(pomodoroRound)번째 집중을 시작합니다!"
+            cameraService.startSession()
+            let focusSession = StudySession(startTime: Date())
+            currentSession = focusSession
+
+        case .longBreak:
+            pomodoroRound = 1
+            pomodoroPhase = .focus
+            targetDuration = pomodoroFocusDuration
+            elapsedTime = 0
+            alertMessage = "🎊 모든 라운드 완료! 처음부터 다시 시작합니다."
+            cameraService.startSession()
+            let restartSession = StudySession(startTime: Date())
+            currentSession = restartSession
+        }
+
+        showAlert = true
+        timerState = .running
+        consecutiveDrowsyCount = 0
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateTimer()
+            }
+        }
+
+        print("🔄 뽀모도로 페이즈 전환: \(pomodoroPhase), 라운드: \(pomodoroRound)")
+    }
+
+    // MARK: - Countdown Completion
+
+    private func handleTimerCompleted() {
+        let plan = selectedPlan  // stopTimer()가 selectedPlan을 nil로 리셋하기 전에 저장
+        stopTimer()
+        isTimerCompleted = true
+        hapticGenerator.notificationOccurred(.success)
+        sendCompletionNotification(plan: plan)
+        print("✅ 목표 시간 완료")
+    }
+
+    private func sendCompletionNotification(plan: StudyPlan?) {
+        let content = UNMutableNotificationContent()
+        content.title = "집중 시간 완료! 🎉"
+        content.body = plan.map { "'\($0.title)' 목표 시간을 달성했습니다." }
+            ?? "설정한 목표 시간을 완료했습니다."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "timer-completed-\(UUID())",
+            content: content,
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+
     // MARK: - Update Timer
     private func updateTimer() {
         elapsedTime += 1
 
-        // 집중 상태일 때만 순수 집중 시간 증가
-        if currentFocusState.level == .focused {
+        // 휴식 페이즈에서는 집중 시간 미적립
+        if currentFocusState.level == .focused && !isPomodoroBreak {
             netFocusTime += 1
         }
 
-        // 📚 [FocusRecord 생성 및 세션 연결]
-        //    매 1초마다 현재 집중 상태를 기록합니다.
-        //    record.session = currentSession 으로 역참조를 설정하고,
-        //    currentSession?.focusRecords.append(record) 로 정참조를 설정합니다.
-        //    이 양방향 관계 설정은 데이터 모델의 일관성을 보장합니다.
-        // 매초 AI 집중도 점수를 함께 기록하여 세션 분석에 활용
+        // 카운트다운 완료 체크
+        if let target = targetDuration, elapsedTime >= target {
+            if showPomodoroView {
+                handlePomodoroPhaseComplete()
+            } else {
+                handleTimerCompleted()
+            }
+            return
+        }
+
+        // 휴식 페이즈에서는 FocusRecord 미기록
+        guard !isPomodoroBreak else { return }
+
         let record = FocusRecord(
             timestamp: Date(),
             focusLevel: currentFocusState.level,
