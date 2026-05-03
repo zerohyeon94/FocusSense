@@ -84,10 +84,11 @@ struct DashboardView: View {
                 .padding()
             }
             .background(Color(hex: "0f0f1a"))
-            // 📚 .navigationTitle: NavigationStack의 상단에 제목을 표시합니다.
-            //    .large: 큰 제목 스타일로, 스크롤 시 자동으로 작은 제목으로 축소됩니다.
             .navigationTitle("ZipJoong")
             .navigationBarTitleDisplayMode(.large)
+        }
+        .task {
+            dashboardViewModel.loadSessions()
         }
     }
 }

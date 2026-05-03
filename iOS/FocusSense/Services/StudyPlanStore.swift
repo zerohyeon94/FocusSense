@@ -72,29 +72,9 @@ final class StudyPlanStore: ObservableObject {
     // MARK: - Configure
     func configure(with context: ModelContext) {
         self.modelContext = context
-        loadAllPlans()
-        print("✅ StudyPlanStore configured: \(plans.count)개 계획 로드")
-
-        // 📚 앱 시작 시 refreshAllNotifications를 호출하는 이유:
-        // iOS의 로컬 알림은 "등록된 상태"가 영구적이지 않을 수 있음:
-        //   1. 앱 업데이트 시 알림이 초기화될 수 있음
-        //   2. 사용자가 설정에서 알림 권한을 변경할 수 있음
-        //   3. iOS가 시스템 최적화를 위해 알림을 정리할 수 있음
-        // → 따라서 앱이 실행될 때마다 알림 상태를 "현재 계획"과 동기화하는 것이 안전
-        //
-        // 📚 Task { } — 비동기(async) 함수를 동기(sync) 컨텍스트에서 호출하는 방법
-        // configure()는 동기 함수이지만, refreshAllNotifications()는 async 함수.
-        // async 함수는 동기 코드에서 직접 호출할 수 없으므로 Task { }로 감쌈.
-        // Task는 새로운 비동기 작업 단위를 생성하고, 현재 코드 흐름을 막지 않고 병렬 실행.
-        // → configure()는 즉시 반환되고, 알림 갱신은 백그라운드에서 진행
-        //
-        // 📚 @MainActor 클래스 내부의 Task:
-        // @MainActor 클래스 안에서 생성된 Task는 자동으로 MainActor를 상속받음.
-        // 따라서 Task 내부 코드도 메인 스레드에서 실행됨.
-        // (await 지점에서는 다른 스레드로 넘어갈 수 있지만, await 이후 다시 메인 스레드로 돌아옴)
-
-        // 앱 시작 시 기존 알림 갱신
         Task {
+            loadAllPlans()
+            print("✅ StudyPlanStore configured: \(plans.count)개 계획 로드")
             await notificationService.refreshAllNotifications(plans: plans)
         }
     }

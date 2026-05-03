@@ -308,19 +308,36 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate {
         // 기존 알림 모두 제거
         center.removeAllPendingNotificationRequests()
 
-        // 📚 for ... where — 조건부 반복문
-        // for plan in plans where plan.isReminderEnabled && plan.isActive
-        // → plans 배열에서 조건을 만족하는 항목만 반복
-        // filter + for 를 합쳐놓은 간결한 문법
-        // where 절 덕분에 내부에 if문 없이도 필터링 가능
-
-        // 활성 계획의 알림 재등록
-        for plan in plans where plan.isReminderEnabled && plan.isActive {
-            await scheduleNotifications(for: plan)
+        let activePlans = plans.filter { $0.isReminderEnabled && $0.isActive }
+        guard !activePlans.isEmpty else {
+            print("🔄 전체 알림 갱신: 0개")
+            return
         }
 
-        let count = plans.filter { $0.isReminderEnabled && $0.isActive }.count
-        print("🔄 전체 알림 갱신: \(count)개")
+        // 권한을 한 번만 확인
+        // 기존: scheduleNotifications()를 계획마다 호출 → center.notificationSettings() IPC가 N번 실행 → 앱 시작 지연
+        // 개선: 권한 확인 1회 후 등록만 반복 → IPC 호출 최소화
+        let status = await checkPermissionStatus()
+        guard status == .authorized || status == .provisional else {
+            print("⚠️ 알림 권한이 없어 알림을 등록하지 않습니다")
+            return
+        }
+
+        for plan in activePlans {
+            switch plan.recurrenceType {
+            case .daily:
+                for weekday in 1...7 {
+                    scheduleWeekdayNotification(for: plan, weekday: weekday)
+                }
+            case .weekdays(let days):
+                for weekday in days {
+                    scheduleWeekdayNotification(for: plan, weekday: weekday)
+                }
+            }
+            print("✅ 알림 등록 완료: \(plan.title)")
+        }
+
+        print("🔄 전체 알림 갱신: \(activePlans.count)개")
     }
 
     // MARK: - Debug

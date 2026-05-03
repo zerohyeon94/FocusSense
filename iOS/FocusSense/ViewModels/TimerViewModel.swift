@@ -539,7 +539,11 @@ final class TimerViewModel: ObservableObject {
         pomodoroRound = 1
         targetDuration = pomodoroFocusDuration
         showPomodoroView = true
-        startTimerWithPlan(nil)
+        // fullScreenCover 애니메이션이 완료된 뒤 카메라/타이머를 시작한다.
+        // 동기 호출 시 SwiftUI가 상태 변경을 한 렌더에 묶어 화면 전환이 실행되지 않는 문제 방지.
+        Task { @MainActor in
+            startTimerWithPlan(nil)
+        }
     }
 
     func stopPomodoroTimer() {

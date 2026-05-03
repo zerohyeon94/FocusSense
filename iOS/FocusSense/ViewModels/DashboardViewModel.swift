@@ -117,6 +117,12 @@ final class DashboardViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    // MARK: - Load
+
+    func loadSessions() {
+        sessionStore.loadAllSessions()
+    }
+
     // MARK: - Compute All
     func computeAll() {
         computeContributionData()

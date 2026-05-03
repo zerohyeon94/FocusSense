@@ -39,9 +39,9 @@ struct SplashView: View {
     //
     //    예: opacity 0 → 1이면, SwiftUI가 0.0, 0.1, 0.2, ... 0.9, 1.0으로
     //    점진적으로 변경하여 페이드인 효과를 만듭니다.
-    @State private var opacity: Double = 0       // 📚 초기값 0: 완전 투명 상태에서 시작
-    @State private var scale: CGFloat = 0.8      // 📚 초기값 0.8: 80% 크기에서 시작 (살짝 작게)
-    @State private var glowOpacity: Double = 0   // 📚 초기값 0: 글로우 없는 상태에서 시작
+    @State private var opacity: Double = 1
+    @State private var scale: CGFloat = 0.8
+    @State private var glowOpacity: Double = 0
 
     var body: some View {
         ZStack {
@@ -83,24 +83,9 @@ struct SplashView: View {
         //    주의: withAnimation은 즉시 반환되며, 애니메이션은 백그라운드에서 진행됩니다.
         //    따라서 두 withAnimation이 동시에 시작 가능합니다 (delay로 시차 조절).
         .onAppear {
-            // 📚 첫 번째 애니메이션: 등장 효과 (0.6초)
-            //    .easeOut: 처음에 빠르게 시작하고 끝에서 느려지는 커브
-            //    → 탄력 있게 나타나서 자연스럽게 멈추는 느낌
-            //    opacity 0→1: 투명→불투명 (페이드인)
-            //    scale 0.8→1.0: 80%→100% (스케일업)
             withAnimation(.easeOut(duration: 0.6)) {
-                opacity = 1
                 scale = 1.0
             }
-            // 📚 두 번째 애니메이션: 글로우 반복 효과
-            //    .easeInOut: 시작과 끝이 모두 부드러운 커브
-            //    .delay(0.4): 0.4초 후에 시작 → 등장 애니메이션 중간에 글로우 시작
-            //    .repeatForever(autoreverses: true): 무한 반복 + 자동 역방향
-            //    → glowOpacity가 0→0.6→0→0.6... 으로 반복되어 숨쉬는 듯한 빛 효과
-            //
-            //    autoreverses 옵션:
-            //    - true: 0→0.6→0→0.6 (부드럽게 왕복)
-            //    - false: 0→0.6, 0→0.6 (순간적으로 리셋 후 반복)
             withAnimation(.easeInOut(duration: 0.8).delay(0.4).repeatForever(autoreverses: true)) {
                 glowOpacity = 0.6
             }

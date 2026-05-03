@@ -98,9 +98,7 @@ final class StudySessionStore: ObservableObject {
     /// ContentView.onAppear에서 ModelContext를 주입
     func configure(with context: ModelContext) {
         self.modelContext = context
-        loadAllSessions()
         migrateJSONDataIfNeeded()
-        print("✅ StudySessionStore configured: \(sessions.count)개 세션 로드")
     }
 
     // MARK: - Save Session

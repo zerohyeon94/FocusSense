@@ -133,7 +133,10 @@ final class SimpleFocusDetectionService: ObservableObject, FocusDetectionService
     // MARK: - Initialization
     init() {
         setupVision()
-        setupCoreML()
+        // CoreML 모델 로딩은 메인 스레드를 블로킹하지 않도록 백그라운드에서 실행
+        Task.detached(priority: .userInitiated) { [weak self] in
+            self?.setupCoreML()
+        }
         print("✅ SimpleFocusDetectionService 초기화 완료")
     }
     
@@ -149,11 +152,14 @@ final class SimpleFocusDetectionService: ObservableObject, FocusDetectionService
             let config = MLModelConfiguration()
             config.computeUnits = .cpuAndNeuralEngine
             let model = try FocusSense_default(configuration: config)
-            mlModel = try VNCoreMLModel(for: model.model)
-            isMLModelLoaded = true
-            print("✅ CoreML 모델 로드 성공 (하이브리드 모드)")
+            let vncoreMLModel = try VNCoreMLModel(for: model.model)
+            // mlModel/isMLModelLoaded은 processFrame(메인 스레드)에서 읽히므로 main에서 설정
+            DispatchQueue.main.async { [weak self] in
+                self?.mlModel = vncoreMLModel
+                self?.isMLModelLoaded = true
+                print("✅ CoreML 모델 로드 성공 (하이브리드 모드)")
+            }
         } catch {
-            isMLModelLoaded = false
             print("⚠️ CoreML 없이 Vision EAR만 사용: \(error.localizedDescription)")
         }
     }

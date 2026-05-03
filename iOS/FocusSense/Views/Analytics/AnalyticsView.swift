@@ -97,6 +97,9 @@ struct AnalyticsView: View {
             .background(Color(hex: "0f0f1a"))
             .navigationTitle("집중 분석")
             .navigationBarTitleDisplayMode(.large)
+            .task {
+                viewModel.sessionStore.loadAllSessions()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
