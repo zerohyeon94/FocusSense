@@ -207,6 +207,39 @@ final class StudySessionStore: ObservableObject {
     }
 
     /// 특정 날짜의 세션들
+    /// 모든 기록을 지웁니다 (설정 › 모든 기록 삭제)
+    func deleteAllSessions() {
+        guard let modelContext else { return }
+        do {
+            try modelContext.delete(model: StudySession.self)
+            try modelContext.save()
+            sessions = []
+            print("✅ 모든 기록 삭제 완료")
+        } catch {
+            print("❌ 모든 기록 삭제 실패: \(error)")
+        }
+    }
+
+    /// 기록 내보내기용 CSV
+    func csv() -> String {
+        let f = ISO8601DateFormatter()
+        let header = "시작,끝,집중 대상,정한 시간(분),측정 시간(초),순수 집중(초),순수 집중 비율,별 등급,자리 감지"
+        let rows = sessions.sorted { $0.startTime < $1.startTime }.map { s in
+            [
+                f.string(from: s.startTime),
+                s.endTime.map(f.string(from:)) ?? "",
+                "\"\((s.studyPlanTitle ?? "").replacingOccurrences(of: "\"", with: "\"\""))\"",
+                "\(Int(s.plannedDuration / 60))",
+                "\(Int(s.measuredDuration))",
+                "\(Int(s.netFocusTime))",
+                String(format: "%.2f", s.pureFocusRatio),
+                "\(s.starMagnitude)",
+                s.isDetectionEnabled ? "켜짐" : "꺼짐",
+            ].joined(separator: ",")
+        }
+        return ([header] + rows).joined(separator: "\n")
+    }
+
     func sessions(for date: Date) -> [StudySession] {
         let calendar = Calendar.current
         let targetDay = calendar.startOfDay(for: date)

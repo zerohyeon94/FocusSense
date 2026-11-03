@@ -1,297 +1,190 @@
 //
 //  SettingsView.swift
-//  FocusSense
+//  Orot
 //
-//  앱 설정 화면
+//  설정 메인 (5-1) — 집중 탭 오른쪽 위 아이콘으로 들어옵니다.
 //
-
-// ============================================================================
-// 📚 [파일 개요] SettingsView - 앱 설정 화면
-// ============================================================================
-//
-// 📚 [@AppStorage - UserDefaults 영속 저장]
-//   @AppStorage("key")는 UserDefaults를 SwiftUI 프로퍼티 래퍼로 감싼 것입니다.
-//   - 값이 변경되면 자동으로 UserDefaults에 저장되고, 앱 재시작 후에도 유지됩니다.
-//   - @State처럼 값이 변경되면 View가 자동 갱신됩니다.
-//   - 예: @AppStorage("hapticEnabled") var hapticEnabled = true
-//     → UserDefaults.standard.bool(forKey: "hapticEnabled")와 동일
-//
-// 📚 [List + Section 패턴]
-//   iOS 설정 앱과 동일한 구조입니다:
-//   List {
-//       Section("카테고리 제목") { ... 행들 ... }
-//       Section("다른 카테고리") { ... 행들 ... }
-//   }
-//   Section은 시각적 그룹핑과 헤더/푸터 텍스트를 제공합니다.
-//
-// 📚 [NavigationLink - 푸시 내비게이션]
-//   NavigationLink는 탭하면 새 화면을 오른쪽에서 밀어 넣는(push) 내비게이션입니다.
-//   NavigationStack 안에서만 동작하며, 자동으로 뒤로가기 버튼이 생성됩니다.
-//
-// 📚 [.task 수정자 - 비동기 작업]
-//   .task { await ... }는 View가 나타날 때 비동기 작업을 실행합니다.
-//   .onAppear와 달리 async/await를 직접 사용할 수 있고,
-//   View가 사라지면 자동으로 Task가 취소됩니다.
-//
-// ============================================================================
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
-    @ObservedObject var studyPlanStore: StudyPlanStore
+    @ObservedObject var subjectStore: FocusSubjectStore
+    @ObservedObject var sessionStore: StudySessionStore
+    @ObservedObject var timerViewModel: TimerViewModel
 
-    @AppStorage("hapticEnabled") private var hapticEnabled = true
-    @AppStorage("soundEnabled") private var soundEnabled = true
-    @AppStorage("autoPauseEnabled") private var autoPauseEnabled = true
-    @AppStorage("drowsinessThreshold") private var drowsinessThreshold = 3.0
-    @AppStorage("contributionDisplayMode") private var contributionDisplayMode = "grass"
+    @AppStorage(OrotSettings.Key.focusMinutes) private var focusMinutes = 25
+    @AppStorage(OrotSettings.Key.restMinutes) private var restMinutes = 5
+    @AppStorage(OrotSettings.Key.longRestMinutes) private var longRestMinutes = 15
+    @AppStorage(OrotSettings.Key.longRestEvery) private var longRestEvery = 4
+    @AppStorage(OrotSettings.Key.detectionEnabled) private var detectionEnabled = true
+    @AppStorage(OrotSettings.Key.sensitivity) private var sensitivity = 1
+    @AppStorage(OrotSettings.Key.constellationDisplay) private var constellationDisplay = 1
+    @AppStorage(OrotSettings.Key.keepAwake) private var keepAwake = true
+    @AppStorage(OrotSettings.Key.notifySessionEnd) private var notifySessionEnd = true
+    @AppStorage(OrotSettings.Key.notifyRestEnd) private var notifyRestEnd = true
+    @AppStorage(OrotSettings.Key.sound) private var sound = false
+    @AppStorage(OrotSettings.Key.haptic) private var haptic = true
 
-    @State private var notificationStatus: String = ""
-
-    /// 각 선택된 모드에 따른 적용
-    var selectedIconColor: Color {
-        switch contributionDisplayMode {
-        case "grass": return .green
-        case "constellation": return .yellow
-        case "waterDrop": return .cyan
-        default: return .gray
-        }
-    }
-
-    var selectedTitle: String {
-        switch contributionDisplayMode {
-        case "grass": return "잔디밭"
-        case "constellation": return "별자리"
-        case "waterDrop": return "물방울"
-        default: return ""
-        }
-    }
-
-    var selectedIcon: String {
-        switch contributionDisplayMode {
-        case "grass": return "square.grid.3x3.fill"
-        case "constellation": return "star.fill"
-        case "waterDrop": return "drop.fill"
-        default: return ""
-        }
-    }
-    
-    var appVersion: String {
-        guard let dictionary = Bundle.main.infoDictionary,
-              let version = dictionary["CFBundleShortVersionString"] as? String else {
-            return "알 수 없음"
-        }
-        return version
-    }
+    @State private var showsDeleteConfirm = false
 
     var body: some View {
         NavigationStack {
-            List {
-                // 학습 계획 관리
-                Section {
-                    NavigationLink {
-                        StudyPlanListView(studyPlanStore: studyPlanStore)
-                    } label: {
-                        HStack {
-                            SettingRow(
-                                icon: "book.fill",
-                                title: "학습 계획 관리",
-                                color: .orange
-                            )
-                            Spacer()
-                            Text("\(studyPlanStore.plans.count)개")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    // 알림 권한 상태
-                    HStack {
-                        SettingRow(
-                            icon: "bell.badge.fill",
-                            title: "학습 알림",
-                            color: .green
-                        )
-                        Spacer()
-                        Text(notificationStatus)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                } header: {
-                    Text("학습 계획")
-                } footer: {
-                    Text("학습 계획을 등록하면 타이머 시작 시 과목을 선택하고, 설정된 시간에 알림을 받을 수 있습니다.")
-                }
-
-                // 화면 표시
-                Section {
-                    HStack {
-                        SettingRow(
-                            icon: "paintbrush.fill",
-                            title: "학습 그래프 스타일",
-                            color: .yellow
-                        )
-                        
-                        Spacer()
-                        
-                        Menu {
-                            Picker("학습 그래프 스타일", selection: $contributionDisplayMode) {
-                                Label("잔디밭", systemImage: "square.grid.3x3.fill").tag("grass")
-                                Label("별자리", systemImage: "star.fill").tag("constellation")
-                                Label("물방울", systemImage: "drop.fill").tag("waterDrop")
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: selectedIcon)
-                                    .foregroundColor(selectedIconColor)
-                                
-                                Text(selectedTitle)
-                                    .foregroundColor(.primary)
-                                
-                                Image(systemName: "chevron.up.chevron.down")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                    }
-                } header: {
-                    Text("화면 표시")
-                }
-                
-                // 알림 설정
-                Section {
-                    Toggle(isOn: $hapticEnabled) {
-                        SettingRow(
-                            icon: "iphone.radiowaves.left.and.right",
-                            title: "진동 알림",
-                            color: .purple
-                        )
-                    }
-
-                    Toggle(isOn: $soundEnabled) {
-                        SettingRow(
-                            icon: "speaker.wave.2.fill",
-                            title: "소리 알림",
-                            color: .orange
-                        )
-                    }
-                } header: {
-                    Text("알림")
-                }
-
-                // 집중 감지 설정
-                Section {
-                    Toggle(isOn: $autoPauseEnabled) {
-                        SettingRow(
-                            icon: "pause.circle.fill",
-                            title: "자동 일시정지",
-                            color: .blue
-                        )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        SettingRow(
-                            icon: "moon.zzz.fill",
-                            title: "졸음 감지 민감도",
-                            color: .red
-                        )
-
-                        Slider(value: $drowsinessThreshold, in: 1...5, step: 1) {
-                            Text("민감도")
-                        }
-
-                        HStack {
-                            Text("민감")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text("둔감")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("집중 감지")
-                } footer: {
-                    Text("민감도가 높을수록 작은 변화에도 졸음으로 감지합니다.")
-                }
-
-                // 개인정보 안내
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "lock.shield.fill")
-                                .foregroundColor(.green)
-                            Text("개인정보 보호")
-                                .font(.headline)
-                        }
-
-                        Text("ZipJoong은 모든 영상 분석을 기기 내에서만 처리합니다. 카메라 영상은 절대 외부 서버로 전송되지 않습니다.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 4)
-                } header: {
-                    Text("개인정보")
-                }
-
-                // 앱 정보
-                Section {
-                    HStack {
-                        Text("버전")
-                        Spacer()
-                        Text(appVersion)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Link(destination: URL(string: "https://github.com/zerohyeon94/FocusSense")!) {
-                        HStack {
-                            SettingRow(
-                                icon: "chevron.left.forwardslash.chevron.right",
-                                title: "소스 코드",
-                                color: .gray
-                            )
-                            Spacer()
-                            Image(systemName: "arrow.up.right.square")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("앱 정보")
-                }
+            SettingsPage(title: "설정", backTitle: "집중") {
+                focusSection
+                detectionSection
+                displaySection
+                notificationSection
+                dataSection
+                privacySection
+                infoSection
             }
-            .navigationTitle("설정")
-            .navigationBarTitleDisplayMode(.large)
-            .listSectionSpacing(.default) // HIG 기반 최적화 - 유동적으로 변경되도록 구현
-            .task { // 화면이 그려질 때, 동작
-                await updateNotificationStatus()
+        }
+        .tint(OrotColor.accent)
+        .sheet(isPresented: $showsDeleteConfirm) {
+            DeleteAllRecordsSheet(sessionStore: sessionStore)
+        }
+    }
+
+    // MARK: - Sections
+
+    private var focusSection: some View {
+        SettingsSection(title: "집중") {
+            SettingsNavRow(title: "기본 집중 시간", value: "\(focusMinutes)분") {
+                SettingsOptionList(title: "기본 집중 시간", options: Array(stride(from: 15, through: 120, by: 5)), label: { "\($0)분" }, selection: $focusMinutes)
+            }
+            SettingsNavRow(title: "휴식 시간", value: "\(restMinutes)분") {
+                SettingsOptionList(title: "휴식 시간", options: [3, 5, 10, 15], label: { "\($0)분" }, selection: $restMinutes)
+            }
+            SettingsNavRow(title: "긴 휴식", value: "\(longRestEvery)세션마다 · \(longRestMinutes)분") {
+                LongRestSettings(every: $longRestEvery, minutes: $longRestMinutes)
+            }
+            SettingsNavRow(title: "집중 대상 관리", value: "\(subjectStore.subjects.count)개") {
+                SubjectManageView(subjectStore: subjectStore, sessionStore: sessionStore)
             }
         }
     }
 
-    // MARK: - Notification Status
-    private func updateNotificationStatus() async {
-        let status = await studyPlanStore.notificationService.checkPermissionStatus()
-        switch status {
-        case .authorized:
-            notificationStatus = "허용됨"
-        case .denied:
-            notificationStatus = "거부됨"
-        case .notDetermined:
-            notificationStatus = "미설정"
-        case .provisional:
-            notificationStatus = "임시 허용"
-        case .ephemeral:
-            notificationStatus = "임시"
-        @unknown default:
-            notificationStatus = "알 수 없음"
+    private var detectionSection: some View {
+        SettingsSection(title: "감지", footer: "감지를 끄면 타이머로만 쓰고, 별은 기본 밝기(3등급)로 떠요.") {
+            SettingsToggleRow(title: "자리 이탈 감지", subtitle: "전면 카메라로 자리에 계신지만 확인해요", isOn: $detectionEnabled)
+            SettingsSegmentRow(
+                title: "민감도",
+                subtitle: detectionEnabled
+                    ? "\(OrotSettings.sensitivityLabels[sensitivity]) · 자리를 비운 지 \(OrotSettings.awayGraceSeconds[sensitivity])초 뒤 잠시 멈춰요"
+                    : "감지가 꺼져 있어요",
+                options: OrotSettings.sensitivityLabels,
+                selection: $sensitivity,
+                disabled: !detectionEnabled
+            )
+            SettingsNavRow(title: "얼굴 위치 다시 맞추기", dimmed: !detectionEnabled) {
+                FaceAlignView(viewModel: timerViewModel, camera: timerViewModel.cameraService, mode: .settings) {}
+            }
+        }
+    }
+
+    private var displaySection: some View {
+        SettingsSection(title: "화면") {
+            SettingsSegmentRow(title: "별자리 표시 밝기", subtitle: "세션 중 하늘에 그리는 별자리 선과 빈 자리", options: OrotSettings.constellationLabels, selection: $constellationDisplay)
+            SettingsToggleRow(title: "화면 꺼짐 방지", subtitle: "세션 중에는 화면이 꺼지지 않아요", isOn: $keepAwake)
+        }
+    }
+
+    private var notificationSection: some View {
+        SettingsSection(title: "알림") {
+            SettingsToggleRow(title: "세션 종료 알림", isOn: $notifySessionEnd)
+            SettingsToggleRow(title: "휴식 종료 알림", isOn: $notifyRestEnd)
+            SettingsToggleRow(title: "사운드", subtitle: "알림이 올 때 소리를 함께 내요", isOn: $sound)
+            SettingsToggleRow(title: "햅틱", isOn: $haptic)
+        }
+    }
+
+    private var dataSection: some View {
+        SettingsSection(title: "데이터") {
+            ShareLink(item: CSVExport(text: sessionStore.csv()), preview: SharePreview("오롯 기록.csv")) {
+                HStack {
+                    SettingsRowLabel(title: "기록 내보내기", subtitle: "CSV 파일로 저장해요")
+                    Text("›").font(OrotFont.regular(17)).foregroundStyle(Color(hex: 0x4A4E54))
+                }
+                .padding(.horizontal, 16).padding(.vertical, 12)
+                .frame(minHeight: 52)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { showsDeleteConfirm = true } label: {
+                Text("모든 기록 삭제").font(OrotFont.body).foregroundStyle(OrotColor.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var privacySection: some View {
+        SettingsSection(title: "개인정보") {
+            SettingsNavRow(title: "카메라 데이터 처리 방식", subtitle: "영상은 저장·전송하지 않아요") { CameraDataView() }
+        }
+    }
+
+    private var infoSection: some View {
+        SettingsSection(title: "정보") {
+            HStack {
+                SettingsRowLabel(title: "버전")
+                Text(Self.version).font(OrotFont.body).monospacedDigit().foregroundStyle(Color(hex: 0x7E7B74))
+            }
+            .padding(.horizontal, 16).frame(minHeight: 52)
+            SettingsNavRow(title: "오픈소스 라이선스") { LicensesView() }
+        }
+    }
+
+    private static var version: String {
+        let info = Bundle.main.infoDictionary
+        return "\(info?["CFBundleShortVersionString"] as? String ?? "") (\(info?["CFBundleVersion"] as? String ?? ""))"
+    }
+}
+
+// MARK: - Long Rest
+private struct LongRestSettings: View {
+    @Binding var every: Int
+    @Binding var minutes: Int
+
+    var body: some View {
+        SettingsPage(title: "긴 휴식") {
+            SettingsSection(title: "몇 세션마다") {
+                SettingsSegmentRow(title: "긴 휴식 주기", options: ["2", "3", "4", "5", "6"].map { "\($0)세션" }, selection: Binding(get: { every - 2 }, set: { every = $0 + 2 }))
+            }
+            SettingsSection(title: "긴 휴식 시간") {
+                SettingsSegmentRow(title: "시간", options: ["10분", "15분", "20분", "30분"], selection: Binding(
+                    get: { [10, 15, 20, 30].firstIndex(of: minutes) ?? 1 },
+                    set: { minutes = [10, 15, 20, 30][$0] }
+                ))
+            }
         }
     }
 }
 
-// MARK: - Preview
-#Preview {
-    SettingsView(studyPlanStore: StudyPlanStore())
-        .preferredColorScheme(.dark)
+// MARK: - CSV Export
+struct CSVExport: Transferable {
+    let text: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .commaSeparatedText) { Data($0.text.utf8) }
+            .suggestedFileName("오롯 기록.csv")
+    }
+}
+
+// MARK: - Licenses
+private struct LicensesView: View {
+    var body: some View {
+        SettingsPage(title: "오픈소스 라이선스") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("IBM Plex Sans KR").font(OrotFont.body).foregroundStyle(OrotColor.textPrimary)
+                Text(Self.ofl).font(OrotFont.caption).lineSpacing(3).foregroundStyle(OrotColor.textSecondary).textSelection(.enabled)
+            }
+        }
+    }
+
+    private static let ofl: String = Bundle.main.url(forResource: "OFL", withExtension: "txt")
+        .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? "SIL Open Font License 1.1"
 }

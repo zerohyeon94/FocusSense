@@ -65,6 +65,7 @@ struct OrotApp: App {
     //    주의: init()에서 @State, @StateObject 등은 직접 접근할 수 없으므로,
     //    이러한 상태의 초기화는 .task나 .onAppear에서 처리합니다.
     init() {
+        OrotSettings.register()
         do {
             // 📚 Schema: SwiftData에 저장할 모델 타입들을 등록합니다.
             //    @Model 매크로가 붙은 클래스들만 등록 가능합니다.

@@ -175,6 +175,7 @@ struct FormingStar: View {
 // MARK: - Session Constellation
 /// 하늘 레이어의 진행 중인 수와 캡션. 28수를 모두 채운 뒤에는 별 하나만 보입니다.
 struct SessionConstellation: View {
+    @AppStorage(OrotSettings.Key.constellationDisplay) private var display = 1
     let sky: SkyProgress
     /// 그릴 수 (nil이면 지금 채우는 수)
     var mansion: Mansion?
@@ -199,7 +200,8 @@ struct SessionConstellation: View {
                     padding: 8,
                     maxSpacing: size.width / 40,
                     background: background,
-                    lineColor: lineColor
+                    lineColor: lineColor,
+                    intensity: OrotSettings.constellationIntensity[min(2, max(0, display))]
                 )
                 .frame(width: size.width, height: size.height)
             } else if case .forming(let f) = next {

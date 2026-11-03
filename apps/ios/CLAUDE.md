@@ -103,7 +103,7 @@ nonisolated func cameraService(_ service: CameraService, didOutput sampleBuffer:
 
 ## 디버깅
 
-앱 실행 → 타이머 시작 → **"AI 분석 보기"** 탭하여 확인:
+DEBUG 빌드에서 세션 시작 → **남은 시간을 세 번 탭**하여 AI 분석 화면에서 확인:
 
 - 존재 상태 (`present` / `away` / `returning`)
 - 눈 상태 (`open` / `halfClosed` / `closed`)

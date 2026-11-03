@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import Combine
+import UserNotifications
 
 @MainActor
 final class FocusSubjectStore: ObservableObject {
@@ -29,6 +30,10 @@ final class FocusSubjectStore: ObservableObject {
         var names: [String] = []
         for title in planTitles + FocusSubject.defaultNames where !names.contains(title) && names.count < FocusSubject.maxCount {
             names.append(title)
+        }
+        if !planTitles.isEmpty {
+            // 학습 계획의 반복 알림은 더 이상 관리할 화면이 없으므로 지웁니다.
+            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         }
         for (i, name) in names.enumerated() {
             context.insert(FocusSubject(name: name, order: i))

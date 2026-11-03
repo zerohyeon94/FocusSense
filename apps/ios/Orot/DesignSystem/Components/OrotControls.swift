@@ -159,7 +159,7 @@ struct FocusChip: View {
 
 // MARK: - Session Badge
 struct SessionBadge: View {
-    enum Kind: Equatable { case focusing, paused, overtime, rest }
+    enum Kind: Equatable { case focusing, paused, overtime, rest, timerFallback }
 
     let state: Kind
     @State private var breathing = false
@@ -183,12 +183,13 @@ struct SessionBadge: View {
         case .paused: return "잠시 멈춤"
         case .overtime: return "오버타임"
         case .rest: return "휴식"
+        case .timerFallback: return "집중 중 · 타이머로 이어가는 중"
         }
     }
 
     private var foreground: Color {
         switch state {
-        case .focusing: return OrotColor.textPrimary
+        case .focusing, .timerFallback: return OrotColor.textPrimary
         case .paused: return OrotColor.textSecondary
         case .overtime: return OrotColor.stateOvertime
         case .rest: return OrotColor.windowLitWarm
@@ -213,6 +214,8 @@ struct SessionBadge: View {
             Circle().strokeBorder(OrotColor.stateOvertime).frame(width: 6, height: 6)
         case .rest:
             RoundedRectangle(cornerRadius: 1).fill(OrotColor.windowLitWarm.opacity(0.8)).frame(width: 6, height: 6)
+        case .timerFallback:
+            Circle().fill(OrotColor.stateOvertime).frame(width: 6, height: 6)
         }
     }
 }

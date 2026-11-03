@@ -33,6 +33,13 @@ enum TimerState {
     case paused
 }
 
+// MARK: - Camera Issue
+/// 세션 중 자리 확인을 할 수 없는 이유
+enum CameraIssue: Equatable {
+    case inUse        // 다른 앱이 카메라를 씀
+    case permission   // 권한이 꺼짐
+}
+
 // MARK: - Session Phase
 enum SessionPhase: Equatable {
     case focusing
@@ -57,6 +64,14 @@ final class TimerViewModel: ObservableObject {
     @Published var showDebugView = false
     @Published var showCalibrationView = false
 
+    // MARK: - Exceptions
+    @Published private(set) var cameraIssue: CameraIssue?
+    /// 카드에서 '타이머로 계속하기'를 골라 안내를 닫았음
+    @Published private(set) var cameraIssueAcknowledged = false
+    /// 발열로 자리 확인 간격을 늘림
+    @Published private(set) var isThermalSlowed = false
+    @Published var showsThermalBanner = false
+
     // MARK: - Session Settings
     @Published private(set) var targetDuration: TimeInterval = 25 * 60
     @Published private(set) var subjectName = FocusSubject.defaultNames[0]
@@ -67,18 +82,18 @@ final class TimerViewModel: ObservableObject {
     @Published private(set) var restElapsed: TimeInterval = 0
     @Published private(set) var completedRounds = 0
 
-    let shortRestDuration: TimeInterval = 5 * 60
-    let longRestDuration: TimeInterval = 15 * 60
-    let longRestEvery = 4
+    var shortRestDuration: TimeInterval { TimeInterval(OrotSettings.current.restMinutes * 60) }
+    var longRestDuration: TimeInterval { TimeInterval(OrotSettings.current.longRestMinutes * 60) }
+    var longRestEvery: Int { OrotSettings.current.longRestEvery }
 
     // MARK: - Services
     let cameraService: CameraService
     private(set) var focusService: SimpleFocusDetectionService
     let calibrationService = CalibrationService()
     let sessionStore: StudySessionStore
-    let studyPlanStore: StudyPlanStore
     let subjectStore: FocusSubjectStore
     let focusScoreService = FocusScoreService()
+    let notificationService = NotificationService()
 
     // MARK: - Computed Properties
     var captureSession: AVCaptureSession? { cameraService.session }
@@ -93,14 +108,18 @@ final class TimerViewModel: ObservableObject {
     var progress: Double { targetDuration > 0 ? min(1, elapsedTime / targetDuration) : 0 }
     var restRemaining: TimeInterval { max(0, restDuration - restElapsed) }
 
-    /// 자리를 비웠거나 눈을 감아 순수 집중이 쌓이지 않는 중
+    /// 자리를 비웠거나 눈을 감은 지 민감도 설정만큼 지나 순수 집중이 쌓이지 않는 중
     var isAwayPaused: Bool {
-        guard isDetectionEnabled, timerState == .running else { return false }
-        return currentFocusState.level == .away || currentFocusState.level == .drowsy
+        guard isDetectionEnabled, cameraIssue == nil, timerState == .running else { return false }
+        return awayDuration >= TimeInterval(OrotSettings.current.awayGrace)
     }
+
+    /// 카메라를 쓸 수 없어 타이머로만 이어가는 중 (그 구간은 미확인으로 기록)
+    var isTimerFallback: Bool { isDetectionEnabled && cameraIssue != nil }
 
     var badgeKind: SessionBadge.Kind {
         if timerState == .paused || isAwayPaused { return .paused }
+        if isTimerFallback { return .timerFallback }
         return isOvertime ? .overtime : .focusing
     }
 
@@ -126,13 +145,14 @@ final class TimerViewModel: ObservableObject {
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private let hapticGenerator = UINotificationFeedbackGenerator()
+    private var backgroundedAt: Date?
+    private var thermalBannerTask: Task<Void, Never>?
 
     // MARK: - Initialization
     init() {
         self.cameraService = CameraService()
         self.focusService = SimpleFocusDetectionService()
         self.sessionStore = StudySessionStore()
-        self.studyPlanStore = StudyPlanStore()
         self.subjectStore = FocusSubjectStore()
 
         focusService.calibrationService = calibrationService
@@ -167,6 +187,88 @@ final class TimerViewModel: ObservableObject {
                 )
             }
             .store(in: &cancellables)
+
+        cameraService.$isInterrupted
+            .combineLatest(cameraService.$permissionDenied)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] interrupted, denied in
+                self?.updateCameraIssue(interrupted: interrupted, denied: denied)
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: ProcessInfo.thermalStateDidChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.handleThermalState() }
+            .store(in: &cancellables)
+    }
+
+    // MARK: - Exceptions
+
+    private func updateCameraIssue(interrupted: Bool, denied: Bool) {
+        let issue: CameraIssue? = denied ? .permission : interrupted ? .inUse : nil
+        guard issue != cameraIssue else { return }
+        cameraIssue = issue
+        if issue == nil { cameraIssueAcknowledged = false }
+    }
+
+    /// 카드의 '타이머로 계속하기'
+    func continueWithTimer() {
+        cameraIssueAcknowledged = true
+    }
+
+    /// 카드의 '카메라 다시 연결'
+    func reconnectCamera() {
+        cameraService.checkPermission()
+        cameraService.startSession()
+    }
+
+    private func handleThermalState() {
+        let state = ProcessInfo.processInfo.thermalState
+        cameraService.adjustFrameInterval(for: state)
+        let slowed = state == .serious || state == .critical
+        if state == .critical { cameraIssue = .inUse }
+        guard slowed != isThermalSlowed else { return }
+        isThermalSlowed = slowed
+        guard slowed, phase == .focusing, isDetectionEnabled else { return }
+        // 배너는 6초 뒤 저절로 사라지고, 비율 옆 "확인 10초 간격"만 남습니다.
+        showsThermalBanner = true
+        thermalBannerTask?.cancel()
+        thermalBannerTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(6))
+            if !Task.isCancelled { showsThermalBanner = false }
+        }
+        print("🔥 발열 — 자리 확인 간격 늘림")
+    }
+
+    // MARK: - Scene Phase (미확인 구간)
+
+    /// 화면이 잠기면 카메라를 쓸 수 없습니다. 그동안 흐른 시간은 돌아왔을 때 미확인 구간으로 채웁니다.
+    func sceneDidEnterBackground() {
+        guard phase != .complete, timerState == .running else { return }
+        backgroundedAt = Date()
+        timer?.invalidate()
+    }
+
+    func sceneDidBecomeActive() {
+        guard let since = backgroundedAt else { return }
+        backgroundedAt = nil
+        let gap = max(0, Int(Date().timeIntervalSince(since)))
+        guard timerState == .running else { return }
+        switch phase {
+        case .focusing:
+            for i in 0..<gap {
+                appendRecord(level: .unknown, at: since.addingTimeInterval(TimeInterval(i)))
+            }
+            elapsedTime += TimeInterval(gap)
+            awayDuration = 0
+            print("👋 복귀 — 미확인 구간 \(gap)초")
+            startTicking()
+        case .rest:
+            restElapsed += TimeInterval(gap)
+            if restElapsed >= restDuration { startNextFocus() } else { startTicking() }
+        case .complete:
+            break
+        }
     }
 
     // MARK: - Camera Preview (시작 직전 확인)
@@ -184,6 +286,7 @@ final class TimerViewModel: ObservableObject {
     // MARK: - Focus Session
 
     func startSession(minutes: Int, subject: String, detection: Bool) {
+        Task { await notificationService.requestIfNeeded() }
         targetDuration = TimeInterval(minutes * 60)
         subjectName = subject
         isDetectionEnabled = detection
@@ -196,6 +299,7 @@ final class TimerViewModel: ObservableObject {
         guard phase == .focusing, timerState == .running else { return }
         timerState = .paused
         timer?.invalidate()
+        notificationService.cancelAll()
         print("⏸️ 세션 일시정지 (수동)")
     }
 
@@ -203,6 +307,7 @@ final class TimerViewModel: ObservableObject {
         guard phase == .focusing, timerState == .paused else { return }
         timerState = .running
         startTicking()
+        notificationService.scheduleSessionEnd(after: targetDuration - elapsedTime, minutes: targetMinutes)
         print("▶️ 세션 재개")
     }
 
@@ -210,6 +315,7 @@ final class TimerViewModel: ObservableObject {
     func finishFocus() {
         guard phase == .focusing, let session = currentSession else { return }
         timer?.invalidate()
+        notificationService.cancelAll()
         cameraService.stopSession()
         timerState = .idle
         session.endTime = Date()
@@ -223,7 +329,7 @@ final class TimerViewModel: ObservableObject {
         sessionStore.saveSession(session)
         completedSession = session
         completedRounds += 1
-        hapticGenerator.notificationOccurred(.success)
+        haptic()
         phase = .complete
         print("✅ 세션 완료: 순수 집중 \(Int(netFocusTime))초, \(session.starMagnitude)등급")
     }
@@ -236,16 +342,19 @@ final class TimerViewModel: ObservableObject {
         phase = .rest
         timerState = .running
         startTicking()
+        notificationService.scheduleRestEnd(after: restDuration)
         print("☕️ 휴식 시작: \(Int(restDuration / 60))분")
     }
 
     func startNextFocus() {
         timer?.invalidate()
+        notificationService.cancelAll()
         beginFocus()
     }
 
     func closeSession() {
         timer?.invalidate()
+        notificationService.cancelAll()
         cameraService.stopSession()
         if phase == .focusing, let session = currentSession, session.endTime == nil, elapsedTime >= 60 {
             session.endTime = Date()
@@ -271,6 +380,7 @@ final class TimerViewModel: ObservableObject {
         session.plannedDuration = targetDuration
         currentSession = session
         completedSession = nil
+        cameraIssueAcknowledged = false
         phase = .focusing
         timerState = .running
 
@@ -279,8 +389,9 @@ final class TimerViewModel: ObservableObject {
         } else {
             cameraService.stopSession()
         }
-        UIApplication.shared.isIdleTimerDisabled = true
+        UIApplication.shared.isIdleTimerDisabled = OrotSettings.current.keepAwake
         startTicking()
+        notificationService.scheduleSessionEnd(after: targetDuration, minutes: targetMinutes)
     }
 
     private func resetFocusValues() {
@@ -309,7 +420,7 @@ final class TimerViewModel: ObservableObject {
         case .rest:
             restElapsed += 1
             if restElapsed >= restDuration {
-                hapticGenerator.notificationOccurred(.success)
+                haptic()
                 startNextFocus()
             }
         case .complete:
@@ -319,18 +430,30 @@ final class TimerViewModel: ObservableObject {
 
     private func tickFocus() {
         elapsedTime += 1
-        let level: FocusLevel = isDetectionEnabled ? currentFocusState.level : .focused
+        let raw = currentFocusState.level
+        let isAway = raw == .away || raw == .drowsy
+        awayDuration = isAway ? awayDuration + 1 : 0
 
-        if level == .focused { netFocusTime += 1 }
-        awayDuration = isAwayPaused ? awayDuration + 1 : 0
-
-        if elapsedTime == targetDuration {
-            hapticGenerator.notificationOccurred(.success)
-            sendTargetReachedNotification()
+        let level: FocusLevel
+        if !isDetectionEnabled {
+            level = .focused
+        } else if cameraIssue != nil {
+            level = .unknown
+        } else if isAway && awayDuration < TimeInterval(OrotSettings.current.awayGrace) {
+            // 민감도 설정만큼은 자리를 비워도 집중으로 봅니다.
+            level = .focused
+        } else {
+            level = raw
         }
 
+        if level == .focused { netFocusTime += 1 }
+        if elapsedTime == targetDuration { haptic() }
+        appendRecord(level: level, at: Date())
+    }
+
+    private func appendRecord(level: FocusLevel, at date: Date) {
         let record = FocusRecord(
-            timestamp: Date(),
+            timestamp: date,
             focusLevel: level,
             duration: 1.0,
             focusScore: focusScoreService.totalScore
@@ -339,13 +462,8 @@ final class TimerViewModel: ObservableObject {
         currentSession?.focusRecords.append(record)
     }
 
-    private func sendTargetReachedNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "정한 \(targetMinutes)분을 채웠어요"
-        content.body = "흐름을 이어가도 되고, 여기서 마쳐도 돼요."
-        content.sound = .default
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "orot-target-\(UUID())", content: content, trigger: trigger))
+    private func haptic() {
+        if OrotSettings.current.haptic { hapticGenerator.notificationOccurred(.success) }
     }
 
     // MARK: - Helpers

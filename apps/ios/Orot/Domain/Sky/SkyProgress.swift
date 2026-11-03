@@ -10,6 +10,7 @@ import Foundation
 // MARK: - Star Record
 /// 하늘에 놓인 별 하나의 기록
 struct StarRecord: Equatable {
+    let sessionID: UUID
     let magnitude: Int
     let date: Date
     let subject: String
@@ -18,6 +19,7 @@ struct StarRecord: Equatable {
     let total: TimeInterval
 
     init(session: StudySession) {
+        sessionID = session.id
         magnitude = session.starMagnitude
         date = session.startTime
         subject = session.studyPlanTitle ?? "이름 없는 대상"
@@ -85,6 +87,16 @@ struct SkyProgress {
     }
 
     var isAllComplete: Bool { records.count >= Mansion.totalStars }
+
+    /// 이 세션의 별이 놓인 수와 자리
+    func place(of sessionID: UUID) -> (mansion: Mansion, star: Int)? {
+        guard var index = records.firstIndex(where: { $0.sessionID == sessionID }) else { return nil }
+        for m in Mansion.all {
+            if index < m.starCount { return (m, index) }
+            index -= m.starCount
+        }
+        return nil
+    }
 
     /// 가장 최근 별이 들어간 수와 그 별의 자리
     var lastPlaced: (mansion: Mansion, star: Int)? {

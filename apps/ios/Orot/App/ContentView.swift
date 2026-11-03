@@ -26,7 +26,9 @@ enum Tab: CaseIterable {
 struct ContentView: View {
     @StateObject private var timerViewModel = TimerViewModel()
     @State private var selectedTab: Tab = .focus
+    @AppStorage(OrotSettings.Key.onboardingDone) private var onboardingDone = false
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +39,7 @@ struct ContentView: View {
                 case .nightSky:
                     NightSkyView(sessionStore: timerViewModel.sessionStore)
                 case .records:
-                    AnalyticsView(viewModel: timerViewModel)
+                    RecordsView(sessionStore: timerViewModel.sessionStore) { selectedTab = .focus }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -51,12 +53,23 @@ struct ContentView: View {
                 selectedTab = .nightSky
             }
         }
+        .fullScreenCover(isPresented: Binding(get: { !onboardingDone }, set: { _ in })) {
+            OnboardingView(viewModel: timerViewModel) { onboardingDone = true }
+        }
         .onChange(of: timerViewModel.isSessionPresented) { _, presented in
             OrientationLock.allowLandscape(presented)
         }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .background: timerViewModel.sceneDidEnterBackground()
+            case .active:
+                timerViewModel.cameraService.checkPermission()
+                timerViewModel.sceneDidBecomeActive()
+            default: break
+            }
+        }
         .onAppear {
             timerViewModel.sessionStore.configure(with: modelContext)
-            timerViewModel.studyPlanStore.configure(with: modelContext)
             timerViewModel.subjectStore.configure(with: modelContext)
             Task {
                 timerViewModel.sessionStore.loadAllSessions()

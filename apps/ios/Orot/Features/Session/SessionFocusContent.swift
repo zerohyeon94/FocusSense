@@ -18,21 +18,30 @@ struct SessionFocusContent: View {
     // MARK: - Landscape (탁상시계)
     private var landscapeLayout: some View {
         ZStack(alignment: .topLeading) {
-            MoonCaption()
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 56)
-                .padding(.top, 32)
+            if !showsCameraCard {
+                MoonCaption()
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 56)
+                    .padding(.top, 32)
 
-            SessionConstellation(
-                sky: viewModel.sky,
-                next: .forming(viewModel.starFormation),
-                size: CGSize(width: 160, height: 100),
-                caption: constellationCaption,
-                captionAlignment: .leading
-            )
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding(.trailing, 110)
-            .padding(.top, 62)
+                SessionConstellation(
+                    sky: viewModel.sky,
+                    next: .forming(viewModel.starFormation),
+                    size: CGSize(width: 160, height: 100),
+                    caption: constellationCaption,
+                    captionAlignment: .leading
+                )
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 110)
+                .padding(.top, 62)
+            }
+
+            if viewModel.showsThermalBanner {
+                ExceptionBanner(message: Self.thermalMessage, detail: Self.thermalDetail, compact: true)
+                    .padding(.leading, OrotSpace.screenInsetH)
+                    .padding(.top, 18)
+                    .transition(.opacity)
+            }
 
             VStack(alignment: .leading, spacing: 14) {
                 statusRow
@@ -45,11 +54,22 @@ struct SessionFocusContent: View {
             .padding(.leading, OrotSpace.screenInsetH)
             .padding(.top, 66)
 
-            controls
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .padding(.trailing, 60)
-                .padding(.bottom, 70)
+            if showsCameraCard {
+                cameraCard(compact: true)
+                    .frame(width: 268)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 48)
+                    .padding(.top, 40)
+                    .transition(.opacity)
+            } else {
+                controls
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 60)
+                    .padding(.bottom, 70)
+            }
         }
+        .animation(.easeInOut(duration: 0.4), value: showsCameraCard)
+        .animation(.easeInOut(duration: 0.4), value: viewModel.showsThermalBanner)
     }
 
     // MARK: - Portrait
@@ -59,6 +79,15 @@ struct SessionFocusContent: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 28)
                 .padding(.top, 64)
+                .opacity(viewModel.showsThermalBanner ? 0 : 1)
+                .overlay(alignment: .top) {
+                    if viewModel.showsThermalBanner {
+                        ExceptionBanner(message: Self.thermalMessage, detail: Self.thermalDetail)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 54)
+                            .transition(.opacity)
+                    }
+                }
 
             SessionConstellation(
                 sky: viewModel.sky,
@@ -85,6 +114,53 @@ struct SessionFocusContent: View {
             controls
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 36)
+                .opacity(showsCameraCard ? 0 : 1)
+        }
+        .overlay(alignment: .bottom) {
+            if showsCameraCard {
+                cameraCard(compact: false)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: showsCameraCard)
+        .animation(.easeInOut(duration: 0.4), value: viewModel.showsThermalBanner)
+    }
+
+    // MARK: - Exceptions
+
+    private static let thermalMessage = "기기가 따뜻해져 자리 확인을 10초마다로 늦췄어요."
+    private static let thermalDetail = "그대로 집중하시면 돼요."
+
+    private var showsCameraCard: Bool {
+        viewModel.isTimerFallback && !viewModel.cameraIssueAcknowledged && viewModel.timerState == .running
+    }
+
+    @ViewBuilder
+    private func cameraCard(compact: Bool) -> some View {
+        if viewModel.cameraIssue == .permission {
+            ExceptionCard(
+                message: "카메라 권한이 꺼져 있어서 자리를 확인할 수 없어요.",
+                detail: "설정 앱에서 카메라를 켜거나, 이번 세션은 타이머로 계속하세요.",
+                primary: "설정 앱 열기",
+                secondary: "타이머로 계속하기",
+                onPrimary: {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                },
+                onSecondary: viewModel.continueWithTimer,
+                compact: compact
+            )
+        } else {
+            ExceptionCard(
+                message: "다른 앱이 카메라를 쓰고 있어서 자리를 확인할 수 없어요.",
+                detail: "이번 세션은 타이머로 계속하거나, 카메라가 풀리면 다시 연결할게요.",
+                primary: "타이머로 계속하기",
+                secondary: "카메라 다시 연결",
+                onPrimary: viewModel.continueWithTimer,
+                onSecondary: viewModel.reconnectCamera,
+                compact: compact
+            )
         }
     }
 
@@ -148,9 +224,16 @@ struct SessionFocusContent: View {
 
     private var ratioText: some View {
         let ratio = Int((viewModel.pureFocusRatio * 100).rounded())
-        let text = viewModel.isOvertime
-            ? "정한 \(viewModel.targetMinutes)분 완료 · 흐름을 이어가는 중 · 순수 집중 \(ratio)%"
-            : (viewModel.isDetectionEnabled ? "순수 집중 \(ratio)%" : "타이머로만 재는 중")
+        let text: String
+        if viewModel.isTimerFallback {
+            text = landscape ? "자리 확인 쉬는 중" : "자리 확인 쉬는 중 · 시간은 계속 흘러요"
+        } else if viewModel.isOvertime {
+            text = "정한 \(viewModel.targetMinutes)분 완료 · 흐름을 이어가는 중 · 순수 집중 \(ratio)%"
+        } else if viewModel.isDetectionEnabled {
+            text = viewModel.isThermalSlowed ? "순수 집중 \(ratio)% · 확인 10초 간격" : "순수 집중 \(ratio)%"
+        } else {
+            text = "타이머로만 재는 중"
+        }
         return Text(text)
             .font(OrotFont.regular(13))
             .foregroundStyle(OrotColor.textSecondary)

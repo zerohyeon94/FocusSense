@@ -12,7 +12,8 @@ struct FocusSetupView: View {
     @ObservedObject var subjectStore: FocusSubjectStore
     @ObservedObject var sessionStore: StudySessionStore
 
-    @AppStorage("focus.minutes") private var minutes = 25
+    @AppStorage(OrotSettings.Key.focusMinutes) private var minutes = 25
+    @AppStorage(OrotSettings.Key.detectionEnabled) private var detectionEnabled = true
     @AppStorage("focus.subject") private var subjectName = FocusSubject.defaultNames[0]
     @State private var showsSetupOnEmpty = false
     @State private var showsStartCheck = false
@@ -25,7 +26,7 @@ struct FocusSetupView: View {
         Group {
             if isEmpty {
                 FocusEmptyStateView(
-                    onStart: { minutes = 25; showsStartCheck = true },
+                    onStart: { minutes = 25; start() },
                     onCustomize: { showsSetupOnEmpty = true },
                     onSettings: { showsSettings = true }
                 )
@@ -35,8 +36,9 @@ struct FocusSetupView: View {
                     subjectName: $subjectName,
                     subjectStore: subjectStore,
                     sessionStore: sessionStore,
-                    onStart: { showsStartCheck = true },
-                    onSettings: { showsSettings = true }
+                    onStart: start,
+                    onSettings: { showsSettings = true },
+                    notificationService: viewModel.notificationService
                 )
             }
         }
@@ -46,8 +48,17 @@ struct FocusSetupView: View {
                 showsStartCheck = false
             }
         }
-        .sheet(isPresented: $showsSettings) {
-            SettingsView(studyPlanStore: viewModel.studyPlanStore)
+        .fullScreenCover(isPresented: $showsSettings) {
+            SettingsView(subjectStore: subjectStore, sessionStore: sessionStore, timerViewModel: viewModel)
+        }
+    }
+
+    /// 감지를 끈 경우에는 확인 시트 없이 바로 시작합니다.
+    private func start() {
+        if detectionEnabled {
+            showsStartCheck = true
+        } else {
+            viewModel.startSession(minutes: minutes, subject: subjectName, detection: false)
         }
     }
 
@@ -70,8 +81,11 @@ private struct FocusSetupContent: View {
     @ObservedObject var sessionStore: StudySessionStore
     let onStart: () -> Void
     let onSettings: () -> Void
+    let notificationService: NotificationService
 
     @State private var showsAddSubject = false
+    @State private var showsNotificationNotice = false
+    @AppStorage(OrotSettings.Key.notificationNoticeDismissedAt) private var noticeDismissedAt = 0.0
     @State private var newSubjectName = ""
 
     private let background = OrotColor.skyLate
@@ -92,6 +106,15 @@ private struct FocusSetupContent: View {
                 TimeDial(minutes: $minutes)
                 presets.padding(.top, 14)
                 subjects.padding(.top, 20)
+                if showsNotificationNotice {
+                    NotificationOffNotice {
+                        noticeDismissedAt = Date().timeIntervalSince1970
+                        withAnimation(.easeOut(duration: 0.3)) { showsNotificationNotice = false }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .transition(.opacity)
+                }
                 Button(startLabel, action: onStart)
                     .buttonStyle(OrotPrimaryButtonStyle())
                     .padding(.horizontal, 24)
@@ -110,6 +133,14 @@ private struct FocusSetupContent: View {
                 }
                 newSubjectName = ""
             }
+        }
+        .task {
+            // 알림이 꺼져 있으면 안내합니다. "괜찮아요"를 누르면 7일 동안 다시 띄우지 않아요.
+            let s = OrotSettings.current
+            let recentlyDismissed = Date().timeIntervalSince1970 - noticeDismissedAt < 7 * 86_400
+            let wantsAlerts = s.notifySessionEnd || s.notifyRestEnd
+            let status = await notificationService.authorizationStatus()
+            showsNotificationNotice = wantsAlerts && !recentlyDismissed && status == .denied
         }
         .onAppear {
             if !subjectStore.subjects.contains(where: { $0.name == subjectName }), let first = subjectStore.subjects.first {

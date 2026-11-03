@@ -27,6 +27,10 @@ final class CameraService: NSObject, ObservableObject {
     // @Published: 이 값이 바뀌면 UI가 자동 업데이트 됨
     @Published var isRunning = false
     @Published var permissionGranted = false
+    /// 다른 앱이 카메라를 쓰는 등으로 세션이 끊긴 상태
+    @Published var isInterrupted = false
+    /// 권한이 거부되었거나 제한됨
+    @Published var permissionDenied = false
     
     // MARK: - Properties
     // weak: 약한 참조 (메모리 누수 방지)
@@ -58,41 +62,42 @@ final class CameraService: NSObject, ObservableObject {
     override init() {
         super.init()
         checkPermission()
+        observeInterruptions()
     }
-    
-    // MARK: - Permission Handling
-    private func checkPermission() {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            // 이미 허용됨
-            DispatchQueue.main.async { // UI 업데이트의 경우 반드시 main 스레드에서 수행
-                self.permissionGranted = true
-            }
-            setupSession()
-            
-        case .notDetermined:
-            // 아직 물어보지 않은 상태 → 권한 요청
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in // wek self: 메모리 누수 방지
-                DispatchQueue.main.async {
-                    self?.permissionGranted = granted
-                }
-                if granted {
-                    self?.setupSession()
-                }
-            }
-            
-        case .denied, .restricted:
-            // 거부됨 or 제한됨
-            DispatchQueue.main.async {
-                self.permissionGranted = false
-            }
-            
-        @unknown default:
-            break
+
+    /// 이미 허용된 경우에만 세션을 준비합니다. 처음 묻는 일은 온보딩의 requestPermission()이 맡습니다.
+    func checkPermission() {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        let granted = status == .authorized
+        DispatchQueue.main.async {
+            self.permissionGranted = granted
+            self.permissionDenied = status == .denied || status == .restricted
+        }
+        if granted && captureSession.inputs.isEmpty { setupSession() }
+    }
+
+    var authorizationStatus: AVAuthorizationStatus {
+        AVCaptureDevice.authorizationStatus(for: .video)
+    }
+
+    func requestPermission() async -> Bool {
+        let granted = await AVCaptureDevice.requestAccess(for: .video)
+        checkPermission()
+        return granted
+    }
+
+    private func observeInterruptions() {
+        let center = NotificationCenter.default
+        center.addObserver(forName: AVCaptureSession.wasInterruptedNotification, object: captureSession, queue: .main) { [weak self] _ in
+            self?.isInterrupted = true
+            print("⚠️ 카메라 세션 끊김")
+        }
+        center.addObserver(forName: AVCaptureSession.interruptionEndedNotification, object: captureSession, queue: .main) { [weak self] _ in
+            self?.isInterrupted = false
+            print("✅ 카메라 세션 다시 연결")
         }
     }
-    
-    // MARK: - Session Setup
+
     private func setupSession() {
         sessionQueue.async { [weak self] in
             self?.configureSession()
@@ -201,8 +206,8 @@ final class CameraService: NSObject, ObservableObject {
             // 약간 뜨거움: 2초에 1번
             setFrameInterval(2.0)
         case .serious:
-            // 심각: 3초에 1번
-            setFrameInterval(3.0)
+            // 심각: 10초에 1번 (세션 화면에 안내 배너)
+            setFrameInterval(10.0)
         case .critical:
             // 위험: 분석 중지
             stopSession()

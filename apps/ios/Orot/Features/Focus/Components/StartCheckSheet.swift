@@ -62,8 +62,8 @@ struct StartCheckSheet: View {
         .presentationDragIndicator(.visible)
         .presentationBackground(OrotColor.surfaceRaised)
         .onAppear { viewModel.startPreview() }
-        .fullScreenCover(isPresented: $viewModel.showCalibrationView) {
-            CalibrationView(viewModel: viewModel, calibrationService: viewModel.calibrationService)
+        .fullScreenCover(isPresented: $viewModel.showCalibrationView, onDismiss: { viewModel.startPreview() }) {
+            FaceAlignView(viewModel: viewModel, camera: camera, mode: .settings) {}
         }
     }
 
