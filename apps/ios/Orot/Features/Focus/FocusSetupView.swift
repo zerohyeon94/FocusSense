@@ -86,7 +86,9 @@ private struct FocusSetupContent: View {
 
             VStack(spacing: 0) {
                 header
-                Spacer(minLength: 16)
+                Spacer(minLength: 8)
+                nextSlotPreview
+                Spacer(minLength: 8)
                 TimeDial(minutes: $minutes)
                 presets.padding(.top, 14)
                 subjects.padding(.top, 20)
@@ -134,6 +136,19 @@ private struct FocusSetupContent: View {
         .padding(.leading, 24)
         .padding(.trailing, 14)
         .padding(.top, 8)
+    }
+
+    @ViewBuilder
+    private var nextSlotPreview: some View {
+        let sky = sessionStore.sky
+        if let mansion = sky.currentMansion {
+            VStack(spacing: 6) {
+                ConstellationView(mansion: mansion, magnitudes: sky.magnitudes(mansion), next: .waiting, starScale: 0.9, padding: 8, maxSpacing: 5.6, background: background)
+                    .frame(width: 224, height: 120)
+                    .opacity(0.75)
+                MansionCaption(text: "이번 세션이 채울 자리 · \(mansion.label)의 \(sky.nextStarOrdinal)", color: Color(hex: 0x7E7B74))
+            }
+        }
     }
 
     private var presets: some View {

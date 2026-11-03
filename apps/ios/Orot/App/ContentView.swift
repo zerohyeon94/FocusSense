@@ -35,7 +35,7 @@ struct ContentView: View {
                 case .focus:
                     FocusSetupView(viewModel: timerViewModel, subjectStore: timerViewModel.subjectStore, sessionStore: timerViewModel.sessionStore)
                 case .nightSky:
-                    NightSkyView()
+                    NightSkyView(sessionStore: timerViewModel.sessionStore)
                 case .records:
                     AnalyticsView(viewModel: timerViewModel)
                 }

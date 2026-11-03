@@ -85,6 +85,7 @@ final class TimerViewModel: ObservableObject {
     var faceAnalysisData: FaceAnalysisData { focusService.faceAnalysisData }
     var needsCalibration: Bool { !calibrationService.calibrationData.isCalibrated }
     var focusRate: Double { focusScoreService.totalScore }
+    var sky: SkyProgress { sessionStore.sky }
 
     var isOvertime: Bool { phase == .focusing && elapsedTime >= targetDuration }
     var remainingTime: TimeInterval { max(0, targetDuration - elapsedTime) }

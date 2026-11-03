@@ -11,6 +11,7 @@
 		1226FE82B1E0217B4E8BD1E1 /* TimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20342AFDB6B7631425545D9 /* TimerViewModel.swift */; };
 		1448EC0A11B1DC21719D365A /* OrotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82FD567C9B320BC4D6D503E /* OrotApp.swift */; };
 		1554EC46B3707DC1F65CB294 /* FocusState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D987F97DAD1561B85A7DE8BB /* FocusState.swift */; };
+		1D570B9C3B79F8F29E92A473 /* SkyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0E788F022BFECB4F9DD8D77 /* SkyMapView.swift */; };
 		248756F672C544099E0228E7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0622D53CA2BF2994F2DA9AD /* SettingsView.swift */; };
 		27BB25FE34C586617C255AFD /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEEDFD424182629394DF761 /* AppCoordinator.swift */; };
 		310C301659118E424A10F80B /* OrientationLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA2A5FDF26C600FE7EC80C2 /* OrientationLock.swift */; };
@@ -18,6 +19,7 @@
 		3998664DAE049B81297D7CD3 /* IBMPlexSansKR-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3E10536B1EA7F3C78BFB1A0 /* IBMPlexSansKR-ExtraLight.ttf */; };
 		42DE0D9DDAD19E99D0D87FF5 /* IBMPlexSansKR-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC5BCD0769CE71E63AA970A8 /* IBMPlexSansKR-Regular.ttf */; };
 		4967BF6C59A4A6555AD47B41 /* SessionCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4647CDD1E49DC08F61B1E49 /* SessionCompleteView.swift */; };
+		4A4334823C2D2C5172A5E474 /* Mansion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2215191A38C574F53EF6447C /* Mansion.swift */; };
 		4C10CAD0E4EACB6AAB0FF5F9 /* NightSkyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1715D8F1A776A97EA06FE0E9 /* NightSkyView.swift */; };
 		51999B965B6CD35CA356D39D /* OrotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64AF2FB6052845B6C93F2875 /* OrotTests.swift */; };
 		59969018B1DD5A9E33BC2A82 /* SessionRestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA9EFC4F75A1A1A1A2FE544A /* SessionRestView.swift */; };
@@ -34,6 +36,7 @@
 		A1B2C3D4E5F60001A0000005 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000005 /* SplashView.swift */; };
 		A54D07D3601981E436296D93 /* MoonPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7F304FD287860A6E05FC6C /* MoonPhase.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* StudySessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */; };
+		ADBD4FC50019721293C99F9A /* MansionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B683745D429F3C44A88F29E /* MansionDetailView.swift */; };
 		B1C2D3E4F5060001B0000001 /* StudyPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000001 /* StudyPlan.swift */; };
 		B1C2D3E4F5060001B0000002 /* StudyPlanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000002 /* StudyPlanStore.swift */; };
 		B1C2D3E4F5060001B0000003 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000003 /* NotificationService.swift */; };
@@ -59,11 +62,15 @@
 		CFBAC3FC2F62DA6800C3D2E2 /* DebugToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3FB2F62DA5100C3D2E2 /* DebugToolbar.swift */; };
 		CFDC218A2F6F4634004DD175 /* AIAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFDC21892F6F4634004DD175 /* AIAnalysisView.swift */; };
 		D2251BBECE15BAA5B5F40583 /* FocusEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5323485BF0EAE5C3BF7198C /* FocusEmptyStateView.swift */; };
+		D6C25F1E3387DE724E0111C5 /* SkyProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6223DE454EE36B94D5A652D /* SkyProgress.swift */; };
 		D928C32842597D9E52631E2D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E399F548A5E3ED1829E26BAE /* ContentView.swift */; };
 		DAD6E5948A73FB438B6D6428 /* SessionFocusContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B0EF9E949F0FB8AE08624D /* SessionFocusContent.swift */; };
 		DCA90BAA133188A58DB35FFE /* StudySession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30345B5C150B4782955450B /* StudySession.swift */; };
+		E1B59FF5D45309ECA82F2281 /* ConstellationCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3099AA99262F3A89FBFD76FE /* ConstellationCelebrationView.swift */; };
 		EE5F6A7B8C9D0E1F2A3B4C5D /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* SessionDetailView.swift */; };
 		F29D84BFC90152792C3F9592 /* MoonPhaseIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ACFDC7F0677A0FC3F5C337E /* MoonPhaseIcon.swift */; };
+		F809A7CBD211E8BC96AB608E /* SkyCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3098C362947832E33F36E0 /* SkyCompleteView.swift */; };
+		FB95BC48510EA78B5F98A815 /* ConstellationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4054CCEC6A34A44ABABED31A /* ConstellationView.swift */; };
 		FFC4D37069607C851F96A82A /* OrotControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D5EE7B66A384B8877C185DB /* OrotControls.swift */; };
 /* End PBXBuildFile section */
 
@@ -80,13 +87,17 @@
 /* Begin PBXFileReference section */
 		1715D8F1A776A97EA06FE0E9 /* NightSkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NightSkyView.swift; sourceTree = "<group>"; };
 		1DF6629F0EBD9402556641D5 /* FocusSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusSetupView.swift; sourceTree = "<group>"; };
+		2215191A38C574F53EF6447C /* Mansion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mansion.swift; sourceTree = "<group>"; };
 		28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F49F192FFC2374293606F6D /* IBMPlexSansKR-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexSansKR-Medium.ttf"; sourceTree = "<group>"; };
+		3099AA99262F3A89FBFD76FE /* ConstellationCelebrationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConstellationCelebrationView.swift; sourceTree = "<group>"; };
+		4054CCEC6A34A44ABABED31A /* ConstellationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConstellationView.swift; sourceTree = "<group>"; };
 		421F32299AAB925853266DA9 /* Orot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Orot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		447A325C52ECFADD67363AFF /* NightSkyLayers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NightSkyLayers.swift; sourceTree = "<group>"; };
 		4C7F304FD287860A6E05FC6C /* MoonPhase.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MoonPhase.swift; sourceTree = "<group>"; };
 		52F8ED1AFB647B0D28F77094 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		59DECA718E5BB819CCDC273E /* OrotTokens.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrotTokens.swift; sourceTree = "<group>"; };
+		5B683745D429F3C44A88F29E /* MansionDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MansionDetailView.swift; sourceTree = "<group>"; };
 		5F186A901A1F132F7616C12D /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		64AF2FB6052845B6C93F2875 /* OrotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrotTests.swift; sourceTree = "<group>"; };
 		6CEEDFD424182629394DF761 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
@@ -104,6 +115,7 @@
 		B1C2D3E4F5060002B0000002 /* StudyPlanStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlanStore.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5060002B0000003 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5060002B0000004 /* StudyPlanListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlanListView.swift; sourceTree = "<group>"; };
+		B6223DE454EE36B94D5A652D /* SkyProgress.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyProgress.swift; sourceTree = "<group>"; };
 		BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySessionStore.swift; sourceTree = "<group>"; };
 		C3E10536B1EA7F3C78BFB1A0 /* IBMPlexSansKR-ExtraLight.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexSansKR-ExtraLight.ttf"; sourceTree = "<group>"; };
 		C4647CDD1E49DC08F61B1E49 /* SessionCompleteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionCompleteView.swift; sourceTree = "<group>"; };
@@ -132,11 +144,13 @@
 		DC5BCD0769CE71E63AA970A8 /* IBMPlexSansKR-Regular.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexSansKR-Regular.ttf"; sourceTree = "<group>"; };
 		DD4E5F6A7B8C9D0E1F2A3B4C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		E0622D53CA2BF2994F2DA9AD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E0E788F022BFECB4F9DD8D77 /* SkyMapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyMapView.swift; sourceTree = "<group>"; };
 		E399F548A5E3ED1829E26BAE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E717B9ED705F3212746C684B /* TimeDial.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimeDial.swift; sourceTree = "<group>"; };
 		E7FFC6D1E4A841D16F92C70E /* FocusDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusDetectionService.swift; sourceTree = "<group>"; };
 		E82FD567C9B320BC4D6D503E /* OrotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrotApp.swift; sourceTree = "<group>"; };
 		EC1C4501053B5F4EE897665D /* FocusSubject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusSubject.swift; sourceTree = "<group>"; };
+		EE3098C362947832E33F36E0 /* SkyCompleteView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyCompleteView.swift; sourceTree = "<group>"; };
 		F30345B5C150B4782955450B /* StudySession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySession.swift; sourceTree = "<group>"; };
 		FA9EFC4F75A1A1A1A2FE544A /* SessionRestView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionRestView.swift; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
@@ -205,6 +219,15 @@
 			path = Sessions;
 			sourceTree = "<group>";
 		};
+		3D57424A722D44AEF338955A /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				E0E788F022BFECB4F9DD8D77 /* SkyMapView.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
 		3D78F31AAAF3C36F5717AC6A /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
@@ -227,6 +250,10 @@
 			isa = PBXGroup;
 			children = (
 				1715D8F1A776A97EA06FE0E9 /* NightSkyView.swift */,
+				3D57424A722D44AEF338955A /* Components */,
+				3099AA99262F3A89FBFD76FE /* ConstellationCelebrationView.swift */,
+				5B683745D429F3C44A88F29E /* MansionDetailView.swift */,
+				EE3098C362947832E33F36E0 /* SkyCompleteView.swift */,
 			);
 			name = NightSky;
 			path = NightSky;
@@ -334,6 +361,8 @@
 			isa = PBXGroup;
 			children = (
 				4C7F304FD287860A6E05FC6C /* MoonPhase.swift */,
+				2215191A38C574F53EF6447C /* Mansion.swift */,
+				B6223DE454EE36B94D5A652D /* SkyProgress.swift */,
 			);
 			name = Sky;
 			path = Sky;
@@ -400,6 +429,7 @@
 				7ACFDC7F0677A0FC3F5C337E /* MoonPhaseIcon.swift */,
 				447A325C52ECFADD67363AFF /* NightSkyLayers.swift */,
 				6D5EE7B66A384B8877C185DB /* OrotControls.swift */,
+				4054CCEC6A34A44ABABED31A /* ConstellationView.swift */,
 			);
 			name = Components;
 			path = Components;
@@ -715,6 +745,13 @@
 				59969018B1DD5A9E33BC2A82 /* SessionRestView.swift in Sources */,
 				8DB90834D39F0DD095AE82C1 /* SessionView.swift in Sources */,
 				C303881CB5A51A86B49F01A7 /* FocusSubjectStore.swift in Sources */,
+				FB95BC48510EA78B5F98A815 /* ConstellationView.swift in Sources */,
+				4A4334823C2D2C5172A5E474 /* Mansion.swift in Sources */,
+				D6C25F1E3387DE724E0111C5 /* SkyProgress.swift in Sources */,
+				1D570B9C3B79F8F29E92A473 /* SkyMapView.swift in Sources */,
+				E1B59FF5D45309ECA82F2281 /* ConstellationCelebrationView.swift in Sources */,
+				ADBD4FC50019721293C99F9A /* MansionDetailView.swift in Sources */,
+				F809A7CBD211E8BC96AB608E /* SkyCompleteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

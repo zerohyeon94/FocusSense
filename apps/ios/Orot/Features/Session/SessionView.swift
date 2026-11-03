@@ -171,3 +171,67 @@ struct FormingStar: View {
             .accessibilityHidden(true)
     }
 }
+
+// MARK: - Session Constellation
+/// 하늘 레이어의 진행 중인 수와 캡션. 28수를 모두 채운 뒤에는 별 하나만 보입니다.
+struct SessionConstellation: View {
+    let sky: SkyProgress
+    /// 그릴 수 (nil이면 지금 채우는 수)
+    var mansion: Mansion?
+    var next: ConstellationView.NextSlot
+    var highlightLast = false
+    let size: CGSize
+    var starScale: CGFloat = 1
+    var background: Color = OrotColor.skyNight
+    var lineColor = Color(hex: 0x3E4247)
+    let caption: String
+    var captionAlignment: Alignment = .center
+
+    var body: some View {
+        VStack(alignment: captionAlignment == .leading ? .leading : .center, spacing: 10) {
+            if let m = mansion ?? sky.currentMansion {
+                ConstellationView(
+                    mansion: m,
+                    magnitudes: sky.magnitudes(m),
+                    next: next,
+                    highlightLast: highlightLast,
+                    starScale: starScale,
+                    padding: 8,
+                    maxSpacing: size.width / 40,
+                    background: background,
+                    lineColor: lineColor
+                )
+                .frame(width: size.width, height: size.height)
+            } else if case .forming(let f) = next {
+                FormingStar(formation: f, scale: starScale)
+                    .frame(width: size.width, height: size.height)
+            }
+            MansionCaption(text: caption)
+        }
+    }
+}
+
+// MARK: - Sky Captions
+extension SkyProgress {
+    /// "두(斗) · 3 / 6"
+    func progressCaption(_ mansion: Mansion? = nil) -> String {
+        guard let m = mansion ?? currentMansion else { return "스물여덟 수를 모두 채웠어요" }
+        return "\(m.label) · \(filledCount(m)) / \(m.starCount)"
+    }
+
+    /// 다음에 채울 별 순서 ("네 번째")
+    var nextStarOrdinal: String {
+        guard let m = currentMansion else { return "" }
+        return "\(KoreanOrdinal.word(filledCount(m) + 1)) 번째"
+    }
+
+    /// 세션 완료 직후 캡션
+    var completionCaption: String {
+        guard let last = lastPlaced else { return "" }
+        let m = last.mansion
+        let remaining = m.starCount - filledCount(m)
+        if remaining == 0 { return "\(m.label) · 별자리 완성" }
+        let more = remaining <= 10 ? "\(KoreanOrdinal.count(remaining)) 별만 더" : "별 \(remaining)개만 더"
+        return "\(m.label) · \(filledCount(m)) / \(m.starCount) · \(more) 모이면 완성"
+    }
+}

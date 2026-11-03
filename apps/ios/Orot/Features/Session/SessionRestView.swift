@@ -24,6 +24,8 @@ struct SessionRestView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 28)
                 .padding(.top, 64)
+            constellation(size: CGSize(width: 272, height: 170), scale: 1.36, alignment: .center)
+                .padding(.top, 50)
             Spacer()
             VStack(spacing: 14) {
                 SessionBadge(state: .rest)
@@ -43,6 +45,11 @@ struct SessionRestView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 56)
                 .padding(.top, 32)
+
+            constellation(size: CGSize(width: 160, height: 100), scale: 1, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 110)
+                .padding(.top, 62)
 
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
@@ -67,6 +74,20 @@ struct SessionRestView: View {
     }
 
     // MARK: - Pieces
+    private func constellation(size: CGSize, scale: CGFloat, alignment: Alignment) -> some View {
+        let sky = viewModel.sky
+        let caption = sky.currentMansion.map { "다음 세션에서 채울 별 · \($0.label)의 \(sky.nextStarOrdinal)" } ?? sky.progressCaption()
+        return SessionConstellation(
+            sky: sky,
+            next: .waiting,
+            size: size,
+            starScale: scale,
+            background: OrotColor.skyEvening,
+            caption: caption,
+            captionAlignment: alignment
+        )
+    }
+
     private var nextLabel: String { "다음은 \(viewModel.subjectName) \(viewModel.targetMinutes)분" }
 
     private func message(alignment: HorizontalAlignment, caption: String) -> some View {

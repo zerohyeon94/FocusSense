@@ -23,10 +23,16 @@ struct SessionFocusContent: View {
                 .padding(.trailing, 56)
                 .padding(.top, 32)
 
-            FormingStar(formation: viewModel.starFormation, scale: 1.2)
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 140)
-                .padding(.top, 102)
+            SessionConstellation(
+                sky: viewModel.sky,
+                next: .forming(viewModel.starFormation),
+                size: CGSize(width: 160, height: 100),
+                caption: constellationCaption,
+                captionAlignment: .leading
+            )
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 110)
+            .padding(.top, 62)
 
             VStack(alignment: .leading, spacing: 14) {
                 statusRow
@@ -54,9 +60,14 @@ struct SessionFocusContent: View {
                 .padding(.trailing, 28)
                 .padding(.top, 64)
 
-            Spacer()
-            FormingStar(formation: viewModel.starFormation, scale: 1.6)
-                .frame(height: 40)
+            SessionConstellation(
+                sky: viewModel.sky,
+                next: .forming(viewModel.starFormation),
+                size: CGSize(width: 272, height: 170),
+                starScale: 1.36,
+                caption: constellationCaption
+            )
+            .padding(.top, 50)
             Spacer()
 
             VStack(spacing: 14) {
@@ -88,6 +99,14 @@ struct SessionFocusContent: View {
                 .foregroundStyle(OrotColor.textSecondary)
         }
         .animation(OrotMotion.tap, value: viewModel.badgeKind)
+    }
+
+    private var constellationCaption: String {
+        let sky = viewModel.sky
+        guard let m = sky.currentMansion else { return sky.progressCaption() }
+        if viewModel.isOvertime { return "\(m.label) · \(sky.nextStarOrdinal) 별이 자리를 잡았어요" }
+        if isPaused && !landscape { return "\(sky.progressCaption()) · \(sky.nextStarOrdinal) 별이 기다리는 중" }
+        return sky.progressCaption()
     }
 
     private var clockColor: Color {

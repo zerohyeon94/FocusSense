@@ -13,6 +13,7 @@ struct SessionCompleteView: View {
     let onOpenNightSky: () -> Void
 
     @State private var revealed = false
+    @State private var celebrating: Mansion?
 
     private var session: StudySession? { viewModel.completedSession }
     private var magnitude: Int { session?.starMagnitude ?? 3 }
@@ -23,6 +24,15 @@ struct SessionCompleteView: View {
         }
         .onAppear {
             withAnimation(OrotMotion.star) { revealed = true }
+            if let mansion = viewModel.sky.justCompletedMansion {
+                Task {
+                    try? await Task.sleep(for: .seconds(2.5))
+                    celebrating = mansion
+                }
+            }
+        }
+        .sheet(item: $celebrating) { mansion in
+            ConstellationCelebrationView(mansion: mansion, sky: viewModel.sky, onOpenNightSky: onOpenNightSky)
         }
     }
 
@@ -34,7 +44,7 @@ struct SessionCompleteView: View {
                 .padding(.trailing, 28)
                 .padding(.top, 64)
             Spacer()
-            newStar.frame(height: 80)
+            newStar
             Spacer()
             headline
             stats.padding(.top, 28)
@@ -53,30 +63,32 @@ struct SessionCompleteView: View {
             }
             .padding(.leading, OrotSpace.screenInsetH)
             Spacer()
-            newStar.padding(.trailing, 140)
+            newStar.padding(.trailing, 90)
         }
         .padding(.bottom, 24)
     }
 
     // MARK: - Pieces
     private var newStar: some View {
-        ZStack {
-            Circle()
-                .strokeBorder(OrotColor.starMag2.opacity(0.35))
-                .frame(width: 26, height: 26)
-                .opacity(revealed ? 1 : 0)
-            StarDot(magnitude: magnitude, scale: 1.4)
-                .scaleEffect(revealed ? 1 : 0.4)
-                .opacity(revealed ? 1 : 0)
+        let size = landscape ? CGSize(width: 200, height: 125) : CGSize(width: 272, height: 170)
+        return VStack(spacing: 8) {
             Text("새 별 · \(magnitude)등급")
                 .font(OrotFont.caption)
                 .tracking(0.5)
                 .foregroundStyle(OrotColor.textSecondary)
-                .fixedSize()
-                .offset(x: 52, y: -26)
-                .opacity(revealed ? 1 : 0)
+            SessionConstellation(
+                sky: viewModel.sky,
+                mansion: viewModel.sky.lastPlaced?.mansion,
+                next: .none,
+                highlightLast: true,
+                size: size,
+                starScale: landscape ? 1.1 : 1.36,
+                background: OrotColor.skyDeepNight,
+                lineColor: Color(hex: 0x464A50),
+                caption: viewModel.sky.completionCaption
+            )
         }
-        .accessibilityElement(children: .combine)
+        .opacity(revealed ? 1 : 0)
     }
 
     private var headline: some View {
