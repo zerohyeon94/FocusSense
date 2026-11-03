@@ -1,0 +1,96 @@
+//
+//  SplashView.swift
+//  FocusSense
+//
+//  앱 시작 시 스플래시 화면
+//
+
+// =============================================================================
+// 📚 파일 개요: SplashView.swift
+// =============================================================================
+// 이 파일은 앱 시작 시 표시되는 **스플래시(로딩) 화면**입니다.
+//
+// 📚 핵심 개념:
+//   1. @State 애니메이션: @State 값 변경 + withAnimation으로 애니메이션 구현
+//   2. withAnimation의 다양한 옵션:
+//      - .easeOut: 끝이 느려지는 커브 (자연스러운 등장)
+//      - .easeInOut: 시작과 끝이 느린 커브 (부드러운 반복)
+//      - .delay(): 지정 시간 후에 애니메이션 시작
+//      - .repeatForever(autoreverses:): 무한 반복 (글로우 효과에 사용)
+//   3. scaleEffect + opacity: 크기와 투명도를 조합한 등장 애니메이션
+//   4. .shadow로 글로우(Glow) 효과 구현
+//   5. .onAppear: 뷰가 나타날 때 애니메이션 트리거
+//
+// 📚 애니메이션 타임라인:
+//   0.0s: 뷰 등장 → opacity 0→1, scale 0.8→1.0 (0.6초 동안)
+//   0.4s: 글로우 시작 → glowOpacity 0→0.6 (0.8초 동안, 무한 반복)
+//   1.8s: FocusSenseApp.swift에서 showSplash = false → 스플래시 페이드아웃
+// =============================================================================
+
+import SwiftUI
+
+// MARK: - Splash View
+struct SplashView: View {
+    // 📚 @State로 애니메이션 상태를 관리합니다.
+    //    SwiftUI 애니메이션의 원리:
+    //    1. @State 변수의 초기값을 설정 (애니메이션 시작 상태)
+    //    2. withAnimation {} 블록 안에서 값을 변경 (애니메이션 끝 상태)
+    //    3. SwiftUI가 초기값 → 최종값 사이를 자동으로 보간(interpolation)
+    //
+    //    예: opacity 0 → 1이면, SwiftUI가 0.0, 0.1, 0.2, ... 0.9, 1.0으로
+    //    점진적으로 변경하여 페이드인 효과를 만듭니다.
+    @State private var opacity: Double = 1
+    @State private var scale: CGFloat = 0.8
+    @State private var glowOpacity: Double = 0
+
+    var body: some View {
+        ZStack {
+            // 📚 .ignoresSafeArea(): Safe Area(노치, 홈 인디케이터 영역)를 무시하고
+            //    화면 전체를 채웁니다. 스플래시 배경은 전체 화면이어야 하므로 필수입니다.
+            OrotColor.skyNight
+                .ignoresSafeArea()
+
+            VStack(spacing: 12) {
+                Text("오롯")
+                    .font(OrotFont.extraLight(48))
+                    .foregroundStyle(OrotColor.textPrimary)
+                    .shadow(color: OrotColor.starMag1.opacity(glowOpacity * 0.5), radius: 20)
+
+                Text("공부도 업무도, 정한 시간만큼 오롯이")
+                    .font(OrotFont.caption)
+                    .tracking(0.5)
+                    .foregroundStyle(OrotColor.textCaption)
+            }
+            // 📚 .scaleEffect(): 뷰의 크기를 비율로 조절합니다.
+            //    scale = 0.8 → 80% 크기, scale = 1.0 → 원본 크기
+            //    opacity와 함께 사용하면 "작은 상태에서 커지면서 나타나는" 효과를 만듭니다.
+            //    이 패턴은 iOS 앱에서 매우 흔한 등장 애니메이션입니다.
+            .scaleEffect(scale)
+            // 📚 .opacity(): 뷰의 투명도를 설정합니다.
+            //    0 = 완전 투명, 1 = 완전 불투명
+            //    @State와 연결하여 withAnimation으로 부드러운 페이드인 구현
+            .opacity(opacity)
+        }
+        // 📚 .onAppear: 이 View가 화면에 처음 나타날 때 실행됩니다.
+        //    여기서 두 개의 withAnimation을 연속으로 호출하여 복합 애니메이션을 구성합니다.
+        //    주의: withAnimation은 즉시 반환되며, 애니메이션은 백그라운드에서 진행됩니다.
+        //    따라서 두 withAnimation이 동시에 시작 가능합니다 (delay로 시차 조절).
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6)) {
+                scale = 1.0
+            }
+            withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+                glowOpacity = 0.6
+            }
+        }
+    }
+}
+
+// MARK: - Preview
+
+// 📚 #Preview: Xcode Canvas에서 실시간 미리보기를 제공합니다.
+//    스플래시 화면의 애니메이션도 Canvas에서 확인할 수 있습니다.
+//    (Canvas 하단의 재생 버튼을 눌러 Live Preview로 확인)
+#Preview {
+    SplashView()
+}

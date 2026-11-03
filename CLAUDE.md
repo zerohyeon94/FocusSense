@@ -1,10 +1,10 @@
 # CLAUDE.md
 
-이 파일은 Claude Code가 ZipJoong 저장소에서 작업할 때 참고하는 가이드입니다.
+이 파일은 Claude Code가 Orot 저장소에서 작업할 때 참고하는 가이드입니다.
 
 ## 프로젝트 개요
 
-ZipJoong(집중)은 사용자가 공부 또는 업무에 얼마나 집중하는지 기록하기 위한 iOS 앱입니다.
+오롯(Orot)은 사용자가 공부 또는 업무에 얼마나 집중하는지 기록하기 위한 iOS 앱입니다.
 카메라로 사용자의 얼굴을 인식하고, **Apple Vision Framework(70%)와 자체 학습 CoreML 모델(30%)**을 결합한 하이브리드 분석을 통해 집중도를 측정합니다.
 
 ### 핵심 원칙
@@ -16,11 +16,13 @@ ZipJoong(집중)은 사용자가 공부 또는 업무에 얼마나 집중하는�
 ## 저장소 구조
 
 ```
-ZipJoong/
-├── iOS/    - SwiftUI iOS 앱 (Swift, Xcode 15+, iOS 17+)
-├── ML/     - ML 학습 파이프라인 (Python, PyTorch → CoreML)
-└── Web/    - 랜딩 페이지 (React 19, TypeScript, Vite)
+Orot/
+├── apps/ios/    - SwiftUI iOS 앱 (Swift, 현재 배포 타깃 iOS 18.6)
+├── research/ml/ - ML 학습 파이프라인 (Python, PyTorch → CoreML)
+└── apps/web/    - 랜딩 페이지 (React 19, TypeScript, Vite)
 ```
+
+상세 폴더 구조는 `docs/architecture/repository-structure.md`를 참고합니다. 현재 구현은 기존 하이브리드 분석을 유지하며 새 제품 기획은 후속 구현 대상입니다.
 
 각 하위 프로젝트에는 별도의 `CLAUDE.md`가 있습니다.
 변경 작업 전에 해당 하위 프로젝트의 `CLAUDE.md`를 반드시 읽어주세요.
