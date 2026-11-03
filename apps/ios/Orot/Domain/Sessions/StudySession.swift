@@ -100,6 +100,11 @@ final class StudySession {
     var studyPlanTitle: String?
     var studyPlanColorHex: String?
 
+    /// false면 자리 확인 없이 타이머로만 잰 세션 (별은 기본 3등급)
+    var isDetectionEnabled: Bool = true
+    /// 사용자가 정한 집중 시간(초). 0이면 이전 버전 세션
+    var plannedDuration: TimeInterval = 0
+
     init(id: UUID = UUID(), startTime: Date = Date()) {
         self.id = id
         self.startTime = startTime
@@ -160,6 +165,23 @@ final class StudySession {
         // AI 점수 없는 이전 세션은 기존 방식으로 폴백
         guard totalDuration > 0 else { return 0 }
         return (netFocusTime / totalDuration) * 100
+    }
+
+    /// 측정한 시간(초) — 수동 일시정지 구간은 빠집니다.
+    var measuredDuration: TimeInterval {
+        focusRecords.reduce(0) { $0 + $1.duration }
+    }
+
+    /// 순수 집중 비율 (0~1)
+    var pureFocusRatio: Double {
+        guard isDetectionEnabled else { return 1 }
+        guard measuredDuration > 0 else { return 0 }
+        return netFocusTime / measuredDuration
+    }
+
+    /// 이 세션이 만든 별의 등급 (1이 가장 밝음)
+    var starMagnitude: Int {
+        isDetectionEnabled ? OrotStar.magnitude(forFocusRatio: pureFocusRatio) : 3
     }
 
     /// 졸음 감지 횟수

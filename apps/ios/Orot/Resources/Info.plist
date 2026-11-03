@@ -23,12 +23,21 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSCameraUsageDescription</key>
-	<string>FocusSense uses the camera to detect your focus level and drowsiness. All processing is done on-device and no video is transmitted.</string>
+	<string>자리에 계신지만 확인해요. 영상은 기기 안에서만 처리되며 저장하거나 전송하지 않아요.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>IBMPlexSansKR-ExtraLight.ttf</string>
+		<string>IBMPlexSansKR-Light.ttf</string>
+		<string>IBMPlexSansKR-Regular.ttf</string>
+		<string>IBMPlexSansKR-Medium.ttf</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>

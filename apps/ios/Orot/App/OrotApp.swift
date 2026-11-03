@@ -43,6 +43,7 @@ struct OrotApp: App {
     //    앱의 최상위 레벨에서 생성하므로, 앱이 살아있는 동안 이 객체도 유지됩니다.
     //    자식 View에서 같은 객체를 참조할 때는 @ObservedObject나 @EnvironmentObject를 씁니다.
     // @StateObject: 객체를 생성하고 소유함
+    @UIApplicationDelegateAdaptor(OrotAppDelegate.self) private var appDelegate
     @StateObject private var appCoordinator = AppCoordinator()
 
     // 📚 @State: View(또는 App)가 소유하는 단순 값 타입 상태입니다.
@@ -70,7 +71,8 @@ struct OrotApp: App {
             let schema = Schema([
                 StudySession.self,
                 FocusRecord.self,
-                StudyPlan.self
+                StudyPlan.self,
+                FocusSubject.self
             ])
             // 📚 ModelConfiguration: 데이터베이스의 저장 방식을 설정합니다.
             //    기본적으로 앱의 Application Support 디렉토리에 SQLite 파일로 저장됩니다.

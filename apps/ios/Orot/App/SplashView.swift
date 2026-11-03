@@ -47,26 +47,19 @@ struct SplashView: View {
         ZStack {
             // 📚 .ignoresSafeArea(): Safe Area(노치, 홈 인디케이터 영역)를 무시하고
             //    화면 전체를 채웁니다. 스플래시 배경은 전체 화면이어야 하므로 필수입니다.
-            Color(hex: "0f0f1a")
+            OrotColor.skyNight
                 .ignoresSafeArea()
 
             VStack(spacing: 12) {
-                Text("ZipJoong")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    // 📚 .shadow(): 텍스트 뒤에 그림자를 추가합니다.
-                    //    여기서는 오렌지색 글로우(Glow) 효과로 활용합니다.
-                    //    - color: 그림자 색상 (.orange에 투명도 적용)
-                    //    - radius: 20으로 크게 설정하여 퍼지는 빛 효과 연출
-                    //    - x, y: 0으로 텍스트 중심에서 퍼지도록 설정
-                    //    glowOpacity가 0→0.6으로 변하면서 빛나는 효과가 나타납니다.
-                    .shadow(color: .orange.opacity(glowOpacity), radius: 20, x: 0, y: 0)
+                Text("오롯")
+                    .font(OrotFont.extraLight(48))
+                    .foregroundStyle(OrotColor.textPrimary)
+                    .shadow(color: OrotColor.starMag1.opacity(glowOpacity * 0.5), radius: 20)
 
-                Text("AI가 지켜주는 나의 진짜 집중 시간")
-                    .font(.subheadline)
-                    // 📚 .opacity(0.5): 부제목을 반투명하게 하여 시각적 위계(hierarchy)를 만듭니다.
-                    //    제목(Focus)은 불투명, 부제목은 반투명 → 자연스러운 강조 효과
-                    .foregroundColor(.white.opacity(0.5))
+                Text("공부도 업무도, 정한 시간만큼 오롯이")
+                    .font(OrotFont.caption)
+                    .tracking(0.5)
+                    .foregroundStyle(OrotColor.textCaption)
             }
             // 📚 .scaleEffect(): 뷰의 크기를 비율로 조절합니다.
             //    scale = 0.8 → 80% 크기, scale = 1.0 → 원본 크기
@@ -86,7 +79,7 @@ struct SplashView: View {
             withAnimation(.easeOut(duration: 0.6)) {
                 scale = 1.0
             }
-            withAnimation(.easeInOut(duration: 0.8).delay(0.4).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
                 glowOpacity = 0.6
             }
         }

@@ -69,7 +69,7 @@ class CameraPreviewUIView: UIView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = .white
+        backgroundColor = .clear
     }
     
     required init?(coder: NSCoder) {
