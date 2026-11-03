@@ -1,0 +1,924 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1226FE82B1E0217B4E8BD1E1 /* TimerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20342AFDB6B7631425545D9 /* TimerViewModel.swift */; };
+		1448EC0A11B1DC21719D365A /* OrotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82FD567C9B320BC4D6D503E /* OrotApp.swift */; };
+		1554EC46B3707DC1F65CB294 /* FocusState.swift in Sources */ = {isa = PBXBuildFile; fileRef = D987F97DAD1561B85A7DE8BB /* FocusState.swift */; };
+		248756F672C544099E0228E7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0622D53CA2BF2994F2DA9AD /* SettingsView.swift */; };
+		27BB25FE34C586617C255AFD /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CEEDFD424182629394DF761 /* AppCoordinator.swift */; };
+		36A6437BB24CEE3DB19EBD12 /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74A0F293C96B5CFCA8CD94C8 /* TimerView.swift */; };
+		51999B965B6CD35CA356D39D /* OrotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64AF2FB6052845B6C93F2875 /* OrotTests.swift */; };
+		5AD65BAC89F4E48745357ABF /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8B899CCF15D591942C4AD /* AnalyticsView.swift */; };
+		6C7EE66291BE655A06F8055D /* FocusDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7FFC6D1E4A841D16F92C70E /* FocusDetectionService.swift */; };
+		71E680A14259D6E9FE8AA071 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F186A901A1F132F7616C12D /* CameraService.swift */; };
+		7DB6094930E624A9D747EB1B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52F8ED1AFB647B0D28F77094 /* Assets.xcassets */; };
+		A1B2C3D4E5F60001A0000001 /* DayActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000001 /* DayActivity.swift */; };
+		A1B2C3D4E5F60001A0000002 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000002 /* DashboardViewModel.swift */; };
+		A1B2C3D4E5F60001A0000003 /* ContributionGraphCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000003 /* ContributionGraphCard.swift */; };
+		A1B2C3D4E5F60001A0000004 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000004 /* DashboardView.swift */; };
+		A1B2C3D4E5F60001A0000005 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000005 /* SplashView.swift */; };
+		AA1B2C3D4E5F6A7B8C9D0E1F /* StudySessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */; };
+		B1C2D3E4F5060001B0000001 /* StudyPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000001 /* StudyPlan.swift */; };
+		B1C2D3E4F5060001B0000002 /* StudyPlanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000002 /* StudyPlanStore.swift */; };
+		B1C2D3E4F5060001B0000003 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000003 /* NotificationService.swift */; };
+		B1C2D3E4F5060001B0000004 /* StudyPlanListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000004 /* StudyPlanListView.swift */; };
+		B1C2D3E4F5060001B0000005 /* StudyPlanPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000005 /* StudyPlanPickerView.swift */; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* HistoryView.swift */; };
+		CF1B7C9A2F334954008F7AE9 /* FocusSense_default.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CF1B7C992F334953008F7AE9 /* FocusSense_default.mlpackage */; };
+		CF1B7CA12F334B6A008F7AE9 /* MLFocusDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1B7CA02F334B68008F7AE9 /* MLFocusDetectionService.swift */; };
+		CF1B7CA32F334F97008F7AE9 /* FocusDetectionServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1B7CA22F334F92008F7AE9 /* FocusDetectionServiceProtocol.swift */; };
+		CF262A3D2F3B0A0300022D2C /* CalibrationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF262A3C2F3B09FE00022D2C /* CalibrationService.swift */; };
+		CF262A3F2F3B0A4300022D2C /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF262A3E2F3B0A3F00022D2C /* CalibrationView.swift */; };
+		CF262A412F3B209000022D2C /* SimpleFocusDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF262A402F3B208700022D2C /* SimpleFocusDetectionService.swift */; };
+		CF262A422F3B20A100022D2C /* FocusScoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF262A432F3B20A200022D2C /* FocusScoreService.swift */; };
+		CF31A6DD2F985C8500A412D4 /* PomodoroTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF31A6DC2F985C8500A412D4 /* PomodoroTimerView.swift */; };
+		CFB1C3F92F28D70F007BF6DE /* FaceAnalysisData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB1C3F72F28D70F007BF6DE /* FaceAnalysisData.swift */; };
+		CFB1C3FA2F28D70F007BF6DE /* FaceLandmarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB1C3F82F28D70F007BF6DE /* FaceLandmarks.swift */; };
+		CFB1C3FF2F28D737007BF6DE /* FaceOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB1C3FE2F28D737007BF6DE /* FaceOverlayView.swift */; };
+		CFB1C4002F28D737007BF6DE /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB1C3FD2F28D737007BF6DE /* CameraPreviewView.swift */; };
+		CFBAC3E32F614FDB00C3D2E2 /* FocusRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3E22F614FD400C3D2E2 /* FocusRecord.swift */; };
+		CFBAC3E72F617BE600C3D2E2 /* SettingRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3E62F617BE200C3D2E2 /* SettingRow.swift */; };
+		CFBAC3EF2F629B5300C3D2E2 /* QuickStatsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3EE2F629B4C00C3D2E2 /* QuickStatsCard.swift */; };
+		CFBAC3F12F629D9200C3D2E2 /* QuickStartCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3F02F629D9000C3D2E2 /* QuickStartCard.swift */; };
+		CFBAC3F32F62A60D00C3D2E2 /* GreetingHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3F22F62A60900C3D2E2 /* GreetingHeader.swift */; };
+		CFBAC3F62F62A7FD00C3D2E2 /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3F42F62A7FD00C3D2E2 /* Color.swift */; };
+		CFBAC3F82F62C43E00C3D2E2 /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3F72F62C43A00C3D2E2 /* Date.swift */; };
+		CFBAC3FC2F62DA6800C3D2E2 /* DebugToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBAC3FB2F62DA5100C3D2E2 /* DebugToolbar.swift */; };
+		CFDC218A2F6F4634004DD175 /* AIAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFDC21892F6F4634004DD175 /* AIAnalysisView.swift */; };
+		D928C32842597D9E52631E2D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E399F548A5E3ED1829E26BAE /* ContentView.swift */; };
+		DCA90BAA133188A58DB35FFE /* StudySession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30345B5C150B4782955450B /* StudySession.swift */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* SessionDetailView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8911A9E24FBCA273955F7345 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 71A443D7C803F31F152D29E1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DDEB6FF4445532155C1390E2;
+			remoteInfo = Orot;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		421F32299AAB925853266DA9 /* Orot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Orot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		52F8ED1AFB647B0D28F77094 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5F186A901A1F132F7616C12D /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
+		64AF2FB6052845B6C93F2875 /* OrotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrotTests.swift; sourceTree = "<group>"; };
+		6CEEDFD424182629394DF761 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		74A0F293C96B5CFCA8CD94C8 /* TimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002A0000001 /* DayActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayActivity.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002A0000002 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002A0000003 /* ContributionGraphCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContributionGraphCard.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002A0000004 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002A0000005 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		A20342AFDB6B7631425545D9 /* TimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModel.swift; sourceTree = "<group>"; };
+		A26F44295EC275F41385F650 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B1C2D3E4F5060002B0000001 /* StudyPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlan.swift; sourceTree = "<group>"; };
+		B1C2D3E4F5060002B0000002 /* StudyPlanStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlanStore.swift; sourceTree = "<group>"; };
+		B1C2D3E4F5060002B0000003 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		B1C2D3E4F5060002B0000004 /* StudyPlanListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlanListView.swift; sourceTree = "<group>"; };
+		B1C2D3E4F5060002B0000005 /* StudyPlanPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlanPickerView.swift; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySessionStore.swift; sourceTree = "<group>"; };
+		CF1B7C992F334953008F7AE9 /* FocusSense_default.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = FocusSense_default.mlpackage; sourceTree = "<group>"; };
+		CF1B7CA02F334B68008F7AE9 /* MLFocusDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLFocusDetectionService.swift; sourceTree = "<group>"; };
+		CF1B7CA22F334F92008F7AE9 /* FocusDetectionServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusDetectionServiceProtocol.swift; sourceTree = "<group>"; };
+		CF262A3C2F3B09FE00022D2C /* CalibrationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationService.swift; sourceTree = "<group>"; };
+		CF262A3E2F3B0A3F00022D2C /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
+		CF262A402F3B208700022D2C /* SimpleFocusDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleFocusDetectionService.swift; sourceTree = "<group>"; };
+		CF262A432F3B20A200022D2C /* FocusScoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusScoreService.swift; sourceTree = "<group>"; };
+		CF31A6DC2F985C8500A412D4 /* PomodoroTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimerView.swift; sourceTree = "<group>"; };
+		CFB1C3F72F28D70F007BF6DE /* FaceAnalysisData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceAnalysisData.swift; sourceTree = "<group>"; };
+		CFB1C3F82F28D70F007BF6DE /* FaceLandmarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceLandmarks.swift; sourceTree = "<group>"; };
+		CFB1C3FD2F28D737007BF6DE /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		CFB1C3FE2F28D737007BF6DE /* FaceOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceOverlayView.swift; sourceTree = "<group>"; };
+		CFBAC3E22F614FD400C3D2E2 /* FocusRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusRecord.swift; sourceTree = "<group>"; };
+		CFBAC3E62F617BE200C3D2E2 /* SettingRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingRow.swift; sourceTree = "<group>"; };
+		CFBAC3EE2F629B4C00C3D2E2 /* QuickStatsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStatsCard.swift; sourceTree = "<group>"; };
+		CFBAC3F02F629D9000C3D2E2 /* QuickStartCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickStartCard.swift; sourceTree = "<group>"; };
+		CFBAC3F22F62A60900C3D2E2 /* GreetingHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GreetingHeader.swift; sourceTree = "<group>"; };
+		CFBAC3F42F62A7FD00C3D2E2 /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
+		CFBAC3F72F62C43A00C3D2E2 /* Date.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date.swift; sourceTree = "<group>"; };
+		CFBAC3FB2F62DA5100C3D2E2 /* DebugToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugToolbar.swift; sourceTree = "<group>"; };
+		CFDC21892F6F4634004DD175 /* AIAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAnalysisView.swift; sourceTree = "<group>"; };
+		D4C00A6156F76A38941DF075 /* Orot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Orot.entitlements; sourceTree = "<group>"; };
+		D987F97DAD1561B85A7DE8BB /* FocusState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusState.swift; sourceTree = "<group>"; };
+		D9D8B899CCF15D591942C4AD /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		E0622D53CA2BF2994F2DA9AD /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		E399F548A5E3ED1829E26BAE /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E7FFC6D1E4A841D16F92C70E /* FocusDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusDetectionService.swift; sourceTree = "<group>"; };
+		E82FD567C9B320BC4D6D503E /* OrotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrotApp.swift; sourceTree = "<group>"; };
+		F30345B5C150B4782955450B /* StudySession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySession.swift; sourceTree = "<group>"; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0F365FAA08E64A7C8828B892 /* SkyRendering */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = SkyRendering;
+			path = SkyRendering;
+			sourceTree = "<group>";
+		};
+		10DBA937CF607B714F4C69A6 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CFB1C3FE2F28D737007BF6DE /* FaceOverlayView.swift */,
+				CFB1C3FD2F28D737007BF6DE /* CameraPreviewView.swift */,
+				B1C2D3E4F5060002B0000005 /* StudyPlanPickerView.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		1A52E4FF945529E935A3142E /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E82FD567C9B320BC4D6D503E /* OrotApp.swift */,
+				3D78F31AAAF3C36F5717AC6A /* Navigation */,
+				A1B2C3D4E5F60002A0000005 /* SplashView.swift */,
+				E399F548A5E3ED1829E26BAE /* ContentView.swift */,
+			);
+			name = App;
+			path = App;
+			sourceTree = "<group>";
+		};
+		2CEA3574ACC17B1269062FF1 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B04C02DCAF504F03A8738E07 /* Extensions */,
+			);
+			name = Support;
+			path = Support;
+			sourceTree = "<group>";
+		};
+		3175B6D7F8A4CBF289B8A9D4 /* Tokens */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3F42F62A7FD00C3D2E2 /* Color.swift */,
+			);
+			name = Tokens;
+			path = Tokens;
+			sourceTree = "<group>";
+		};
+		336523AEFD379071E57BEA3E /* Sessions */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3E22F614FD400C3D2E2 /* FocusRecord.swift */,
+				F30345B5C150B4782955450B /* StudySession.swift */,
+				B1C2D3E4F5060002B0000001 /* StudyPlan.swift */,
+			);
+			name = Sessions;
+			path = Sessions;
+			sourceTree = "<group>";
+		};
+		3D78F31AAAF3C36F5717AC6A /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				6CEEDFD424182629394DF761 /* AppCoordinator.swift */,
+			);
+			name = Navigation;
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		436A1A8078AEF7616445B094 /* CoreML */ = {
+			isa = PBXGroup;
+			children = (
+				CF1B7CA02F334B68008F7AE9 /* MLFocusDetectionService.swift */,
+			);
+			name = CoreML;
+			path = CoreML;
+			sourceTree = "<group>";
+		};
+		5CC5EE3C14EA20E861D8AF37 /* NightSky */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = NightSky;
+			path = NightSky;
+			sourceTree = "<group>";
+		};
+		6E038FF86B77D1FFA61B8501 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				CF262A3E2F3B0A3F00022D2C /* CalibrationView.swift */,
+			);
+			name = Onboarding;
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		6F1BE92E0684E7D2A7956FD9 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				7882ACA10E5266378168B5B9 /* Components */,
+				E0622D53CA2BF2994F2DA9AD /* SettingsView.swift */,
+				B1C2D3E4F5060002B0000004 /* StudyPlanListView.swift */,
+			);
+			name = Settings;
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		7882ACA10E5266378168B5B9 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3E62F617BE200C3D2E2 /* SettingRow.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		82B1AB1047CFB34922309829 /* Infrastructure */ = {
+			isa = PBXGroup;
+			children = (
+				D50015BB5E38E1B775B4C049 /* Vision */,
+				436A1A8078AEF7616445B094 /* CoreML */,
+				856FDBC73875BE884D162EF4 /* Camera */,
+				D61A0EEFA482BF276B35F70A /* Persistence */,
+				87903AFE081007C1E17ADEEC /* Notifications */,
+				9948EB0E50985E94CEE42EBF /* LiveActivities */,
+			);
+			name = Infrastructure;
+			path = Infrastructure;
+			sourceTree = "<group>";
+		};
+		856FDBC73875BE884D162EF4 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				5F186A901A1F132F7616C12D /* CameraService.swift */,
+			);
+			name = Camera;
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		87903AFE081007C1E17ADEEC /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				B1C2D3E4F5060002B0000003 /* NotificationService.swift */,
+			);
+			name = Notifications;
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		9026FDDA0F72D5716C3F15EC /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				A20342AFDB6B7631425545D9 /* TimerViewModel.swift */,
+				10DBA937CF607B714F4C69A6 /* Components */,
+				9D6A48ADAF2D6C64E18B5134 /* Diagnostics */,
+				74A0F293C96B5CFCA8CD94C8 /* TimerView.swift */,
+				CF31A6DC2F985C8500A412D4 /* PomodoroTimerView.swift */,
+			);
+			name = Session;
+			path = Session;
+			sourceTree = "<group>";
+		};
+		9948EB0E50985E94CEE42EBF /* LiveActivities */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = LiveActivities;
+			path = LiveActivities;
+			sourceTree = "<group>";
+		};
+		99F73C8C8E14F0BF88088024 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				EF63BAE8F7290136739FFE30 /* History */,
+				9026FDDA0F72D5716C3F15EC /* Session */,
+				C80CE2DFEE8A7B5289677882 /* Focus */,
+				6E038FF86B77D1FFA61B8501 /* Onboarding */,
+				6F1BE92E0684E7D2A7956FD9 /* Settings */,
+				5CC5EE3C14EA20E861D8AF37 /* NightSky */,
+			);
+			name = Features;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		9D6A48ADAF2D6C64E18B5134 /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3FB2F62DA5100C3D2E2 /* DebugToolbar.swift */,
+				CFDC21892F6F4634004DD175 /* AIAnalysisView.swift */,
+			);
+			name = Diagnostics;
+			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		A26E529B24E9896E378F4199 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				3175B6D7F8A4CBF289B8A9D4 /* Tokens */,
+				B0792143F8B14AD15898FEFE /* Components */,
+				0F365FAA08E64A7C8828B892 /* SkyRendering */,
+			);
+			name = DesignSystem;
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		A8E385EDE74C05BBC378B885 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				336523AEFD379071E57BEA3E /* Sessions */,
+				AF59EDB2912D65FEC67E02F8 /* Detection */,
+				BAC86867D58DF1579F9B8D95 /* NightSky */,
+			);
+			name = Domain;
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		AF59EDB2912D65FEC67E02F8 /* Detection */ = {
+			isa = PBXGroup;
+			children = (
+				CFB1C3F72F28D70F007BF6DE /* FaceAnalysisData.swift */,
+				CFB1C3F82F28D70F007BF6DE /* FaceLandmarks.swift */,
+				D987F97DAD1561B85A7DE8BB /* FocusState.swift */,
+				CF262A432F3B20A200022D2C /* FocusScoreService.swift */,
+				CF1B7CA22F334F92008F7AE9 /* FocusDetectionServiceProtocol.swift */,
+			);
+			name = Detection;
+			path = Detection;
+			sourceTree = "<group>";
+		};
+		B04C02DCAF504F03A8738E07 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3F72F62C43A00C3D2E2 /* Date.swift */,
+			);
+			name = Extensions;
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		B0792143F8B14AD15898FEFE /* Components */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		BA2F177F1D783FF3668B03D8 = {
+			isa = PBXGroup;
+			children = (
+				BE9BBC48CF7F32C5D6858972 /* Products */,
+				BA919E179F7353B5244ED006 /* Orot */,
+				E6B610D0A3FF35B786E001BE /* OrotTests */,
+				DB0DABD9CCDE30DBE450190A /* OrotWidgets */,
+				DE812C484FF1880B5C3470BC /* Shared */,
+			);
+			sourceTree = "<group>";
+		};
+		BA919E179F7353B5244ED006 /* Orot */ = {
+			isa = PBXGroup;
+			children = (
+				1A52E4FF945529E935A3142E /* App */,
+				A8E385EDE74C05BBC378B885 /* Domain */,
+				99F73C8C8E14F0BF88088024 /* Features */,
+				DD92BF5E187C6F1548C09910 /* Resources */,
+				82B1AB1047CFB34922309829 /* Infrastructure */,
+				2CEA3574ACC17B1269062FF1 /* Support */,
+				A26E529B24E9896E378F4199 /* DesignSystem */,
+			);
+			name = Orot;
+			path = Orot;
+			sourceTree = "<group>";
+		};
+		BAC86867D58DF1579F9B8D95 /* NightSky */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = NightSky;
+			path = NightSky;
+			sourceTree = "<group>";
+		};
+		BE9BBC48CF7F32C5D6858972 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				421F32299AAB925853266DA9 /* Orot.app */,
+				28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C54D3D1BF9895AB60827694A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60002A0000001 /* DayActivity.swift */,
+			);
+			name = Models;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		C80CE2DFEE8A7B5289677882 /* Focus */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F60002A0000002 /* DashboardViewModel.swift */,
+				D861F67DFEC8DFD4AFD89A4D /* Components */,
+				A1B2C3D4E5F60002A0000004 /* DashboardView.swift */,
+			);
+			name = Focus;
+			path = Focus;
+			sourceTree = "<group>";
+		};
+		D50015BB5E38E1B775B4C049 /* Vision */ = {
+			isa = PBXGroup;
+			children = (
+				CF262A402F3B208700022D2C /* SimpleFocusDetectionService.swift */,
+				CF262A3C2F3B09FE00022D2C /* CalibrationService.swift */,
+				E7FFC6D1E4A841D16F92C70E /* FocusDetectionService.swift */,
+			);
+			name = Vision;
+			path = Vision;
+			sourceTree = "<group>";
+		};
+		D61A0EEFA482BF276B35F70A /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */,
+				B1C2D3E4F5060002B0000002 /* StudyPlanStore.swift */,
+			);
+			name = Persistence;
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		D861F67DFEC8DFD4AFD89A4D /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CFBAC3F22F62A60900C3D2E2 /* GreetingHeader.swift */,
+				CFBAC3F02F629D9000C3D2E2 /* QuickStartCard.swift */,
+				CFBAC3EE2F629B4C00C3D2E2 /* QuickStatsCard.swift */,
+				A1B2C3D4E5F60002A0000003 /* ContributionGraphCard.swift */,
+			);
+			name = Components;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		DB0DABD9CCDE30DBE450190A /* OrotWidgets */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = OrotWidgets;
+			path = OrotWidgets;
+			sourceTree = "<group>";
+		};
+		DD92BF5E187C6F1548C09910 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				52F8ED1AFB647B0D28F77094 /* Assets.xcassets */,
+				D4C00A6156F76A38941DF075 /* Orot.entitlements */,
+				A26F44295EC275F41385F650 /* Info.plist */,
+				CF1B7C992F334953008F7AE9 /* FocusSense_default.mlpackage */,
+				E2F7C80965ED3F415CB4573D /* Constellations */,
+			);
+			name = Resources;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		DE812C484FF1880B5C3470BC /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Shared;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		E2F7C80965ED3F415CB4573D /* Constellations */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Constellations;
+			path = Constellations;
+			sourceTree = "<group>";
+		};
+		E6B610D0A3FF35B786E001BE /* OrotTests */ = {
+			isa = PBXGroup;
+			children = (
+				64AF2FB6052845B6C93F2875 /* OrotTests.swift */,
+			);
+			name = OrotTests;
+			path = OrotTests;
+			sourceTree = "<group>";
+		};
+		EF63BAE8F7290136739FFE30 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				C54D3D1BF9895AB60827694A /* Models */,
+				D9D8B899CCF15D591942C4AD /* AnalyticsView.swift */,
+				DD4E5F6A7B8C9D0E1F2A3B4C /* HistoryView.swift */,
+				FF6A7B8C9D0E1F2A3B4C5D6E /* SessionDetailView.swift */,
+			);
+			name = History;
+			path = History;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DDEB6FF4445532155C1390E2 /* Orot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6E0B4A31A53F6395B3C96969 /* Build configuration list for PBXNativeTarget "Orot" */;
+			buildPhases = (
+				DCD18DC9428736E48C0DD2E8 /* Sources */,
+				5BEBAE5F57DEDEE7865470C0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Orot;
+			productName = Orot;
+			productReference = 421F32299AAB925853266DA9 /* Orot.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E24D52000E82B79BEA0A4176 /* OrotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 938FF5912FA14BBD7B111096 /* Build configuration list for PBXNativeTarget "OrotTests" */;
+			buildPhases = (
+				E4677862B8C12A221993E861 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BEBE9B915D45DF9132AF297B /* PBXTargetDependency */,
+			);
+			name = OrotTests;
+			productName = OrotTests;
+			productReference = 28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		71A443D7C803F31F152D29E1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					DDEB6FF4445532155C1390E2 = {
+						ProvisioningStyle = Automatic;
+					};
+					E24D52000E82B79BEA0A4176 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 4EBA796AE39EC8C08879796A /* Build configuration list for PBXProject "Orot" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = BA2F177F1D783FF3668B03D8;
+			minimizedProjectReferenceProxies = 1;
+			productRefGroup = BE9BBC48CF7F32C5D6858972 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DDEB6FF4445532155C1390E2 /* Orot */,
+				E24D52000E82B79BEA0A4176 /* OrotTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5BEBAE5F57DEDEE7865470C0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7DB6094930E624A9D747EB1B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DCD18DC9428736E48C0DD2E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF1B7CA32F334F97008F7AE9 /* FocusDetectionServiceProtocol.swift in Sources */,
+				5AD65BAC89F4E48745357ABF /* AnalyticsView.swift in Sources */,
+				27BB25FE34C586617C255AFD /* AppCoordinator.swift in Sources */,
+				71E680A14259D6E9FE8AA071 /* CameraService.swift in Sources */,
+				D928C32842597D9E52631E2D /* ContentView.swift in Sources */,
+				CFB1C3F92F28D70F007BF6DE /* FaceAnalysisData.swift in Sources */,
+				CF1B7CA12F334B6A008F7AE9 /* MLFocusDetectionService.swift in Sources */,
+				CFB1C3FA2F28D70F007BF6DE /* FaceLandmarks.swift in Sources */,
+				CF262A412F3B209000022D2C /* SimpleFocusDetectionService.swift in Sources */,
+				CF262A422F3B20A100022D2C /* FocusScoreService.swift in Sources */,
+				6C7EE66291BE655A06F8055D /* FocusDetectionService.swift in Sources */,
+				CFBAC3FC2F62DA6800C3D2E2 /* DebugToolbar.swift in Sources */,
+				1448EC0A11B1DC21719D365A /* OrotApp.swift in Sources */,
+				CFBAC3F12F629D9200C3D2E2 /* QuickStartCard.swift in Sources */,
+				1554EC46B3707DC1F65CB294 /* FocusState.swift in Sources */,
+				248756F672C544099E0228E7 /* SettingsView.swift in Sources */,
+				CF262A3D2F3B0A0300022D2C /* CalibrationService.swift in Sources */,
+				CF1B7C9A2F334954008F7AE9 /* FocusSense_default.mlpackage in Sources */,
+				CFBAC3E32F614FDB00C3D2E2 /* FocusRecord.swift in Sources */,
+				CFBAC3F82F62C43E00C3D2E2 /* Date.swift in Sources */,
+				CFBAC3EF2F629B5300C3D2E2 /* QuickStatsCard.swift in Sources */,
+				DCA90BAA133188A58DB35FFE /* StudySession.swift in Sources */,
+				CFBAC3F32F62A60D00C3D2E2 /* GreetingHeader.swift in Sources */,
+				36A6437BB24CEE3DB19EBD12 /* TimerView.swift in Sources */,
+				CFB1C3FF2F28D737007BF6DE /* FaceOverlayView.swift in Sources */,
+				CFB1C4002F28D737007BF6DE /* CameraPreviewView.swift in Sources */,
+				CF262A3F2F3B0A4300022D2C /* CalibrationView.swift in Sources */,
+				1226FE82B1E0217B4E8BD1E1 /* TimerViewModel.swift in Sources */,
+				AA1B2C3D4E5F6A7B8C9D0E1F /* StudySessionStore.swift in Sources */,
+				CC3D4E5F6A7B8C9D0E1F2A3B /* HistoryView.swift in Sources */,
+				EE5F6A7B8C9D0E1F2A3B4C5D /* SessionDetailView.swift in Sources */,
+				A1B2C3D4E5F60001A0000001 /* DayActivity.swift in Sources */,
+				A1B2C3D4E5F60001A0000002 /* DashboardViewModel.swift in Sources */,
+				CF31A6DD2F985C8500A412D4 /* PomodoroTimerView.swift in Sources */,
+				CFBAC3E72F617BE600C3D2E2 /* SettingRow.swift in Sources */,
+				A1B2C3D4E5F60001A0000003 /* ContributionGraphCard.swift in Sources */,
+				A1B2C3D4E5F60001A0000004 /* DashboardView.swift in Sources */,
+				CFDC218A2F6F4634004DD175 /* AIAnalysisView.swift in Sources */,
+				CFBAC3F62F62A7FD00C3D2E2 /* Color.swift in Sources */,
+				A1B2C3D4E5F60001A0000005 /* SplashView.swift in Sources */,
+				B1C2D3E4F5060001B0000001 /* StudyPlan.swift in Sources */,
+				B1C2D3E4F5060001B0000002 /* StudyPlanStore.swift in Sources */,
+				B1C2D3E4F5060001B0000003 /* NotificationService.swift in Sources */,
+				B1C2D3E4F5060001B0000004 /* StudyPlanListView.swift in Sources */,
+				B1C2D3E4F5060001B0000005 /* StudyPlanPickerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E4677862B8C12A221993E861 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				51999B965B6CD35CA356D39D /* OrotTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BEBE9B915D45DF9132AF297B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DDEB6FF4445532155C1390E2 /* Orot */;
+			targetProxy = 8911A9E24FBCA273955F7345 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		176F2543511AB3C3EEF6AEC8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orot.app/Orot";
+			};
+			name = Release;
+		};
+		6A1F8A41B1ECC9AFBFDEF1B7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orot.app/Orot";
+			};
+			name = Debug;
+		};
+		76DF8B7F9955A7781A956696 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		7BF44F62FC71AB999EF09735 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Orot/Resources/Orot.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 5G6N83PM9C;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Orot/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "오롯";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app;
+				PRODUCT_MODULE_NAME = FocusSense;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		946B76A91369F8489FC96EFA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Orot/Resources/Orot.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 5G6N83PM9C;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Orot/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "오롯";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app;
+				PRODUCT_MODULE_NAME = FocusSense;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		ADC1A176B688C1819B77504C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4EBA796AE39EC8C08879796A /* Build configuration list for PBXProject "Orot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ADC1A176B688C1819B77504C /* Debug */,
+				76DF8B7F9955A7781A956696 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6E0B4A31A53F6395B3C96969 /* Build configuration list for PBXNativeTarget "Orot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				946B76A91369F8489FC96EFA /* Debug */,
+				7BF44F62FC71AB999EF09735 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		938FF5912FA14BBD7B111096 /* Build configuration list for PBXNativeTarget "OrotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A1F8A41B1ECC9AFBFDEF1B7 /* Debug */,
+				176F2543511AB3C3EEF6AEC8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 71A443D7C803F31F152D29E1 /* Project object */;
+}
