@@ -14,29 +14,15 @@ struct TimeDial: View {
     private let fullTurn = 120
     private let step = 5
 
+    @State private var isDragging = false
+
     var body: some View {
-        let radius = size * 0.4
         let center = CGPoint(x: size / 2, y: size / 2)
-        let angle = Double(minutes) / Double(fullTurn) * 2 * .pi
 
         ZStack {
-            Circle()
-                .stroke(Color(hex: 0x2D3237), lineWidth: 2)
-                .frame(width: radius * 2, height: radius * 2)
-            Circle()
-                .trim(from: 0, to: Double(minutes) / Double(fullTurn))
-                .stroke(OrotColor.accent, lineWidth: 2)
-                .rotationEffect(.degrees(-90))
-                .frame(width: radius * 2, height: radius * 2)
-                .animation(OrotMotion.tap, value: minutes)
-
-            ticks(center: center)
-
-            Circle()
-                .fill(OrotColor.textPrimary)
-                .frame(width: 16, height: 16)
-                .position(x: center.x + radius * sin(angle), y: center.y - radius * cos(angle))
-                .animation(OrotMotion.tap, value: minutes)
+            // 프리셋을 누르면 바늘과 게이지가 원을 따라 돌아갑니다. 끌 때는 손가락을 바로 따라갑니다.
+            DialFace(progress: Double(minutes) / Double(fullTurn), size: size, tickCount: fullTurn / step)
+                .animation(isDragging ? nil : .easeInOut(duration: 0.6), value: minutes)
 
             VStack(spacing: 2) {
                 Text("\(minutes)")
@@ -54,7 +40,11 @@ struct TimeDial: View {
         .contentShape(Circle())
         .gesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { update(with: $0.location, center: center) }
+                .onChanged {
+                    isDragging = true
+                    update(with: $0.location, center: center)
+                }
+                .onEnded { _ in isDragging = false }
         )
         .sensoryFeedback(.selection, trigger: minutes)
         .accessibilityElement()
@@ -69,12 +59,60 @@ struct TimeDial: View {
         }
     }
 
+    private func update(with location: CGPoint, center: CGPoint) {
+        let a = atan2(location.x - center.x, -(location.y - center.y))
+        let turn = (a / (2 * .pi) + 1).truncatingRemainder(dividingBy: 1)
+        var m = Int((turn * Double(fullTurn / step)).rounded()) * step
+        // 12시 방향에서는 직전 값에 따라 처음(5분) 또는 끝(120분)으로 붙입니다.
+        if m == 0 || m == fullTurn { m = minutes > fullTurn / 2 ? fullTurn : step }
+        if m != minutes { minutes = m }
+    }
+}
+
+// MARK: - Dial Face
+/// 진행률(각도) 하나로 게이지·눈금·바늘을 함께 그려, 애니메이션 중에도 바늘이 원 위를 지나갑니다.
+private struct DialFace: View, Animatable {
+    var progress: Double
+    let size: CGFloat
+    let tickCount: Int
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        let radius = size * 0.4
+        let center = CGPoint(x: size / 2, y: size / 2)
+        let angle = progress * 2 * .pi
+
+        ZStack {
+            Circle()
+                .stroke(Color(hex: 0x2D3237), lineWidth: 2)
+                .frame(width: radius * 2, height: radius * 2)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(OrotColor.accent, lineWidth: 2)
+                .rotationEffect(.degrees(-90))
+                .frame(width: radius * 2, height: radius * 2)
+
+            ticks(center: center)
+
+            Circle()
+                .fill(OrotColor.textPrimary)
+                .frame(width: 16, height: 16)
+                .position(x: center.x + radius * sin(angle), y: center.y - radius * cos(angle))
+        }
+        .frame(width: size, height: size)
+        .allowsHitTesting(false)
+    }
+
     private func ticks(center: CGPoint) -> some View {
         Canvas { context, _ in
-            for i in 0..<(fullTurn / step) {
+            for i in 0..<tickCount {
                 let isMajor = i % 3 == 0
-                let isPassed = i * step < minutes || minutes == fullTurn
-                let a = Double(i) / Double(fullTurn / step) * 2 * .pi
+                let isPassed = Double(i) < progress * Double(tickCount) || progress >= 1
+                let a = Double(i) / Double(tickCount) * 2 * .pi
                 let outer = size / 2 - 10
                 let inner = size / 2 - (isMajor ? 20 : 15)
                 var path = Path()
@@ -84,15 +122,5 @@ struct TimeDial: View {
             }
         }
         .frame(width: size, height: size)
-        .allowsHitTesting(false)
-    }
-
-    private func update(with location: CGPoint, center: CGPoint) {
-        let a = atan2(location.x - center.x, -(location.y - center.y))
-        let turn = (a / (2 * .pi) + 1).truncatingRemainder(dividingBy: 1)
-        var m = Int((turn * Double(fullTurn / step)).rounded()) * step
-        // 12시 방향에서는 직전 값에 따라 처음(5분) 또는 끝(120분)으로 붙입니다.
-        if m == 0 || m == fullTurn { m = minutes > fullTurn / 2 ? fullTurn : step }
-        if m != minutes { minutes = m }
     }
 }
