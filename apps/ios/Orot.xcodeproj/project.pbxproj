@@ -19,9 +19,11 @@
 		343389D3B6E04BBB30601F03 /* OrotTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59DECA718E5BB819CCDC273E /* OrotTokens.swift */; };
 		3998664DAE049B81297D7CD3 /* IBMPlexSansKR-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3E10536B1EA7F3C78BFB1A0 /* IBMPlexSansKR-ExtraLight.ttf */; };
 		42DE0D9DDAD19E99D0D87FF5 /* IBMPlexSansKR-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC5BCD0769CE71E63AA970A8 /* IBMPlexSansKR-Regular.ttf */; };
+		45966163CE208F644E6E52CD /* IBMPlexSansKR-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC5BCD0769CE71E63AA970A8 /* IBMPlexSansKR-Regular.ttf */; };
 		4967BF6C59A4A6555AD47B41 /* SessionCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4647CDD1E49DC08F61B1E49 /* SessionCompleteView.swift */; };
 		4A4334823C2D2C5172A5E474 /* Mansion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2215191A38C574F53EF6447C /* Mansion.swift */; };
 		4C10CAD0E4EACB6AAB0FF5F9 /* NightSkyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1715D8F1A776A97EA06FE0E9 /* NightSkyView.swift */; };
+		4ED8023F81BB72BAF62E1832 /* LiveActivityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C0B33E14CBF7CC6F9FBA64 /* LiveActivityService.swift */; };
 		4F366DDE819BD0AE63713F0E /* ExceptionNotices.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB26B1453B90A9F0F0BD92DF /* ExceptionNotices.swift */; };
 		51797F94918D4F1B00AC9597 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 5DC3EA32E87FFE49CB8A6D00 /* OFL.txt */; };
 		51999B965B6CD35CA356D39D /* OrotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64AF2FB6052845B6C93F2875 /* OrotTests.swift */; };
@@ -38,15 +40,18 @@
 		83D49AFDBC9FB619235434F6 /* SettingsRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0CE06A9133E18EE818C0D9F /* SettingsRows.swift */; };
 		8AC17F2B477D72FAF410ED5C /* SessionRecordDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 385CA6EE4A36CC4820814361 /* SessionRecordDetailView.swift */; };
 		8DB90834D39F0DD095AE82C1 /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91801630604CF9163DD7891D /* SessionView.swift */; };
+		90667227C604990C1F147FF6 /* SessionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14F58B5C74BA2FBA893B7E20 /* SessionActivityAttributes.swift */; };
 		9947ADDD567FCBF10EDA9153 /* OrotSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40FE03D1164D6905B8C6A14A /* OrotSettings.swift */; };
 		9C268450CADA81B00F813ABE /* IBMPlexSansKR-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C92B3B661FFA54F5C94AF11 /* IBMPlexSansKR-Light.ttf */; };
 		A1B2C3D4E5F60001A0000005 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002A0000005 /* SplashView.swift */; };
 		A54D07D3601981E436296D93 /* MoonPhase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C7F304FD287860A6E05FC6C /* MoonPhase.swift */; };
+		A6BAE43EDAF347A1498C1930 /* OrotWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A410ED6726847EF5105DB201 /* OrotWidgetsBundle.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* StudySessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* StudySessionStore.swift */; };
 		ADBD4FC50019721293C99F9A /* MansionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B683745D429F3C44A88F29E /* MansionDetailView.swift */; };
 		B09DDDDDE10CF065A4116DE7 /* SkyTiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A63C46D56D74B674740FBEE /* SkyTiles.swift */; };
 		B1C2D3E4F5060001B0000001 /* StudyPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000001 /* StudyPlan.swift */; };
 		B1C2D3E4F5060001B0000003 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5060002B0000003 /* NotificationService.swift */; };
+		C12A5E5B52A4EBE9460B7C30 /* OrotWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB027B4032D56887F3A41C44 /* OrotWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C303881CB5A51A86B49F01A7 /* FocusSubjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBEE667FCE413FA830B958D0 /* FocusSubjectStore.swift */; };
 		C4D48DB9402886BF66EECDE1 /* SubjectManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7194C71A0DA3367D407EC857 /* SubjectManageView.swift */; };
 		C54EA6B76CF3BD6783B3705A /* TimeDial.swift in Sources */ = {isa = PBXBuildFile; fileRef = E717B9ED705F3212746C684B /* TimeDial.swift */; };
@@ -71,15 +76,28 @@
 		DAD6E5948A73FB438B6D6428 /* SessionFocusContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B0EF9E949F0FB8AE08624D /* SessionFocusContent.swift */; };
 		DCA90BAA133188A58DB35FFE /* StudySession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30345B5C150B4782955450B /* StudySession.swift */; };
 		E1B59FF5D45309ECA82F2281 /* ConstellationCelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3099AA99262F3A89FBFD76FE /* ConstellationCelebrationView.swift */; };
+		E24DD654C86992C55CCFEDEC /* IBMPlexSansKR-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3E10536B1EA7F3C78BFB1A0 /* IBMPlexSansKR-ExtraLight.ttf */; };
+		E2A8E561EC88177B5B9AE401 /* SessionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14F58B5C74BA2FBA893B7E20 /* SessionActivityAttributes.swift */; };
+		E50E339234F32AEB22621796 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E879196BB9CE4997CEBA68A /* Foundation.framework */; };
 		E84ED10EA1E90D726D24D759 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 998AE7C40925DBA62940EF81 /* OnboardingView.swift */; };
 		EA722436B876003E741DFB5F /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B782B7E225CE2752A7616F4 /* RecordsView.swift */; };
+		EBC27350B1B3D2B4FDC239AB /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F79E4FC212FDBF19E2B76C2 /* SessionLiveActivity.swift */; };
+		F02BB9AED356BE0A49896BEA /* OrotTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59DECA718E5BB819CCDC273E /* OrotTokens.swift */; };
 		F29D84BFC90152792C3F9592 /* MoonPhaseIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ACFDC7F0677A0FC3F5C337E /* MoonPhaseIcon.swift */; };
+		F52AF48B3BDBEEB3A158D636 /* IBMPlexSansKR-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8C92B3B661FFA54F5C94AF11 /* IBMPlexSansKR-Light.ttf */; };
 		F809A7CBD211E8BC96AB608E /* SkyCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3098C362947832E33F36E0 /* SkyCompleteView.swift */; };
 		FB95BC48510EA78B5F98A815 /* ConstellationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4054CCEC6A34A44ABABED31A /* ConstellationView.swift */; };
 		FFC4D37069607C851F96A82A /* OrotControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D5EE7B66A384B8877C185DB /* OrotControls.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		82A1141E59E134312279DD52 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 71A443D7C803F31F152D29E1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3A327EA837632092C64565F3;
+			remoteInfo = OrotWidgets;
+		};
 		8911A9E24FBCA273955F7345 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 71A443D7C803F31F152D29E1 /* Project object */;
@@ -89,14 +107,31 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		2F5DF98B3E7245B79DFC4F30 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C12A5E5B52A4EBE9460B7C30 /* OrotWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		0A63C46D56D74B674740FBEE /* SkyTiles.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyTiles.swift; sourceTree = "<group>"; };
+		14F58B5C74BA2FBA893B7E20 /* SessionActivityAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionActivityAttributes.swift; sourceTree = "<group>"; };
 		1715D8F1A776A97EA06FE0E9 /* NightSkyView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NightSkyView.swift; sourceTree = "<group>"; };
 		1DF6629F0EBD9402556641D5 /* FocusSetupView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FocusSetupView.swift; sourceTree = "<group>"; };
+		1E879196BB9CE4997CEBA68A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2215191A38C574F53EF6447C /* Mansion.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Mansion.swift; sourceTree = "<group>"; };
 		28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OrotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F49F192FFC2374293606F6D /* IBMPlexSansKR-Medium.ttf */ = {isa = PBXFileReference; includeInIndex = 1; path = "IBMPlexSansKR-Medium.ttf"; sourceTree = "<group>"; };
 		3099AA99262F3A89FBFD76FE /* ConstellationCelebrationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConstellationCelebrationView.swift; sourceTree = "<group>"; };
+		32C0B33E14CBF7CC6F9FBA64 /* LiveActivityService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiveActivityService.swift; sourceTree = "<group>"; };
 		385CA6EE4A36CC4820814361 /* SessionRecordDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionRecordDetailView.swift; sourceTree = "<group>"; };
 		4054CCEC6A34A44ABABED31A /* ConstellationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConstellationView.swift; sourceTree = "<group>"; };
 		40FE03D1164D6905B8C6A14A /* OrotSettings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrotSettings.swift; sourceTree = "<group>"; };
@@ -115,6 +150,7 @@
 		6CEEDFD424182629394DF761 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		6CFE8E7AC4E487514539C81B /* FaceAlignView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FaceAlignView.swift; sourceTree = "<group>"; };
 		6D5EE7B66A384B8877C185DB /* OrotControls.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrotControls.swift; sourceTree = "<group>"; };
+		6F79E4FC212FDBF19E2B76C2 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		6FA2A5FDF26C600FE7EC80C2 /* OrientationLock.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrientationLock.swift; sourceTree = "<group>"; };
 		70B0EF9E949F0FB8AE08624D /* SessionFocusContent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionFocusContent.swift; sourceTree = "<group>"; };
 		7194C71A0DA3367D407EC857 /* SubjectManageView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SubjectManageView.swift; sourceTree = "<group>"; };
@@ -124,8 +160,11 @@
 		976886F95997AAECBD8A03AE /* StartCheckSheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StartCheckSheet.swift; sourceTree = "<group>"; };
 		998AE7C40925DBA62940EF81 /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60002A0000005 /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		A1E956EF38140E91C974709B /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20342AFDB6B7631425545D9 /* TimerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerViewModel.swift; sourceTree = "<group>"; };
 		A26F44295EC275F41385F650 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A410ED6726847EF5105DB201 /* OrotWidgetsBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OrotWidgetsBundle.swift; sourceTree = "<group>"; };
+		AB027B4032D56887F3A41C44 /* OrotWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OrotWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1C2D3E4F5060002B0000001 /* StudyPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlan.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5060002B0000003 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		B6223DE454EE36B94D5A652D /* SkyProgress.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SkyProgress.swift; sourceTree = "<group>"; };
@@ -166,6 +205,17 @@
 		FA9EFC4F75A1A1A1A2FE544A /* SessionRestView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SessionRestView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		F9860C2BB1A648243A8228DD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E50E339234F32AEB22621796 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		0F365FAA08E64A7C8828B892 /* SkyRendering */ = {
 			isa = PBXGroup;
@@ -196,6 +246,14 @@
 			);
 			name = App;
 			path = App;
+			sourceTree = "<group>";
+		};
+		268611AA9A8DD316FED7D34C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				82A874333534B446A2C69943 /* iOS */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		2CEA3574ACC17B1269062FF1 /* Support */ = {
@@ -311,6 +369,14 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		82A874333534B446A2C69943 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				1E879196BB9CE4997CEBA68A /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
 		82B1AB1047CFB34922309829 /* Infrastructure */ = {
 			isa = PBXGroup;
 			children = (
@@ -320,6 +386,7 @@
 				D61A0EEFA482BF276B35F70A /* Persistence */,
 				87903AFE081007C1E17ADEEC /* Notifications */,
 				9948EB0E50985E94CEE42EBF /* LiveActivities */,
+				D3FC90E07505F838F4DDF09F /* LiveActivity */,
 			);
 			name = Infrastructure;
 			path = Infrastructure;
@@ -477,6 +544,7 @@
 				E6B610D0A3FF35B786E001BE /* OrotTests */,
 				DB0DABD9CCDE30DBE450190A /* OrotWidgets */,
 				DE812C484FF1880B5C3470BC /* Shared */,
+				268611AA9A8DD316FED7D34C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -508,6 +576,7 @@
 			children = (
 				421F32299AAB925853266DA9 /* Orot.app */,
 				28CAFB8CD85B5E70C9D052D4 /* OrotTests.xctest */,
+				AB027B4032D56887F3A41C44 /* OrotWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -541,6 +610,15 @@
 			);
 			name = Fonts;
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		D3FC90E07505F838F4DDF09F /* LiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				32C0B33E14CBF7CC6F9FBA64 /* LiveActivityService.swift */,
+			);
+			name = LiveActivity;
+			path = LiveActivity;
 			sourceTree = "<group>";
 		};
 		D50015BB5E38E1B775B4C049 /* Vision */ = {
@@ -578,6 +656,9 @@
 		DB0DABD9CCDE30DBE450190A /* OrotWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				A410ED6726847EF5105DB201 /* OrotWidgetsBundle.swift */,
+				6F79E4FC212FDBF19E2B76C2 /* SessionLiveActivity.swift */,
+				A1E956EF38140E91C974709B /* Info.plist */,
 			);
 			name = OrotWidgets;
 			path = OrotWidgets;
@@ -600,6 +681,7 @@
 		DE812C484FF1880B5C3470BC /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				14F58B5C74BA2FBA893B7E20 /* SessionActivityAttributes.swift */,
 			);
 			name = Shared;
 			path = Shared;
@@ -645,16 +727,35 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3A327EA837632092C64565F3 /* OrotWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0B98906976BF4A8EA85182B3 /* Build configuration list for PBXNativeTarget "OrotWidgets" */;
+			buildPhases = (
+				C6E56C3CB9E037A5E707F71B /* Sources */,
+				F9860C2BB1A648243A8228DD /* Frameworks */,
+				BADB4B3FC6F247BC22036AA7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OrotWidgets;
+			productName = OrotWidgets;
+			productReference = AB027B4032D56887F3A41C44 /* OrotWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		DDEB6FF4445532155C1390E2 /* Orot */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6E0B4A31A53F6395B3C96969 /* Build configuration list for PBXNativeTarget "Orot" */;
 			buildPhases = (
 				DCD18DC9428736E48C0DD2E8 /* Sources */,
 				5BEBAE5F57DEDEE7865470C0 /* Resources */,
+				2F5DF98B3E7245B79DFC4F30 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				FEFA8799099D2607E0EE54A5 /* PBXTargetDependency */,
 			);
 			name = Orot;
 			productName = Orot;
@@ -711,6 +812,7 @@
 			targets = (
 				DDEB6FF4445532155C1390E2 /* Orot */,
 				E24D52000E82B79BEA0A4176 /* OrotTests */,
+				3A327EA837632092C64565F3 /* OrotWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -729,9 +831,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BADB4B3FC6F247BC22036AA7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E24DD654C86992C55CCFEDEC /* IBMPlexSansKR-ExtraLight.ttf in Resources */,
+				F52AF48B3BDBEEB3A158D636 /* IBMPlexSansKR-Light.ttf in Resources */,
+				45966163CE208F644E6E52CD /* IBMPlexSansKR-Regular.ttf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C6E56C3CB9E037A5E707F71B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6BAE43EDAF347A1498C1930 /* OrotWidgetsBundle.swift in Sources */,
+				EBC27350B1B3D2B4FDC239AB /* SessionLiveActivity.swift in Sources */,
+				90667227C604990C1F147FF6 /* SessionActivityAttributes.swift in Sources */,
+				F02BB9AED356BE0A49896BEA /* OrotTokens.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DCD18DC9428736E48C0DD2E8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -799,6 +922,8 @@
 				83D49AFDBC9FB619235434F6 /* SettingsRows.swift in Sources */,
 				6F65F9E3C17EA045FE1CCF8A /* DeleteAllRecordsSheet.swift in Sources */,
 				C4D48DB9402886BF66EECDE1 /* SubjectManageView.swift in Sources */,
+				E2A8E561EC88177B5B9AE401 /* SessionActivityAttributes.swift in Sources */,
+				4ED8023F81BB72BAF62E1832 /* LiveActivityService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -818,6 +943,12 @@
 			target = DDEB6FF4445532155C1390E2 /* Orot */;
 			targetProxy = 8911A9E24FBCA273955F7345 /* PBXContainerItemProxy */;
 		};
+		FEFA8799099D2607E0EE54A5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = OrotWidgets;
+			target = 3A327EA837632092C64565F3 /* OrotWidgets */;
+			targetProxy = 82A1141E59E134312279DD52 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -834,6 +965,33 @@
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orot.app/Orot";
+			};
+			name = Release;
+		};
+		2C34490DB1A1C9165D7F7A33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5G6N83PM9C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OrotWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "오롯";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -1034,9 +1192,44 @@
 			};
 			name = Debug;
 		};
+		CFD0CBB765E3603C13FA1EE0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5G6N83PM9C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = OrotWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "오롯";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.focussense.app.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0B98906976BF4A8EA85182B3 /* Build configuration list for PBXNativeTarget "OrotWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C34490DB1A1C9165D7F7A33 /* Release */,
+				CFD0CBB765E3603C13FA1EE0 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		4EBA796AE39EC8C08879796A /* Build configuration list for PBXProject "Orot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

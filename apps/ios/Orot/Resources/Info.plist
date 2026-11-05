@@ -22,6 +22,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>자리에 계신지만 확인해요. 영상은 기기 안에서만 처리되며 저장하거나 전송하지 않아요.</string>
 	<key>UIAppFonts</key>

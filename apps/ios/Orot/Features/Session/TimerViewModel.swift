@@ -94,6 +94,7 @@ final class TimerViewModel: ObservableObject {
     let subjectStore: FocusSubjectStore
     let focusScoreService = FocusScoreService()
     let notificationService = NotificationService()
+    private let liveActivity = LiveActivityService()
 
     // MARK: - Computed Properties
     var captureSession: AVCaptureSession? { cameraService.session }
@@ -158,6 +159,7 @@ final class TimerViewModel: ObservableObject {
         focusService.calibrationService = calibrationService
         cameraService.delegate = self
         setupBindings()
+        liveActivity.endLeftovers()
 
         print("✅ TimerViewModel 초기화 완료")
     }
@@ -263,6 +265,7 @@ final class TimerViewModel: ObservableObject {
             awayDuration = 0
             print("👋 복귀 — 미확인 구간 \(gap)초")
             startTicking()
+            syncLiveActivity()
         case .rest:
             restElapsed += TimeInterval(gap)
             if restElapsed >= restDuration { startNextFocus() } else { startTicking() }
@@ -300,6 +303,7 @@ final class TimerViewModel: ObservableObject {
         timerState = .paused
         timer?.invalidate()
         notificationService.cancelAll()
+        syncLiveActivity()
         print("⏸️ 세션 일시정지 (수동)")
     }
 
@@ -308,6 +312,7 @@ final class TimerViewModel: ObservableObject {
         timerState = .running
         startTicking()
         notificationService.scheduleSessionEnd(after: targetDuration - elapsedTime, minutes: targetMinutes)
+        syncLiveActivity()
         print("▶️ 세션 재개")
     }
 
@@ -331,6 +336,7 @@ final class TimerViewModel: ObservableObject {
         completedRounds += 1
         haptic()
         phase = .complete
+        syncLiveActivity()
         print("✅ 세션 완료: 순수 집중 \(Int(netFocusTime))초, \(session.starMagnitude)등급")
     }
 
@@ -343,6 +349,7 @@ final class TimerViewModel: ObservableObject {
         timerState = .running
         startTicking()
         notificationService.scheduleRestEnd(after: restDuration)
+        syncLiveActivity()
         print("☕️ 휴식 시작: \(Int(restDuration / 60))분")
     }
 
@@ -362,6 +369,7 @@ final class TimerViewModel: ObservableObject {
         }
         timerState = .idle
         isSessionPresented = false
+        liveActivity.end()
         UIApplication.shared.isIdleTimerDisabled = false
         resetFocusValues()
         completedSession = nil
@@ -392,6 +400,7 @@ final class TimerViewModel: ObservableObject {
         UIApplication.shared.isIdleTimerDisabled = OrotSettings.current.keepAwake
         startTicking()
         notificationService.scheduleSessionEnd(after: targetDuration, minutes: targetMinutes)
+        syncLiveActivity()
     }
 
     private func resetFocusValues() {
@@ -460,6 +469,40 @@ final class TimerViewModel: ObservableObject {
         )
         record.session = currentSession
         currentSession?.focusRecords.append(record)
+    }
+
+    // MARK: - Live Activity
+
+    /// 잠금 화면 · 다이내믹 아일랜드 표시를 지금 상태에 맞춥니다. 시계는 시스템이 세므로 상태가 바뀔 때만 부릅니다.
+    private func syncLiveActivity() {
+        let now = Date()
+        let kind: SessionActivityAttributes.ContentState.Phase
+        let startedAt: Date
+        let endsAt: Date
+        switch phase {
+        case .focusing:
+            kind = timerState == .paused ? .paused : .focusing
+            startedAt = now.addingTimeInterval(-elapsedTime)
+            endsAt = startedAt.addingTimeInterval(targetDuration)
+        case .rest:
+            kind = .rest
+            startedAt = now.addingTimeInterval(-restElapsed)
+            endsAt = startedAt.addingTimeInterval(restDuration)
+        case .complete:
+            kind = .complete
+            startedAt = now
+            endsAt = now
+        }
+        let state = SessionActivityAttributes.ContentState(
+            phase: kind,
+            startedAt: startedAt,
+            endsAt: endsAt,
+            pausedRemaining: remainingTime,
+            starFormation: phase == .complete ? 1 : starFormation,
+            mansionCaption: sky.progressCaption(),
+            magnitude: completedSession?.starMagnitude ?? OrotStar.magnitude(forFocusRatio: pureFocusRatio)
+        )
+        liveActivity.update(subject: subjectName, targetMinutes: targetMinutes, state: state)
     }
 
     private func haptic() {
